@@ -30,7 +30,33 @@ async function main() {
     });
     console.log("Created Admin User successfully.");
   } else {
-    console.log("Admin user already exists.");
+    // Provisioning repair path: if the stored hash does not verify against
+    // the canonical bootstrap password (e.g. hand-inserted row), re-hash it
+    // with the project's standard bcrypt design. Role is enforced to ADMIN.
+    console.log("Admin user already exists. Verifying provisioned credentials...");
+    let dirty = false;
+    const data: { passwordHash?: string; role?: "ADMIN" } = {};
+
+    const ok = await bcrypt.compare(password, adminUser.passwordHash);
+    if (!ok) {
+      console.log("Stored hash does not verify — resetting admin password (bcrypt, cost 12).");
+      data.passwordHash = await bcrypt.hash(password, 12);
+      dirty = true;
+    }
+    if (adminUser.role !== "ADMIN") {
+      console.log(`Role was '${adminUser.role}' — promoting to ADMIN.`);
+      data.role = "ADMIN";
+      dirty = true;
+    }
+    if (dirty) {
+      adminUser = await prisma.user.update({
+        where: { id: adminUser.id },
+        data,
+      });
+      console.log("Admin account provisioned successfully.");
+    } else {
+      console.log("Admin credentials verified.");
+    }
   }
   
   process.exit(0);
