@@ -49,9 +49,9 @@ test.describe('Authentication & RBAC E2E Tests', () => {
     const data = await response.json();
     expect(data).toHaveProperty('accessToken');
 
-    // 2. Go to login page on the UI
+    // 2. Go to login page on the UI (heading is h1 after auth redesign)
     await page.goto('/login');
-    await expect(page.locator('h2')).toContainText('Sign In');
+    await expect(page.locator('h1')).toContainText('Sign In');
 
     // Test invalid credentials
     await page.fill('#email', testEmail);

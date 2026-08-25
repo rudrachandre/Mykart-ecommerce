@@ -7,7 +7,7 @@ async function registerViaUi(
   password = "password123",
 ) {
   await page.goto("/register");
-  await expect(page.locator("h2")).toContainText("Create Account");
+  await expect(page.locator("h1")).toContainText("Create Account");
   await page.fill("#name", name);
   await page.fill("#email", email);
   await page.fill("#password", password);

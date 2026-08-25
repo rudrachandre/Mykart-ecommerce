@@ -4,7 +4,6 @@ import { FormEvent, Suspense, useMemo, useState } from "react";
 import Cookies from "js-cookie";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,50 +91,30 @@ function RegisterForm() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] bg-background">
-      {/* Left side: Premium Image */}
-      <div className="hidden lg:flex lg:w-[45%] relative bg-secondary items-center justify-center overflow-hidden">
-        <Image
-          src="https://images.unsplash.com/photo-1611078489935-0cb964de46d6?q=80&w=2000&auto=format&fit=crop"
-          alt="MyKart Premium"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/10" />
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative z-10 text-center p-12 text-white"
-        >
-          <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight mb-3">
-            MyKart.
+    <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-secondary px-4 py-12 md:min-h-[calc(100vh-6rem)]">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-md"
+      >
+        <div className="rounded-lg border border-border bg-card p-8 shadow-sm sm:p-10">
+          <Link
+            href="/"
+            aria-label="mykart home"
+            className="inline-block font-display text-2xl font-semibold tracking-tight text-foreground"
+          >
+            mykart
+          </Link>
+
+          <h1 className="mt-6 font-display text-3xl font-semibold tracking-tight text-foreground">
+            Create Account
           </h1>
-          <p className="text-white/90 font-medium tracking-wide">
-            Curated for excellence.
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Join MyKart for a personalized shopping experience.
           </p>
-        </motion.div>
-      </div>
 
-      {/* Right side: Registration Form */}
-      <div className="w-full lg:w-[55%] flex flex-col justify-center px-8 sm:px-16 lg:px-24 xl:px-32 relative py-12">
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full max-w-md mx-auto space-y-10"
-        >
-          <div>
-            <h2 className="text-3xl font-medium tracking-tight text-foreground">
-              Create Account
-            </h2>
-            <p className="mt-3 text-sm text-foreground/60 font-light leading-relaxed">
-              Join MyKart for a personalized shopping experience.
-            </p>
-          </div>
-
-          <form className="space-y-8" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-6">
               <div className="space-y-3">
                 <label
@@ -227,8 +206,8 @@ function RegisterForm() {
               Sign In
             </Link>
           </p>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
