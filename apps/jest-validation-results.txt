@@ -1,0 +1,50 @@
+(node:6160) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL test/search.e2e-spec.ts (19.479 s)
+  ● Console
+
+    console.log
+      ◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../../../node_modules/dotenv/lib/main.js:131:11)
+
+  ● SearchController (e2e) › /search/autocomplete (GET)
+
+    expect(received).toBeInstanceOf(expected)
+
+    Expected constructor: Array
+    Received constructor: Object
+
+    [0m [90m 91 |[39m       [33m.[39m[36mget[39m([32m'/api/v1/search/autocomplete?q=te'[39m)
+     [90m 92 |[39m       [33m.[39mexpect([35m200[39m)
+    [31m[1m>[22m[39m[90m 93 |[39m       [33m.[39mexpect((res) [33m=>[39m {
+     [90m    |[39m        [31m[1m^[22m[39m
+     [90m 94 |[39m         expect(res[33m.[39mbody)[33m.[39mtoBeInstanceOf([33mArray[39m)[33m;[39m
+     [90m 95 |[39m       })[33m;[39m
+     [90m 96 |[39m   })[33m;[39m[0m
+
+      at Object.<anonymous> (search.e2e-spec.ts:93:8)
+      ----
+      at search.e2e-spec.ts:94:26
+      at ../../../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../../../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../../../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../../../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../../../node_modules/supertest/lib/test.js:152:11)
+
+(node:6160) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+^C

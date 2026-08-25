@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * MyKart design tokens — mykart-ui-spec.md (Figma source of truth)
+ * Palette: brand #ff3b00 · ink #111111 · warm grey #666662 ·
+ * surfaces #ffffff/#faf9f6 · hairline #ebeae6 · star #FFB000
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #ff3b00;
+  --primary-foreground: #ffffff;
+  --brand: #ff3b00;
+  --brand-muted: rgba(255, 59, 0, 0.07);
+  --secondary: #faf9f6;
+  --secondary-foreground: #111111;
+  --muted: #faf9f6;
+  --muted-foreground: #666662;
+  --accent: rgba(255, 59, 0, 0.07);
+  --accent-foreground: #ff3b00;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #ebeae6;
+  --input: #ebeae6;
+  --ring: #ff3b00;
+  --star: #ffb000;
+  --chart-1: #ff3b00;
+  --chart-2: #111111;
+  --chart-3: #666662;
+  --chart-4: #ffb000;
+  --chart-5: #ebeae6;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: #111111;
+  --foreground: #faf9f6;
+  --card: #1a1a1a;
+  --card-foreground: #faf9f6;
+  --popover: #1a1a1a;
+  --popover-foreground: #faf9f6;
+  --primary: #ff3b00;
+  --primary-foreground: #ffffff;
+  --secondary: #222222;
+  --secondary-foreground: #faf9f6;
+  --muted: #222222;
+  --muted-foreground: #a3a3a0;
+  --accent: rgba(255, 59, 0, 0.15);
+  --accent-foreground: #ff6a3d;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+  --ring: #ff3b00;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-brand: var(--brand);
+  --color-brand-muted: var(--brand-muted);
+  --color-star: var(--star);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 16px);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  /* Figma §27 — focus ring: 2px brand, offset 2 */
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  ::placeholder {
+    color: var(--muted-foreground);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display), sans-serif;
+  }
+}

@@ -1,0 +1,9 @@
+No tests found, exiting with code 1
+Run with `--passWithNoTests` to exit with code 0
+In C:\Users\admin\Documents\anti website\apps\api\test
+  17 files checked.
+  testMatch:  - 0 matches
+  testPathIgnorePatterns: \\node_modules\\ - 17 matches
+  testRegex: .e2e-spec.ts$ - 12 matches
+Pattern: src/app.controller.spec.ts - 0 matches
+JEST_EXITCODE:1 

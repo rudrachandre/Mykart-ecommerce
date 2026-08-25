@@ -1,0 +1,19 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^meilisearch$": "<rootDir>/mocks/meilisearch.mock.ts",
+    "^Meilisearch$": "<rootDir>/mocks/meilisearch.mock.ts",
+    "^bullmq$": "<rootDir>/mocks/bullmq.mock.ts",
+    "^ioredis$": "<rootDir>/mocks/ioredis.mock.ts"
+  },
+  "setupFiles": [
+    "dotenv/config"
+  ],
+  "testTimeout": 60000
+}

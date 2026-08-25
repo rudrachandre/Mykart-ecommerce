@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Builds
+.next/
+dist/
+coverage/
+.turbo/
+
+# Env & secrets (example stays tracked)
+.env
+.env.*
+!.env.example
+
+# Local infra data & binaries
+dump.rdb
+data.ms/
+redis/
+redis.zip
+meilisearch*.exe
+.npm-cache/
+dumps/
+
+# Logs & transient tool output
+*.log
+*.out
+*.err
+
+# Local verification / diagnostic tooling & reports
+verify-*
+overflow-*
+pdp-repro.js
+pdp-check.txt
+search-check.js
+final-report.json
+responsive-sweep.json
+web-tc-final.txt
+
+# Editor / OS
+.vscode/
+.DS_Store
+
+# Test artifacts
+test-results/
+playwright-report/
