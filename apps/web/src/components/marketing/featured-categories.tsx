@@ -31,7 +31,7 @@ const cover: Record<string, string> = {
 export function FeaturedCategories({ categories }: { categories: CategoryCardData[] }) {
   if (!categories?.length) return null;
   return (
-    <section className="mx-auto max-w-[1280px] px-5 md:px-10 xl:px-20 py-12 md:py-16">
+    <section className="mx-auto w-full max-w-[1280px] px-5 md:px-10 xl:px-20 py-12 md:py-16">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
