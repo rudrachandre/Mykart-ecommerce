@@ -46,7 +46,6 @@ const columns = [
     links: [
       { label: 'Become a Seller', href: '/seller/onboard' },
       { label: 'Seller Dashboard', href: '/seller' },
-      { label: 'Admin', href: '/admin' },
     ],
   },
   {

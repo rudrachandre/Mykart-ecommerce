@@ -11,7 +11,7 @@ import {
   IsArray,
   IsUrl,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductStatus } from '@prisma/client';
 
@@ -101,11 +101,16 @@ export class CreateProductDto {
   description: string;
 
   @ApiProperty({ example: 49.99 })
+  // Prisma Decimal columns serialize to JSON strings ("49.99") and clients
+  // legitimately round-trip them verbatim; coerce numeric strings back to
+  // numbers before @IsNumber() runs instead of rejecting those updates.
+  @Transform(({ value }) => (typeof value === 'string' ? Number(value) : value))
   @IsNumber()
   @Min(0)
   basePrice: number;
 
   @ApiPropertyOptional({ example: 39.99 })
+  @Transform(({ value }) => (typeof value === 'string' ? Number(value) : value))
   @IsNumber()
   @Min(0)
   @IsOptional()

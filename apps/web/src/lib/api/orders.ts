@@ -11,7 +11,12 @@ export async function checkout(token: string, payload: any) {
     },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error('Checkout failed');
+  if (!res.ok) {
+    // Surface the API's real error (e.g. "Cart is empty", inventory limits,
+    // gateway configuration problems) instead of an opaque generic failure.
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || 'Checkout failed');
+  }
   return res.json();
 }
 
@@ -24,7 +29,12 @@ export async function verifyPayment(token: string, data: any) {
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Payment verification failed');
+  if (!res.ok) {
+    // Surface the backend's specific reason (signature mismatch, cancelled
+    // order, gateway misconfiguration) instead of an opaque generic failure.
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || 'Payment verification failed');
+  }
   return res.json();
 }
 

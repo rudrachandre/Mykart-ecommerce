@@ -77,6 +77,28 @@ async function main() {
     }
   });
 
+  // Additional marketplace categories (top-level, database-driven — the API
+  // and storefront render whatever exists here; nothing is hardcoded in UI).
+  const extraCategories: Array<{ name: string; slug: string; description: string }> = [
+    { name: 'Mobiles', slug: 'mobiles', description: 'Smartphones and tablets' },
+    { name: 'Laptops & Computers', slug: 'laptops-computers', description: 'Laptops, desktops and peripherals' },
+    { name: 'Fashion', slug: 'fashion', description: 'Apparel, footwear and eyewear' },
+    { name: 'Home & Kitchen', slug: 'home-kitchen', description: 'Furniture, decor and appliances' },
+    { name: 'Beauty', slug: 'beauty', description: 'Skincare, cosmetics and grooming' },
+    { name: 'Grocery', slug: 'grocery', description: 'Daily essentials and staples' },
+    { name: 'Sports', slug: 'sports', description: 'Fitness and outdoor gear' },
+    { name: 'Books', slug: 'books', description: 'Fiction, non-fiction and academic' },
+    { name: 'Toys', slug: 'toys', description: 'Games, plush and educational kits' },
+    { name: 'Accessories', slug: 'accessories', description: 'Watches, bags and everyday carry' },
+  ];
+  for (const c of extraCategories) {
+    await prisma.category.upsert({
+      where: { slug: c.slug },
+      update: { name: c.name, description: c.description },
+      create: c,
+    });
+  }
+
   // Create Brand
   const brand = await prisma.brand.upsert({
     where: { slug: 'techcorp' },

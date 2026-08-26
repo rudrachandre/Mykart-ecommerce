@@ -72,7 +72,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Total Revenue</p>
-              <h3 className="text-3xl font-bold">₹{(stats?.totalRevenue || 0).toFixed(2)}</h3>
+              <h3 className="text-3xl font-bold">₹{Number(stats?.totalRevenue ?? 0).toFixed(2)}</h3>
             </div>
           </div>
         </div>

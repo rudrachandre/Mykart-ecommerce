@@ -140,7 +140,7 @@ export default function AdminDashboardPage() {
             </div>
             <div className="relative z-10">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 mb-2">Total Revenue</h3>
-              <p className="text-4xl font-medium text-foreground">₹{(stats?.totalRevenue || 0).toFixed(2)}</p>
+              <p className="text-4xl font-medium text-foreground">₹{Number(stats?.totalRevenue ?? 0).toFixed(2)}</p>
             </div>
           </motion.div>
         </Link>

@@ -82,7 +82,12 @@ export async function updateProduct(token: string, id: string, data: any) {
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update product");
+  if (!res.ok) {
+    // Surface safe, user-facing validation/error messages from the API
+    // instead of an opaque generic failure.
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || "Failed to update product");
+  }
   return res.json();
 }
 

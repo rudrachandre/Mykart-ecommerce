@@ -84,6 +84,24 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
       if (!token) throw new Error('Not authenticated');
 
       const payload: any = { ...formData };
+      // Decimal-backed fields round-trip as strings from list endpoints; never
+      // echo them back raw or @IsNumber() DTO validation rejects the update.
+      payload.basePrice = Number(formData.basePrice ?? 0);
+      // Variants are deleted+recreated by the API, so send only schema fields:
+      // stale ids/prisma noise would otherwise be posted verbatim, and Decimal
+      // strings must be coerced back into numbers for @IsNumber() validation.
+      payload.variants = formData.variants.map((v: any) => ({
+        sku: v.sku,
+        color: v.color,
+        size: v.size,
+        price: Number(v.price ?? 0),
+        inventory: { quantity: Number(v.inventory?.quantity ?? 0) },
+      }));
+      payload.images = formData.images.map((img: any, i: number) => ({
+        url: img.url,
+        alt: img.alt,
+        sortOrder: img.sortOrder ?? i,
+      }));
       // Optional UUID fields must be omitted - not sent as "" - because
       // class-validator @IsOptional() still rejects empty strings against
       // @IsUUID(), which made no-brand submissions fail with 400.

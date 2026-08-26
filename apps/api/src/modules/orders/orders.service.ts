@@ -3,9 +3,10 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { CheckoutDto } from './dto/checkout.dto';
+import { CheckoutDto, PaymentMethodDto } from './dto/checkout.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import * as crypto from 'crypto';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -83,9 +84,14 @@ export class OrdersService {
     return order;
   }
   async checkout(userId: string, dto: CheckoutDto) {
-    if (!this.razorpay) {
-      throw new InternalServerErrorException(
-        'Payment gateway is not configured',
+    const isCod = dto.paymentMethod === PaymentMethodDto.COD;
+
+    // Only online methods touch Razorpay. Missing gateway credentials are a
+    // deployment CONFIGURATION issue and fail closed with an explicit reason;
+    // they never silently redirect a customer to another payment mode.
+    if (!isCod && !this.razorpay) {
+      throw new ServiceUnavailableException(
+        'Online payments are not configured on this server (missing RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET). Choose Cash on Delivery or configure the payment gateway.',
       );
     }
 
@@ -206,29 +212,31 @@ export class OrdersService {
         'Not enough stock available to complete the order',
       );
     }
-    // 4. Create Razorpay order (after reservation).
-    let rpOrder;
-    try {
-      rpOrder = await this.razorpay.orders.create({
-        amount: Math.round(total * 100),
-        currency: 'INR',
-        receipt: orderId,
-        payment_capture: 1,
-      });
-    } catch (err: any) {
-      // Release the reservation because the payment order could not be created.
-      for (const item of reservedItems) {
-        await this.prisma.inventory.updateMany({
-          where: { variantId: item.variantId },
-          data: {
-            quantity: { increment: item.quantity },
-            reserved: { decrement: item.quantity },
-          },
+    // 4. Create the gateway order for online methods only — COD never touches
+    // Razorpay. On gateway failure the reservation is released before failing.
+    let rpOrder: any = null;
+    if (!isCod) {
+      try {
+        rpOrder = await this.razorpay.orders.create({
+          amount: Math.round(total * 100),
+          currency: 'INR',
+          receipt: orderId,
+          payment_capture: 1,
         });
+      } catch (err: any) {
+        await this.releaseReservations(reservedItems);
+        // Surface the provider's own safe error fields so configuration /
+        // connectivity problems are distinguishable from code failures.
+        // Razorpay's `error.description` never contains key secrets.
+        const detail: string =
+          err?.error?.description ||
+          err?.description ||
+          (typeof err?.message === 'string' ? err.message.split('\n')[0] : '') ||
+          'unknown gateway error';
+        throw new InternalServerErrorException(
+          `Online payment could not be initialized: ${detail}`.slice(0, 300),
+        );
       }
-      throw new InternalServerErrorException(
-        'Unable to initialize a payment session. Please try again.',
-      );
     }
 
     // 5. Create order + payment record in one transaction.
@@ -251,15 +259,16 @@ export class OrdersService {
           },
         });
 
-        // Create pending payment record inside transaction
+        // Create pending payment record inside transaction. COD bypasses the
+        // gateway entirely (no transaction id yet; settled on delivery).
         await prisma.payment.create({
           data: {
             orderId: orderId,
-            provider: 'RAZORPAY',
+            provider: isCod ? 'COD' : 'RAZORPAY',
             amount: total,
             currency: 'INR',
             status: 'PENDING',
-            transactionId: rpOrder.id,
+            transactionId: rpOrder?.id ?? null,
           },
         });
 
@@ -304,10 +313,31 @@ export class OrdersService {
 
     return {
       order,
-      razorpayOrderId: rpOrder.id,
-      amount: rpOrder.amount,
-      currency: rpOrder.currency,
+      paymentMethod: isCod
+        ? PaymentMethodDto.COD
+        : (dto.paymentMethod ?? PaymentMethodDto.CARD),
+      // Gateway identifiers exist only for online payments.
+      ...(rpOrder
+        ? {
+            razorpayOrderId: rpOrder.id,
+            amount: rpOrder.amount,
+            currency: rpOrder.currency,
+          }
+        : {}),
     };
+  }
+
+  /** Shared rollback: give stock back when a later checkout step fails. */
+  private async releaseReservations(reservedItems: any[]) {
+    for (const item of reservedItems) {
+      await this.prisma.inventory.updateMany({
+        where: { variantId: item.variantId },
+        data: {
+          quantity: { increment: item.quantity },
+          reserved: { decrement: item.quantity },
+        },
+      });
+    }
   }
 
   /**
@@ -568,7 +598,12 @@ export class OrdersService {
       },
       include: {
         items: true,
-        payments: { where: { status: 'PENDING' }, take: 1 },
+        payments: {
+          // COD reservations must outlive the online-payment TTL: the customer
+          // pays physically at delivery, not within RESERVATION_TTL_MS.
+          where: { status: 'PENDING', provider: { not: 'COD' } },
+          take: 1,
+        },
       },
       take: 50,
     });

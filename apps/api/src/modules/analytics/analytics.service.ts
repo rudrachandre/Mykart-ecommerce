@@ -49,7 +49,10 @@ export class AnalyticsService {
     return {
       totalUsers,
       totalOrders,
-      totalRevenue: totalRevenueData._sum.total || 0,
+      // Prisma aggregates a Decimal column into a Decimal that JSON-serializes
+      // as a string ("1049.99"); coerce so clients receive a real number and
+      // numeric formatting (.toFixed etc.) can never crash.
+      totalRevenue: Number(totalRevenueData._sum.total ?? 0),
       totalProducts,
     };
   }

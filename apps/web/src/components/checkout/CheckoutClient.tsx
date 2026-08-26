@@ -10,6 +10,19 @@ import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { calculateShippingFee } from "@/lib/shipping";
 
+/**
+ * Methods surfaced in checkout. All online methods fulfil through the existing
+ * Razorpay architecture; availability of specific instruments (UPI, netbanking,
+ * wallets) ultimately depends on the configured Razorpay merchant account.
+ */
+const PAYMENT_METHODS = {
+  COD: "Cash on Delivery",
+  UPI: "UPI",
+  CARD: "Credit / Debit Card",
+  NETBANKING: "Net Banking",
+  WALLET: "Wallets",
+} as const;
+
 export function CheckoutClient({
   token,
   items,
@@ -40,6 +53,9 @@ export function CheckoutClient({
   });
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<
+    "COD" | "UPI" | "CARD" | "NETBANKING" | "WALLET"
+  >("COD");
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
@@ -72,12 +88,21 @@ export function CheckoutClient({
     setCheckoutLoading(true);
 
     try {
-      const payload: any = { shippingAddress: address };
+      const payload: any = { shippingAddress: address, paymentMethod };
       if (appliedCoupon) {
         payload.couponCode = appliedCoupon;
       }
 
       const result = await checkout(token, payload);
+
+      // COD orders carry no gateway identifiers: the order is placed now and
+      // settled physically at delivery, so Razorpay Checkout is never opened.
+      if (!result.razorpayOrderId) {
+        await refreshCart();
+        toast.success("Order placed! Pay on delivery.");
+        router.push(`/orders/${result.order.id}?success=true&cod=true`);
+        return;
+      }
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "dummy_key",
@@ -395,12 +420,48 @@ export function CheckoutClient({
                 </span>
               </div>
             </div>
+            <div className="mt-10">
+              <h3 className="text-xl font-medium mb-6 uppercase tracking-widest text-foreground">
+                Payment Method
+              </h3>
+              <div className="space-y-3">
+                {(
+                  Object.keys(PAYMENT_METHODS) as Array<
+                    keyof typeof PAYMENT_METHODS
+                  >
+                ).map((method) => (
+                  <label
+                    key={method}
+                    className="flex items-center gap-3 cursor-pointer select-none"
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={method}
+                      checked={paymentMethod === method}
+                      onChange={() => setPaymentMethod(method)}
+                      className="h-4 w-4 accent-black"
+                    />
+                    <span className="text-sm font-medium text-foreground">
+                      {PAYMENT_METHODS[method]}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Online methods are processed securely through Razorpay Checkout.
+              </p>
+            </div>
             <Button
               type="submit"
               className="w-full h-14 rounded-none bg-foreground text-background hover:bg-foreground/90 uppercase tracking-widest text-xs font-bold transition-all mt-8"
               disabled={checkoutLoading}
             >
-              {checkoutLoading ? "Processing..." : "Place Order & Pay"}
+              {checkoutLoading
+                ? "Processing..."
+                : paymentMethod === "COD"
+                  ? "Place Order"
+                  : "Place Order & Pay"}
             </Button>
           </div>
         </div>

@@ -274,37 +274,105 @@ export class ProductsService {
       ...productData
     } = updateProductDto as any;
 
-    const updatedProduct = await this.prisma.product.update({
-      where: { id },
-      data: {
-        ...productData,
-        ...(variants && {
-          variants: {
-            deleteMany: {},
-            create: variants.map((v: any) => ({
-              sku: v.sku,
-              color: v.color,
-              size: v.size,
-              price: v.price,
-              inventory: {
-                create: {
-                  quantity: v.inventory?.quantity || 0,
+    // Reference-aware variant sync.
+    // Variants referenced by CartItem/OrderItem have RESTRICT FKs in the
+    // schema, so a wholesale `deleteMany:{}` replace-all made ANY product
+    // that was ever carted/ordered impossible to edit (P2039 -> 500).
+    // Instead: update matching variants by id/sku, create new ones, and
+    // delete only variants removed from the payload AND unreferenced.
+    const updatedProduct = await this.prisma.$transaction(async (tx) => {
+      if (variants) {
+        const incoming = variants as Array<{
+          id?: string;
+          sku: string;
+          color?: string;
+          size?: string;
+          price?: number | null;
+          inventory?: { quantity?: number } | null;
+        }>;
+        const existing = await tx.productVariant.findMany({
+          where: { productId: id },
+          select: { id: true, sku: true },
+        });
+        for (const v of incoming) {
+          const match =
+            (v.id && existing.find((e) => e.id === v.id)) ||
+            existing.find((e) => e.sku === v.sku);
+          if (match) {
+            await tx.productVariant.update({
+              where: { id: match.id },
+              data: {
+                sku: v.sku,
+                color: v.color ?? null,
+                size: v.size ?? null,
+                price: v.price ?? null,
+                ...(v.inventory && {
+                  inventory: {
+                    upsert: {
+                      where: { variantId: match.id },
+                      update: { quantity: v.inventory.quantity ?? 0 },
+                      create: { quantity: v.inventory.quantity ?? 0 },
+                    },
+                  },
+                }),
+              },
+            });
+          } else {
+            await tx.productVariant.create({
+              data: {
+                productId: id,
+                sku: v.sku,
+                color: v.color ?? null,
+                size: v.size ?? null,
+                price: v.price ?? null,
+                inventory: {
+                  create: { quantity: v.inventory?.quantity ?? 0 },
                 },
               },
-            })),
-          },
-        }),
-        ...(images && {
-          images: {
-            deleteMany: {},
-            create: images.map((img: any, i: number) => ({
-              url: img.url,
-              alt: img.alt,
-              sortOrder: img.sortOrder ?? i,
-            })),
-          },
-        }),
-      },
+            });
+          }
+        }
+        // Remove only payload-dropped variants that no cart/order still references.
+        const incomingIds = incoming.map((v) => v.id).filter(Boolean);
+        const incomingSkus = new Set(incoming.map((v) => v.sku));
+        const removed = existing
+          .filter((e) => !incomingSkus.has(e.sku) && !incomingIds.includes(e.id))
+          .map((e) => e.id);
+        if (removed.length > 0) {
+          await tx.productVariant.deleteMany({
+            where: {
+              productId: id,
+              id: { in: removed },
+              cartItems: { none: {} },
+              orderItems: { none: {} },
+            },
+          });
+        }
+      }
+
+      return tx.product.update({
+        where: { id },
+        data: {
+          ...productData,
+          ...(images && {
+            images: {
+              deleteMany: {},
+              create: images.map((img: any, i: number) => ({
+                url: img.url,
+                alt: img.alt,
+                sortOrder: img.sortOrder ?? i,
+              })),
+            },
+          }),
+        },
+        include: { variants: { include: { inventory: true } }, images: true },
+      });
+    }, {
+      // Remote Postgres (Neon) round-trips are slow: the 5s default transaction
+      // timeout expired mid-commit (P2028 -> 500) on real admin edits. Use the
+      // same generous budget as the checkout transaction.
+      maxWait: 15000,
+      timeout: 30000,
     });
 
     this.searchSyncQueue
