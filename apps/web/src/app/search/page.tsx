@@ -70,7 +70,7 @@ export default async function SearchPage({
             ) : (
               <div className="flex flex-col items-center justify-center p-12 border rounded-lg bg-card text-center">
                 <p className="text-lg font-semibold mb-2">No products found</p>
-                <p className="text-muted-foreground">Try adjusting your search or filters to find what you're looking for.</p>
+                <p className="text-muted-foreground">Try adjusting your search or filters to find what you&apos;re looking for.</p>
               </div>
             )}
           </Suspense>

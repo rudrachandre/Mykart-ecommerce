@@ -63,7 +63,7 @@ export default async function OrdersPage() {
             <Package className="w-12 h-12 text-muted-foreground opacity-50" />
           </div>
           <p className="text-xl font-semibold text-foreground mb-2">No orders found</p>
-          <p className="text-muted-foreground mb-8">You haven't placed any orders yet.</p>
+          <p className="text-muted-foreground mb-8">You haven&apos;t placed any orders yet.</p>
           <Link href="/products">
             <Button size="lg" className="rounded-full px-8 hover:scale-105 active:scale-95 transition-all">
               Start Shopping <ArrowRight className="ml-2 w-4 h-4" />

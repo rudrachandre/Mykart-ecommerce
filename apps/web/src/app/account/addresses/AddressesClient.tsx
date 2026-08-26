@@ -163,7 +163,7 @@ export default function AddressesClient({ initialAddresses, token }: { initialAd
 
       {addresses.length === 0 ? (
         <div className="text-center py-12 border border-border/40 border-dashed bg-muted/20">
-          <p className="text-muted-foreground">You don't have any saved addresses.</p>
+          <p className="text-muted-foreground">You don&apos;t have any saved addresses.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

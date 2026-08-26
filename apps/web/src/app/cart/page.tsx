@@ -95,7 +95,7 @@ export default function CartPage() {
             Your cart is empty
           </p>
           <p className="text-muted-foreground mb-8">
-            Looks like you haven't added anything yet.
+            Looks like you haven&apos;t added anything yet.
           </p>
           <Link href="/products">
             <Button

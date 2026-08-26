@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,9 @@ export default function WishlistPage() {
   };
 
   useEffect(() => {
-    fetchWishlist();
+    startTransition(() => {
+      fetchWishlist();
+    });
   }, [user]);
 
   const handleRemove = async (itemId: string) => {

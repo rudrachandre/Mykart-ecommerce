@@ -104,7 +104,7 @@ export function CartDrawer() {
                       <ShoppingBag className="h-8 w-8 text-muted-foreground opacity-50" />
                     </div>
                     <p className="text-lg font-semibold mb-2">Your cart is empty</p>
-                    <p className="text-sm text-muted-foreground mb-6">Looks like you haven't added anything yet.</p>
+                    <p className="text-sm text-muted-foreground mb-6">Looks like you haven&apos;t added anything yet.</p>
                     <Button variant="outline" className="rounded-full" onClick={() => setIsOpen(false)}>
                       Continue Shopping
                     </Button>

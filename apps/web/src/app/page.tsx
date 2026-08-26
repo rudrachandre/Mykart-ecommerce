@@ -24,9 +24,13 @@ export default async function Home() {
       <HeroBanner />
 
       {/* Figma §13 — FeaturedCategories */}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <FeaturedCategories
-        categories={(categories as any[]).map((c) => ({
+        categories={((categories ?? []) as unknown as Array<{
+          id: string;
+          name: string;
+          slug: string;
+          _count?: { products?: number };
+        }>).map((c) => ({
           id: c.id,
           name: c.name,
           slug: c.slug,

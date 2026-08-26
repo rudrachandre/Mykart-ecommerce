@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, X, Loader2, History, Tag, Package } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,9 @@ export function SearchBar() {
     const saved = localStorage.getItem('recentSearches');
     if (saved) {
       try {
-        setRecentSearches(JSON.parse(saved));
+        startTransition(() => {
+          setRecentSearches(JSON.parse(saved));
+        });
       } catch (e) {}
     }
   }, []);
@@ -43,13 +45,17 @@ export function SearchBar() {
 
   useEffect(() => {
     if (debouncedQuery.trim().length === 0) {
-      setResults(null);
-      setSelectedIndex(-1);
+      startTransition(() => {
+        setResults(null);
+        setSelectedIndex(-1);
+      });
       return;
     }
 
     let isMounted = true;
-    setIsLoading(true);
+    startTransition(() => {
+      setIsLoading(true);
+    });
     autocompleteProducts(debouncedQuery)
       .then((data) => {
         if (isMounted) {

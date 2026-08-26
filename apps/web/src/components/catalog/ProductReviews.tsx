@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { getProductReviews, submitReview } from '@/lib/api/reviews';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +35,9 @@ export function ProductReviews({
   };
 
   useEffect(() => {
-    fetchReviews();
+    startTransition(() => {
+      fetchReviews();
+    });
   }, [productId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,7 +71,9 @@ export function ProductReviews({
   // hydration mismatch that briefly detached all PDP event handlers.
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   useEffect(() => {
-    setIsLoggedIn(!!Cookies.get('accessToken'));
+    startTransition(() => {
+      setIsLoggedIn(!!Cookies.get('accessToken'));
+    });
   }, []);
 
   // Calculate summary

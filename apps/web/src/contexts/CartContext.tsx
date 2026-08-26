@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, startTransition, ReactNode } from 'react';
 import Cookies from 'js-cookie';
 import { getCart, addToCart, updateCartItem, removeFromCart } from '@/lib/api/cart';
 import { toast } from 'sonner';
@@ -64,7 +64,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    fetchCart();
+    startTransition(() => {
+      fetchCart();
+    });
   }, []);
 
   const addItem = async (productId: string, variantId: string, quantity: number) => {
