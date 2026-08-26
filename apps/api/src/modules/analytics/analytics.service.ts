@@ -36,13 +36,15 @@ export class AnalyticsService {
   }
 
   async getDashboardStats() {
-    const totalUsers = await this.prisma.user.count();
-    const totalOrders = await this.prisma.order.count();
-    const totalRevenueData = await this.prisma.order.aggregate({
-      _sum: { total: true },
-      where: { status: { not: 'CANCELLED' } },
-    });
-    const totalProducts = await this.prisma.product.count();
+    const [totalUsers, totalOrders, totalRevenueData, totalProducts] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.order.count(),
+      this.prisma.order.aggregate({
+        _sum: { total: true },
+        where: { status: { not: 'CANCELLED' } },
+      }),
+      this.prisma.product.count(),
+    ]);
 
     return {
       totalUsers,
