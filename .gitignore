@@ -12,29 +12,31 @@ coverage/
 .env.*
 !.env.example
 
-# Local infra data & binaries
-dump.rdb
-data.ms/
-redis/
-redis.zip
-meilisearch*.exe
-.npm-cache/
-dumps/
+# Local infra data & binaries (anchored to repo root so they cannot shadow
+# real source directories like apps/api/src/redis/)
+/dump.rdb
+/data.ms/
+/redis/
+/redis.zip
+/meilisearch*.exe
+/.npm-cache/
+/dumps/
 
 # Logs & transient tool output
 *.log
 *.out
 *.err
 
-# Local verification / diagnostic tooling & reports
-verify-*
-overflow-*
-pdp-repro.js
-pdp-check.txt
-search-check.js
-final-report.json
-responsive-sweep.json
-web-tc-final.txt
+# Local verification / diagnostic tooling & reports (anchored to repo root;
+# an unanchored verify-* was accidentally ignoring dto/verify-payment.dto.ts)
+/verify-*
+/overflow-*
+/pdp-repro.js
+/pdp-check.txt
+/search-check.js
+/final-report.json
+/responsive-sweep.json
+/web-tc-final.txt
 
 # Editor / OS
 .vscode/
