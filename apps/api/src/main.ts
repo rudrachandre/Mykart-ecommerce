@@ -25,7 +25,9 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(',')
-      : ['http://localhost:3000', 'http://localhost:3002'],
+      : process.env.NODE_ENV === 'production'
+        ? ['https://mykart-ecommerce-web.vercel.app']
+        : ['http://localhost:3000', 'http://localhost:3002'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
