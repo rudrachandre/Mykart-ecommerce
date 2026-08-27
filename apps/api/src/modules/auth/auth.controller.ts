@@ -76,7 +76,14 @@ export class AuthController {
       await this.authService.logout(refreshToken);
     }
 
-    res.clearCookie('refreshToken');
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      domain: process.env.COOKIE_DOMAIN || undefined,
+      sameSite:
+        (process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none') || 'lax',
+      path: '/',
+    });
     return { message: 'Logged out successfully' };
   }
 }

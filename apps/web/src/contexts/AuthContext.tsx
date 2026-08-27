@@ -15,7 +15,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -62,11 +62,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const logout = () => {
-    Cookies.remove('accessToken');
-    setUser(null);
-    router.push('/');
-    router.refresh();
+  const logout = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      await fetch(`${apiUrl}/api/v1/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Best-effort backend logout; still clear local session
+    } finally {
+      Cookies.remove('accessToken');
+      setUser(null);
+      router.push('/');
+      router.refresh();
+    }
   };
 
   return (
