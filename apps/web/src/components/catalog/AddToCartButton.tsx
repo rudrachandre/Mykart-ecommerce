@@ -6,14 +6,17 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { addToCart } from '@/lib/api/cart';
 
-type Variant = { id: string; inventory?: { quantity?: number } };
+type Variant = { id: string; inventory?: { quantity?: number; reserved?: number } };
 
 export function AddToCartButton({ productId, variants }: { productId: string; variants: Variant[] }) {
   const router = useRouter();
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState('');
 
-  const variant = variants.find((item) => (item.inventory?.quantity ?? 0) > 0);
+  const variant = variants.find((item) => {
+    const available = (item.inventory?.quantity ?? 0) - (item.inventory?.reserved ?? 0);
+    return available > 0;
+  });
 
   async function handleAddToCart() {
     const token = Cookies.get('accessToken');

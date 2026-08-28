@@ -26,12 +26,17 @@ export function ProductCard({ product }: ProductCardProps) {
   const imageUrl = product.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format&fit=crop';
   const hasDiscount = product.salePrice && product.salePrice < product.basePrice;
 
-  // Stock is derived from variant inventory returned by the products list API.
   const variants: any[] = product.variants || [];
   const inStockVariant = variants.find(
     (v) => (v.inventory?.quantity ?? 0) > 0,
   );
   const isOutOfStock = variants.length > 0 && !inStockVariant;
+  const lowStockVariant = variants.find(
+    (v) => {
+      const available = (v.inventory?.quantity ?? 0) - (v.inventory?.reserved ?? 0);
+      return available > 0 && available <= 10;
+    },
+  );
   const discountPercent = hasDiscount 
     ? Math.round(((product.basePrice - product.salePrice) / product.basePrice) * 100)
     : 0;
@@ -104,6 +109,11 @@ export function ProductCard({ product }: ProductCardProps) {
           {isOutOfStock && (
             <span className="rounded-md bg-muted-foreground px-2 py-1 text-xs font-semibold text-white">
               OUT OF STOCK
+            </span>
+          )}
+          {!isOutOfStock && lowStockVariant && (
+            <span className="rounded-md bg-yellow-500/90 px-2 py-1 text-xs font-semibold text-white">
+              LOW STOCK
             </span>
           )}
         </div>

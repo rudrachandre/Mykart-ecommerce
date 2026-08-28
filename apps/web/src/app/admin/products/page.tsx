@@ -94,14 +94,15 @@ export default function AdminProductsPage() {
                   <th className="px-4 py-3">Seller</th>
                   <th className="px-4 py-3">Price</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Stock</th>
                   <th className="px-4 py-3">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {loading ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Loading...</td></tr>
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading...</td></tr>
                 ) : data.products.length === 0 ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No products found.</td></tr>
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No products found.</td></tr>
                 ) : (
                   data.products.map((product) => {
                     const imageUrl = product.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80';
@@ -125,6 +126,19 @@ export default function AdminProductsPage() {
                           <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${product.status === 'ACTIVE' ? 'bg-green-500/20 text-green-700' : 'bg-muted'}`}>
                             {product.status}
                           </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {(product.variants || []).map((v: any) => {
+                            const qty = v.inventory?.quantity ?? 0;
+                            const reserved = v.inventory?.reserved ?? 0;
+                            const available = qty - reserved;
+                            return (
+                              <div key={v.id} className="text-xs">
+                                <span className="font-mono">{v.sku}</span>
+                                <span className="text-muted-foreground"> A:{available}</span>
+                              </div>
+                            );
+                          })}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">

@@ -54,6 +54,7 @@ export default async function SellerProductsPage() {
                 <th className="px-6 py-4 font-medium">Category</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium">Base Price</th>
+                <th className="px-6 py-4 font-medium">Stock</th>
                 <th className="px-6 py-4 font-medium">Actions</th>
               </tr>
             </thead>
@@ -64,6 +65,19 @@ export default async function SellerProductsPage() {
                   <td className="px-6 py-4">{product.category?.name || 'Uncategorized'}</td>
                   <td className="px-6 py-4">{product.status}</td>
                   <td className="px-6 py-4">₹{parseFloat(product.basePrice).toFixed(2)}</td>
+                  <td className="px-6 py-4">
+                    {(product.variants || []).map((v: any) => {
+                      const qty = v.inventory?.quantity ?? 0;
+                      const reserved = v.inventory?.reserved ?? 0;
+                      const available = qty - reserved;
+                      return (
+                        <div key={v.id} className="text-xs">
+                          <span className="font-mono">{v.sku}</span>
+                          <span className="text-muted-foreground"> Q:{qty} R:{reserved} A:{available}</span>
+                        </div>
+                      );
+                    })}
+                  </td>
                   <td className="px-6 py-4">
                     <ProductActions productId={product.id} slug={product.slug} />
                   </td>
