@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Cookies from 'js-cookie';
 import { createProduct, updateProduct } from '@/lib/api/sellers';
+import { ImageUploader } from './ImageUploader';
 
 interface ProductFormProps {
   initialData?: any;
@@ -19,6 +20,8 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const token = Cookies.get('accessToken') || '';
+
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     slug: initialData?.slug || '',
@@ -30,8 +33,6 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
     variants: initialData?.variants
       ? initialData.variants.map((v: any) => ({
           ...v,
-          // List endpoints serialize Prisma Decimals as strings; coerce so the
-          // update payload passes the API's @IsNumber() validation.
           price: v.price != null ? Number(v.price) : 0,
           inventory: { quantity: Number(v.inventory?.quantity ?? 0) },
         }))
@@ -287,35 +288,14 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
       <div className="border-t pt-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">Images</h3>
-          <Button type="button" variant="outline" size="sm" onClick={() => setFormData(prev => ({ ...prev, images: [...prev.images, { url: '', alt: '' }] }))}>Add Image</Button>
         </div>
-        <div className="space-y-4">
-          {formData.images.map((img: any, index: number) => (
-            <div key={index} className="flex gap-4 items-end">
-              <div className="flex-1 space-y-2">
-                <label className="text-xs font-medium">Cloudinary Image URL</label>
-                <input type="url" value={img.url} onChange={(e) => {
-                  const newImages = [...formData.images];
-                  newImages[index].url = e.target.value;
-                  setFormData(prev => ({ ...prev, images: newImages }));
-                }} className="w-full p-2 border rounded-md bg-background text-sm" placeholder="https://res.cloudinary.com/..." required />
-              </div>
-              <div className="flex-1 space-y-2">
-                <label className="text-xs font-medium">Alt Text</label>
-                <input type="text" value={img.alt} onChange={(e) => {
-                  const newImages = [...formData.images];
-                  newImages[index].alt = e.target.value;
-                  setFormData(prev => ({ ...prev, images: newImages }));
-                }} className="w-full p-2 border rounded-md bg-background text-sm" />
-              </div>
-              <Button type="button" variant="destructive" size="sm" onClick={() => {
-                const newImages = [...formData.images];
-                newImages.splice(index, 1);
-                setFormData(prev => ({ ...prev, images: newImages }));
-              }}>Remove</Button>
-            </div>
-          ))}
-        </div>
+        <ImageUploader
+          images={formData.images}
+          onChange={(images) => setFormData(prev => ({ ...prev, images }))}
+          token={token}
+          productId={initialData?.id}
+          disabled={loading}
+        />
       </div>
 
       <div className="flex justify-end pt-4">

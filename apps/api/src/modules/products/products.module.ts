@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
+import { CloudinaryService } from './cloudinary.service';
 
 @Module({
   imports: [
@@ -10,6 +11,6 @@ import { ProductsController } from './products.controller';
     }),
   ],
   controllers: [ProductsController],
-  providers: [ProductsService],
+  providers: [ProductsService, CloudinaryService],
 })
 export class ProductsModule {}

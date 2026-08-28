@@ -149,6 +149,7 @@ model ProductImage {
   url       String
   alt       String?
   sortOrder Int     @default(0)
+  publicId  String?
 
   @@index([productId])
 }

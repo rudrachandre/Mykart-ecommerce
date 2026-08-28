@@ -9,15 +9,18 @@ import { Queue } from 'bullmq';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { UpdateImageDto } from './dto/update-image.dto';
 import { ProductQueryDto, ProductSortBy } from './dto/product-query.dto';
 import { ProductStatus, Role } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { CloudinaryService } from './cloudinary.service';
 
 @Injectable()
 export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue('search-sync-queue') private readonly searchSyncQueue: Queue,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   private async getSellerId(userId: string): Promise<string> {
@@ -411,5 +414,122 @@ export class ProductsService {
       });
 
     return deletedProduct;
+  }
+
+  async uploadImage(productId: string, file: Express.Multer.File, user: any) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      include: { images: true },
+    });
+    if (!product) throw new NotFoundException('Product not found');
+
+    if (user.role !== Role.ADMIN) {
+      const sellerId = await this.getSellerId(user.userId);
+      if (product.sellerId !== sellerId) {
+        throw new ForbiddenException('You can only upload images to your own products');
+      }
+    }
+
+    const uploadResult = await this.cloudinaryService.uploadImage(
+      file,
+      `products/${productId}`,
+    );
+
+    const maxSortOrder = product.images.reduce(
+      (max, img) => Math.max(max, img.sortOrder),
+      -1,
+    );
+
+    const image = await this.prisma.productImage.create({
+      data: {
+        productId,
+        url: uploadResult.url,
+        publicId: uploadResult.publicId,
+        sortOrder: maxSortOrder + 1,
+      },
+    });
+
+    this.searchSyncQueue
+      .add('upsert-product', { productId: product.id })
+      .catch((err) => {
+        console.error('Failed to enqueue upsert-product job', err);
+      });
+
+    return image;
+  }
+
+  async deleteImage(productId: string, imageId: string, user: any) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+    if (!product) throw new NotFoundException('Product not found');
+
+    if (user.role !== Role.ADMIN) {
+      const sellerId = await this.getSellerId(user.userId);
+      if (product.sellerId !== sellerId) {
+        throw new ForbiddenException('You can only delete images from your own products');
+      }
+    }
+
+    const image = await this.prisma.productImage.findFirst({
+      where: { id: imageId, productId },
+    });
+    if (!image) throw new NotFoundException('Image not found');
+
+    if (image.publicId) {
+      await this.cloudinaryService.deleteImage(image.publicId);
+    }
+
+    const deletedImage = await this.prisma.productImage.delete({
+      where: { id: imageId },
+    });
+
+    this.searchSyncQueue
+      .add('upsert-product', { productId: product.id })
+      .catch((err) => {
+        console.error('Failed to enqueue upsert-product job', err);
+      });
+
+    return deletedImage;
+  }
+
+  async updateImage(
+    productId: string,
+    imageId: string,
+    updateImageDto: UpdateImageDto,
+    user: any,
+  ) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+    if (!product) throw new NotFoundException('Product not found');
+
+    if (user.role !== Role.ADMIN) {
+      const sellerId = await this.getSellerId(user.userId);
+      if (product.sellerId !== sellerId) {
+        throw new ForbiddenException('You can only update images on your own products');
+      }
+    }
+
+    const image = await this.prisma.productImage.findFirst({
+      where: { id: imageId, productId },
+    });
+    if (!image) throw new NotFoundException('Image not found');
+
+    const updatedImage = await this.prisma.productImage.update({
+      where: { id: imageId },
+      data: {
+        alt: updateImageDto.alt ?? image.alt,
+        sortOrder: updateImageDto.sortOrder ?? image.sortOrder,
+      },
+    });
+
+    this.searchSyncQueue
+      .add('upsert-product', { productId: product.id })
+      .catch((err) => {
+        console.error('Failed to enqueue upsert-product job', err);
+      });
+
+    return updatedImage;
   }
 }
