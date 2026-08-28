@@ -9,19 +9,16 @@ export class ReviewsService {
   async createOrUpdateReview(userId: string, dto: CreateReviewDto) {
     const { productId, rating, title, comment } = dto;
 
-    // Check if the product exists
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
     if (!product) throw new NotFoundException('Product not found');
 
-    // Check if the user has a verified purchase
-    // A verified purchase means the user has a completed/delivered order with this product
     const orderItem = await this.prisma.orderItem.findFirst({
       where: {
         order: {
           userId,
-          status: { in: ['DELIVERED', 'SHIPPED', 'PROCESSING'] }, // Assuming they can review if paid
+          status: { in: ['DELIVERED', 'SHIPPED', 'PROCESSING'] },
         },
         productId,
       },
@@ -29,29 +26,32 @@ export class ReviewsService {
 
     const verifiedPurchase = !!orderItem;
 
-    // Upsert the review
-    // We only allow one review per user per product
     const existingReview = await this.prisma.review.findFirst({
       where: { userId, productId },
     });
 
+    let review;
     if (existingReview) {
-      return this.prisma.review.update({
+      review = await this.prisma.review.update({
         where: { id: existingReview.id },
         data: { rating, title, comment, verifiedPurchase },
       });
+    } else {
+      review = await this.prisma.review.create({
+        data: {
+          userId,
+          productId,
+          rating,
+          title,
+          comment,
+          verifiedPurchase,
+        },
+      });
     }
 
-    return this.prisma.review.create({
-      data: {
-        userId,
-        productId,
-        rating,
-        title,
-        comment,
-        verifiedPurchase,
-      },
-    });
+    await this.recalculateRating(productId);
+
+    return review;
   }
 
   async getProductReviews(productId: string) {
@@ -71,8 +71,35 @@ export class ReviewsService {
 
     if (!review) throw new NotFoundException('Review not found');
 
-    return this.prisma.review.delete({
+    const productId = review.productId;
+
+    await this.prisma.review.delete({
       where: { id: reviewId },
+    });
+
+    await this.recalculateRating(productId);
+
+    return { message: 'Review deleted successfully' };
+  }
+
+  private async recalculateRating(productId: string) {
+    const [aggregate] = await Promise.all([
+      this.prisma.review.aggregate({
+        where: { productId },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+    ]);
+
+    const averageRating = aggregate._avg.rating ?? 0;
+    const reviewCount = aggregate._count.rating ?? 0;
+
+    await this.prisma.product.update({
+      where: { id: productId },
+      data: {
+        averageRating,
+        reviewCount,
+      },
     });
   }
 }

@@ -70,7 +70,7 @@ export class SearchSyncProcessor extends WorkerHost {
         : null,
       images: product.images.map((img) => img.url),
       createdAt: product.createdAt.getTime(),
-      rating: 0, // Placeholder if rating is added later
+      rating: product.averageRating,
     };
 
     await this.client.index('products').addDocuments([document]);

@@ -40,6 +40,11 @@ export class CategoriesService {
         parentId: null, // Get top-level categories by default
       },
       include: {
+        _count: {
+          select: {
+            products: true,
+          },
+        },
         children: includeChildren
           ? {
               include: {

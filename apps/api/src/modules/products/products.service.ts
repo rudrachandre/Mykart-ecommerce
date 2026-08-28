@@ -134,6 +134,7 @@ export class ProductsService {
       search,
       sortBy,
       onSale,
+      rating,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -158,6 +159,10 @@ export class ProductsService {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ];
+    }
+
+    if (typeof rating === 'number') {
+      where.averageRating = { gte: rating };
     }
 
     let orderBy: Prisma.ProductOrderByWithRelationInput = {};
