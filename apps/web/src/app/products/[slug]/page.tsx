@@ -6,6 +6,7 @@ import { ProductReviews } from '@/components/catalog/ProductReviews';
 import { ProductGallery } from '@/components/catalog/ProductGallery';
 import { ProductActions } from '@/components/catalog/ProductActions';
 import { ProductGrid } from '@/components/catalog/ProductGrid';
+import { RecentlyViewed } from '@/components/catalog/RecentlyViewed';
 import { ChevronLeft, Star, Truck, RefreshCcw, ShieldCheck } from 'lucide-react';
 import * as motion from 'framer-motion/client';
 
@@ -151,6 +152,16 @@ export default async function ProductDetailPage({
         <h2 className="text-2xl font-bold tracking-tight mb-8">Related Products</h2>
         <ProductGrid products={relatedProducts} meta={undefined} searchParams={{}} />
       </div>
+
+      {/* Recently Viewed (client-side persistence) */}
+      <RecentlyViewed
+        currentProduct={{
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          image: product.images?.[0]?.url ?? null,
+        }}
+      />
     </div>
   );
 }
