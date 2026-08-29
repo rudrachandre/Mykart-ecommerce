@@ -12,6 +12,9 @@ import {
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/permissions/permissions.guard';
+import { RequirePermissions } from '../../common/permissions/permissions.decorator';
+import { PERMISSIONS } from '../../common/permissions/permissions';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Role } from '@prisma/client';
@@ -20,12 +23,13 @@ import { UpdateSellerStatusDto } from './dto/update-seller-status.dto';
 import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 
 @Controller('admin')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Roles(Role.ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('users')
+  @RequirePermissions(PERMISSIONS.USER_READ)
   getUsers(
     @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
     @Query('take', new DefaultValuePipe(20), ParseIntPipe) take: number,
@@ -36,6 +40,7 @@ export class AdminController {
   }
 
   @Get('sellers')
+  @RequirePermissions(PERMISSIONS.SELLER_READ)
   getSellers(
     @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
     @Query('take', new DefaultValuePipe(20), ParseIntPipe) take: number,
@@ -45,11 +50,13 @@ export class AdminController {
   }
 
   @Get('sellers/:id')
+  @RequirePermissions(PERMISSIONS.SELLER_READ)
   getSeller(@Param('id') id: string) {
     return this.adminService.getSellerById(id);
   }
 
   @Get('orders')
+  @RequirePermissions(PERMISSIONS.ORDER_READ)
   getOrders(
     @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
     @Query('take', new DefaultValuePipe(20), ParseIntPipe) take: number,
@@ -60,6 +67,7 @@ export class AdminController {
   }
 
   @Get('products')
+  @RequirePermissions(PERMISSIONS.PRODUCT_READ)
   getAdminProducts(
     @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
     @Query('take', new DefaultValuePipe(20), ParseIntPipe) take: number,
@@ -69,6 +77,7 @@ export class AdminController {
   }
 
   @Patch('users/:id/role')
+  @RequirePermissions(PERMISSIONS.USER_ROLE_MANAGE)
   changeUserRole(
     @CurrentUser() admin: { userId: string },
     @Param('id') id: string,
@@ -78,6 +87,10 @@ export class AdminController {
   }
 
   @Patch('sellers/:id/status')
+  @RequirePermissions(
+    PERMISSIONS.SELLER_APPROVE,
+    PERMISSIONS.SELLER_SUSPEND,
+  )
   setSellerStatus(
     @CurrentUser() admin: { userId: string },
     @Param('id') id: string,
@@ -87,6 +100,7 @@ export class AdminController {
   }
 
   @Patch('products/:id/status')
+  @RequirePermissions(PERMISSIONS.PRODUCT_MODERATE)
   setProductStatus(
     @CurrentUser() admin: { userId: string },
     @Param('id') id: string,
