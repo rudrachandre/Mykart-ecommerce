@@ -7,6 +7,7 @@ import {
 import { Meilisearch } from 'meilisearch';
 import { SearchQueryDto } from './dto/search-query.dto';
 import { PrismaService } from '../../database/prisma.service';
+import { ProductStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -99,10 +100,6 @@ export class SearchService implements OnModuleInit {
   }
 
   async searchProducts(query: SearchQueryDto) {
-    if (!this.indexReady) {
-      throw new InternalServerErrorException('Search index is not ready');
-    }
-
     const {
       q,
       category,
@@ -116,6 +113,23 @@ export class SearchService implements OnModuleInit {
       rating,
       onSale,
     } = query as any;
+
+    if (!this.indexReady) {
+      return this.fallbackSearch({
+        q,
+        category,
+        brand,
+        minPrice,
+        maxPrice,
+        status,
+        page,
+        limit,
+        sort,
+        rating,
+        onSale,
+      });
+    }
+
     const filter: string[] = [];
 
     if (category) filter.push(`category.slug = "${category}"`);
@@ -127,7 +141,6 @@ export class SearchService implements OnModuleInit {
     if (onSale) filter.push('salePrice < basePrice');
 
     const sortOption = sort ? [sort] : undefined;
-
     const offset = (page - 1) * limit;
 
     try {
@@ -148,9 +161,143 @@ export class SearchService implements OnModuleInit {
         },
       };
     } catch (error) {
-      this.logger.error('Meilisearch search failed', error);
-      throw new InternalServerErrorException('Search service temporarily unavailable');
+      this.logger.error(
+        'Meilisearch search failed, falling back to PostgreSQL',
+        error,
+      );
+      return this.fallbackSearch({
+        q,
+        category,
+        brand,
+        minPrice,
+        maxPrice,
+        status,
+        page,
+        limit,
+        sort,
+        rating,
+        onSale,
+      });
     }
+  }
+
+  private async fallbackSearch(query: SearchQueryDto) {
+    const {
+      q,
+      category,
+      brand,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 20,
+      sort,
+      rating,
+      onSale,
+    } = query as any;
+
+    const where: Prisma.ProductWhereInput = {
+      status: ProductStatus.ACTIVE,
+    };
+
+    if (category) {
+      where.category = { slug: category };
+    }
+
+    if (brand) {
+      where.brand = { slug: brand };
+    }
+
+    if (q) {
+      where.OR = [
+        { name: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    const priceCondition: any = {};
+    if (minPrice !== undefined) priceCondition.gte = minPrice;
+    if (maxPrice !== undefined) priceCondition.lte = maxPrice;
+    if (Object.keys(priceCondition).length > 0) {
+      where.basePrice = priceCondition;
+    }
+
+    if (rating !== undefined) {
+      where.averageRating = { gte: rating };
+    }
+
+    if (onSale) {
+      where.salePrice = { not: null };
+    }
+
+    const orderBy = this.getFallbackOrderBy(sort);
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    try {
+      const [items, total] = await Promise.all([
+        this.prisma.product.findMany({
+          where,
+          skip,
+          take,
+          orderBy,
+          include: {
+            images: {
+              take: 1,
+              orderBy: { sortOrder: 'asc' },
+            },
+            category: {
+              select: { name: true, slug: true },
+            },
+            brand: {
+              select: { name: true, slug: true },
+            },
+          },
+        }),
+        this.prisma.product.count({ where }),
+      ]);
+
+      return {
+        items,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      this.logger.error('PostgreSQL fallback search failed', error);
+      throw new InternalServerErrorException(
+        'Search service temporarily unavailable',
+      );
+    }
+  }
+
+  private getFallbackOrderBy(
+    sort?: string,
+  ): Prisma.ProductOrderByWithRelationInput {
+    if (!sort) {
+      return { createdAt: 'desc' };
+    }
+
+    const [field, direction] = sort.split(':');
+    const allowedFields = [
+      'basePrice',
+      'salePrice',
+      'createdAt',
+      'averageRating',
+      'reviewCount',
+    ];
+    const allowedDirections: Array<'asc' | 'desc'> = ['asc', 'desc'];
+
+    if (
+      allowedFields.includes(field) &&
+      allowedDirections.includes(direction as 'asc' | 'desc')
+    ) {
+      return { [field]: direction };
+    }
+
+    return { createdAt: 'desc' };
   }
 
   async autocompleteProducts(q: string) {
