@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { getJwtSecret } from './jwt.config';
+import { MailService } from '../../common/mail/mail.service';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { getJwtSecret } from './jwt.config';
     AnalyticsModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, MailService],
   exports: [AuthService],
 })
 export class AuthModule {}

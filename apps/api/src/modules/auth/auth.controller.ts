@@ -7,10 +7,17 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import type { Response, Request } from 'express';
 
 @Controller('auth')
@@ -85,5 +92,45 @@ export class AuthController {
       path: '/',
     });
     return { message: 'Logged out successfully' };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('forgot-password')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto);
+    // Deliberately identical for known and unknown emails.
+    return {
+      message:
+        'If an account exists for that email, a password reset link has been sent.',
+    };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('reset-password')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto);
+    return { message: 'Password has been reset. Please sign in again.' };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @Post('logout-all')
+  async logoutAll(
+    @Req() req: Request & { user: { userId: string } },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.logoutAll(req.user.userId);
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      domain: process.env.COOKIE_DOMAIN || undefined,
+      sameSite:
+        (process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none') || 'lax',
+      path: '/',
+    });
+    return { message: 'Logged out from all devices' };
   }
 }

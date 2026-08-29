@@ -9,9 +9,10 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 import { Role } from '@prisma/client';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { MailService } from '../../common/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
     private jwtService: JwtService,
     private usersService: UsersService,
     private analyticsService: AnalyticsService,
+    private mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -124,6 +126,72 @@ export class AuthService {
       rtRecord.user.role,
       rtRecord.familyId,
     );
+  }
+
+  async logoutAll(userId: string) {
+    // Invalidate every refresh token for the user: "log out from all devices".
+    await this.revokeAllUserTokens(userId);
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
+    // Silent for unknown emails — prevents account enumeration.
+    const user = await this.usersService.findByEmail(dto.email);
+    if (!user) {
+      return;
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(rawToken);
+
+    // One-time token, 15 minute TTL, stored hashed (same pattern as refresh tokens).
+    await this.redis.set(`pwreset:${tokenHash}`, user.id, 15 * 60);
+
+    await this.mailService.sendPasswordResetEmail(user.email, rawToken);
+    await this.analyticsService.logAction(
+      user.id,
+      'PASSWORD_RESET_REQUESTED',
+      undefined,
+      { email: dto.email },
+    );
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    const tokenHash = this.hashToken(dto.token);
+
+    const userId = await this.redis.get(`pwreset:${tokenHash}`);
+    if (!userId) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    // Consume the token immediately: single use.
+    await this.redis.del(`pwreset:${tokenHash}`);
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    // A password reset invalidates every existing session.
+    await this.revokeAllUserTokens(userId);
+
+    await this.analyticsService.logAction(userId, 'PASSWORD_RESET_COMPLETED');
+  }
+
+  private async revokeAllUserTokens(userId: string) {
+    const tokens = await this.prisma.refreshToken.findMany({
+      where: { userId, isRevoked: false },
+    });
+
+    await this.prisma.refreshToken.updateMany({
+      where: { userId },
+      data: { isRevoked: true },
+    });
+
+    for (const t of tokens) {
+      await this.redis.set(`revoked:${t.tokenHash}`, 'true', 3600);
+      await this.redis.del(`rt:${t.tokenHash}`);
+    }
   }
 
   private async revokeFamily(familyId: string) {
