@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -82,7 +83,18 @@ export class ProductsService {
       if (!brand) throw new NotFoundException('Brand not found');
     }
 
-    const product = await this.prisma.product.create({
+    if (
+      productData.salePrice != null &&
+      productData.salePrice > productData.basePrice
+    ) {
+      throw new BadRequestException(
+        'salePrice must be less than or equal to basePrice',
+      );
+    }
+
+    let product;
+    try {
+      product = await this.prisma.product.create({
       data: {
         ...productData,
         sellerId,
@@ -118,6 +130,19 @@ export class ProductsService {
         },
       },
     });
+    } catch (error) {
+      // Unique violations (slug race or duplicate variant SKUs) must surface
+      // as 409, not an unhandled 500.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'Product slug or variant SKU already exists',
+        );
+      }
+      throw error;
+    }
 
     this.searchSyncQueue
       .add('upsert-product', { productId: product.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
@@ -253,6 +278,13 @@ export class ProductsService {
       throw new NotFoundException(`Product not found`);
     }
 
+    // Public detail endpoint: only ACTIVE products are visible. Draft/archived
+    // products stay private — sellers see their own via /sellers/products and
+    // admins via /admin/products.
+    if (product.status !== ProductStatus.ACTIVE) {
+      throw new NotFoundException(`Product not found`);
+    }
+
     return product;
   }
 
@@ -281,6 +313,26 @@ export class ProductsService {
       sellerId: _dtoSellerId,
       ...productData
     } = updateProductDto as any;
+
+    // Effective price integrity: validate against the resulting basePrice
+    // (the incoming value if provided, otherwise the stored one).
+    const incoming = updateProductDto as {
+      basePrice?: number;
+      salePrice?: number | null;
+    };
+    const effectiveBasePrice = incoming.basePrice ?? product.basePrice;
+    const effectiveSalePrice =
+      'salePrice' in updateProductDto
+        ? incoming.salePrice
+        : (product.salePrice as number | null);
+    if (
+      effectiveSalePrice != null &&
+      Number(effectiveSalePrice) > Number(effectiveBasePrice)
+    ) {
+      throw new BadRequestException(
+        'salePrice must be less than or equal to basePrice',
+      );
+    }
 
     // Reference-aware variant sync.
     // Variants referenced by CartItem/OrderItem have RESTRICT FKs in the
@@ -381,7 +433,16 @@ export class ProductsService {
       // same generous budget as the checkout transaction.
       maxWait: 15000,
       timeout: 30000,
-    });
+    }).catch((error) => {
+      // Unique violations (duplicate variant SKUs) must surface as 409.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Product slug or variant SKU already exists');
+      }
+      throw error;
+    }) as Awaited<ReturnType<typeof this.prisma.product.update>>;
 
     this.searchSyncQueue
       .add('upsert-product', { productId: updatedProduct.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
