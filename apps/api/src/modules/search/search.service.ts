@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleInit, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Meilisearch } from 'meilisearch';
 import { SearchQueryDto } from './dto/search-query.dto';
 import { PrismaService } from '../../database/prisma.service';
@@ -175,8 +180,10 @@ export class SearchService implements OnModuleInit {
         brands,
       };
     } catch (error) {
-      this.logger.error('Meilisearch autocomplete failed', error);
-      return { products: [], categories: [], brands: [] };
+      this.logger.error('Autocomplete failed', error);
+      throw new InternalServerErrorException(
+        'Autocomplete service temporarily unavailable',
+      );
     }
   }
 }

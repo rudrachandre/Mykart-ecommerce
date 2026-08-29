@@ -161,4 +161,32 @@ describe('SearchController (e2e)', () => {
     expect(responseString).not.toContain('masterKey');
     expect(responseString).not.toContain('MEILISEARCH_API_KEY');
   });
+
+  it('/search/autocomplete (GET) - missing q', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search/autocomplete')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toEqual({
+          products: [],
+          categories: [],
+          brands: [],
+        });
+      });
+  });
+
+  it('/search/autocomplete (GET) - q > 100 characters', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search/autocomplete?q=' + 'a'.repeat(101))
+      .expect(400);
+  });
+
+  it('Verifies autocomplete endpoint does not expose Meilisearch credentials', async () => {
+    const res = await request(app.getHttpServer()).get(
+      '/api/v1/search/autocomplete?q=test',
+    );
+    const responseString = JSON.stringify(res.body);
+    expect(responseString).not.toContain('masterKey');
+    expect(responseString).not.toContain('MEILISEARCH_API_KEY');
+  });
 });

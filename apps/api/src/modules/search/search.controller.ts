@@ -1,6 +1,8 @@
 import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { SearchService } from './search.service';
 import { SearchQueryDto } from './dto/search-query.dto';
+import { AutocompleteQueryDto } from './dto/autocomplete-query.dto';
 
 @Controller('search')
 export class SearchController {
@@ -14,7 +16,10 @@ export class SearchController {
   }
 
   @Get('autocomplete')
-  async autocomplete(@Query('q') q: string) {
-    return this.searchService.autocompleteProducts(q);
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async autocomplete(
+    @Query(new ValidationPipe({ transform: true })) dto: AutocompleteQueryDto,
+  ) {
+    return this.searchService.autocompleteProducts(dto.q || '');
   }
 }
