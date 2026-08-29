@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, startTransition, useMemo } from 'react';
+import { useState, useEffect, useRef, startTransition, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, X, Loader2, History, Tag, Package } from 'lucide-react';
 import { Input } from '@/components/ui/input';
