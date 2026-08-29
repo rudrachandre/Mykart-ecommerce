@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, InternalServerErrorException } from '@nestjs/common';
 import { Meilisearch } from 'meilisearch';
 import { SearchQueryDto } from './dto/search-query.dto';
 import { PrismaService } from '../../database/prisma.service';
@@ -7,6 +7,7 @@ import { PrismaService } from '../../database/prisma.service';
 export class SearchService implements OnModuleInit {
   private readonly logger = new Logger(SearchService.name);
   private client: Meilisearch;
+  private indexReady = false;
 
   constructor(private prisma: PrismaService) {
     const apiKey = process.env.MEILISEARCH_API_KEY;
@@ -22,6 +23,7 @@ export class SearchService implements OnModuleInit {
   async onModuleInit() {
     try {
       await this.setupIndex();
+      this.indexReady = true;
     } catch (error) {
       this.logger.error('Failed to setup Meilisearch index', error);
     }
@@ -30,21 +32,72 @@ export class SearchService implements OnModuleInit {
   private async setupIndex() {
     const index = this.client.index('products');
 
+    await index.updateSearchableAttributes([
+      'name',
+      'brand.name',
+      'category.name',
+      'description',
+      'slug',
+    ]);
+
     await index.updateFilterableAttributes([
       'category.slug',
       'brand.slug',
       'basePrice',
       'status',
+      'salePrice',
+      'onSale',
     ]);
 
-    await index.updateSortableAttributes(['basePrice', 'createdAt', 'rating']);
+    await index.updateSortableAttributes([
+      'basePrice',
+      'salePrice',
+      'createdAt',
+      'rating',
+      'reviewCount',
+    ]);
 
-    await index.updateSearchableAttributes(['name', 'description', 'slug']);
+    await index.updateDisplayedAttributes([
+      'id',
+      'name',
+      'slug',
+      'description',
+      'basePrice',
+      'salePrice',
+      'status',
+      'category',
+      'brand',
+      'images',
+      'createdAt',
+      'rating',
+      'reviewCount',
+    ]);
+
+    await index.updateRankingRules([
+      'words',
+      'typo',
+      'proximity',
+      'attribute',
+      'sort',
+      'exactness',
+    ]);
+
+    await index.updateTypoTolerance({
+      enabled: true,
+      minWordSizeForTypos: {
+        oneTypo: 5,
+        twoTypos: 8,
+      },
+    });
 
     this.logger.log('Meilisearch index "products" configured successfully.');
   }
 
   async searchProducts(query: SearchQueryDto) {
+    if (!this.indexReady) {
+      throw new InternalServerErrorException('Search index is not ready');
+    }
+
     const {
       q,
       category,
@@ -55,7 +108,9 @@ export class SearchService implements OnModuleInit {
       page,
       limit,
       sort,
-    } = query as any; // Cast to any to accept rating for now
+      rating,
+      onSale,
+    } = query as any;
     const filter: string[] = [];
 
     if (category) filter.push(`category.slug = "${category}"`);
@@ -63,54 +118,65 @@ export class SearchService implements OnModuleInit {
     if (status) filter.push(`status = "${status}"`);
     if (minPrice !== undefined) filter.push(`basePrice >= ${minPrice}`);
     if (maxPrice !== undefined) filter.push(`basePrice <= ${maxPrice}`);
-    if ((query as any).rating !== undefined) filter.push(`rating >= ${(query as any).rating}`);
+    if (rating !== undefined) filter.push(`rating >= ${rating}`);
+    if (onSale) filter.push('salePrice < basePrice');
 
     const sortOption = sort ? [sort] : undefined;
 
     const offset = (page - 1) * limit;
 
-    const result = await this.client.index('products').search(q || '', {
-      filter,
-      sort: sortOption,
-      offset,
-      limit,
-    });
-
-    return {
-      items: result.hits,
-      meta: {
-        total: result.estimatedTotalHits,
-        page,
+    try {
+      const result = await this.client.index('products').search(q || '', {
+        filter,
+        sort: sortOption,
+        offset,
         limit,
-        totalPages: Math.ceil(result.estimatedTotalHits / limit),
-      },
-    };
+      });
+
+      return {
+        items: result.hits,
+        meta: {
+          total: result.estimatedTotalHits,
+          page,
+          limit,
+          totalPages: Math.ceil(result.estimatedTotalHits / limit),
+        },
+      };
+    } catch (error) {
+      this.logger.error('Meilisearch search failed', error);
+      throw new InternalServerErrorException('Search service temporarily unavailable');
+    }
   }
 
   async autocompleteProducts(q: string) {
     if (!q) return { products: [], categories: [], brands: [] };
 
-    const result = await this.client.index('products').search(q, {
-      limit: 5,
-      attributesToRetrieve: ['id', 'name', 'slug', 'basePrice', 'images'],
-    });
+    try {
+      const result = await this.client.index('products').search(q, {
+        limit: 5,
+        attributesToRetrieve: ['id', 'name', 'slug', 'basePrice', 'images'],
+      });
 
-    const categories = await this.prisma.category.findMany({
-      where: { name: { contains: q, mode: 'insensitive' } },
-      take: 3,
-      select: { id: true, name: true, slug: true },
-    });
+      const categories = await this.prisma.category.findMany({
+        where: { name: { contains: q, mode: 'insensitive' } },
+        take: 3,
+        select: { id: true, name: true, slug: true },
+      });
 
-    const brands = await this.prisma.brand.findMany({
-      where: { name: { contains: q, mode: 'insensitive' } },
-      take: 3,
-      select: { id: true, name: true, slug: true },
-    });
+      const brands = await this.prisma.brand.findMany({
+        where: { name: { contains: q, mode: 'insensitive' } },
+        take: 3,
+        select: { id: true, name: true, slug: true },
+      });
 
-    return {
-      products: result.hits,
-      categories,
-      brands,
-    };
+      return {
+        products: result.hits,
+        categories,
+        brands,
+      };
+    } catch (error) {
+      this.logger.error('Meilisearch autocomplete failed', error);
+      return { products: [], categories: [], brands: [] };
+    }
   }
 }

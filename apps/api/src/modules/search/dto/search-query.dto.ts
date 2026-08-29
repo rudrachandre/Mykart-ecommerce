@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNumber, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsNumber, Min, Max, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -6,6 +6,7 @@ export class SearchQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   q?: string;
 
   @ApiPropertyOptional()
@@ -36,6 +37,17 @@ export class SearchQueryDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  rating?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  onSale?: boolean;
 
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()

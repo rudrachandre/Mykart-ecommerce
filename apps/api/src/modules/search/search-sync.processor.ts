@@ -26,15 +26,23 @@ export class SearchSyncProcessor extends WorkerHost {
       `Processing job ${job.name} for product ID: ${job.data.productId}`,
     );
 
-    switch (job.name) {
-      case 'upsert-product':
-        await this.handleUpsertProduct(job.data.productId);
-        break;
-      case 'delete-product':
-        await this.handleDeleteProduct(job.data.productId);
-        break;
-      default:
-        this.logger.warn(`Unknown job name: ${job.name}`);
+    try {
+      switch (job.name) {
+        case 'upsert-product':
+          await this.handleUpsertProduct(job.data.productId);
+          break;
+        case 'delete-product':
+          await this.handleDeleteProduct(job.data.productId);
+          break;
+        default:
+          this.logger.warn(`Unknown job name: ${job.name}`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to process job ${job.name} for product ${job.data.productId}`,
+        error,
+      );
+      throw error;
     }
   }
 
@@ -44,7 +52,10 @@ export class SearchSyncProcessor extends WorkerHost {
       include: {
         category: true,
         brand: true,
-        images: true,
+        images: {
+          orderBy: { sortOrder: 'asc' },
+        },
+        variants: true,
       },
     });
 
@@ -61,6 +72,7 @@ export class SearchSyncProcessor extends WorkerHost {
       slug: product.slug,
       description: product.description,
       basePrice: Number(product.basePrice),
+      salePrice: product.salePrice ? Number(product.salePrice) : null,
       status: product.status,
       category: product.category
         ? { name: product.category.name, slug: product.category.slug }
@@ -71,6 +83,15 @@ export class SearchSyncProcessor extends WorkerHost {
       images: product.images.map((img) => img.url),
       createdAt: product.createdAt.getTime(),
       rating: product.averageRating,
+      reviewCount: product.reviewCount,
+      variants: product.variants.map((v) => ({
+        id: v.id,
+        sku: v.sku,
+        color: v.color,
+        size: v.size,
+        price: v.price ? Number(v.price) : null,
+      })),
+      onSale: product.salePrice ? Number(product.salePrice) < Number(product.basePrice) : false,
     };
 
     await this.client.index('products').addDocuments([document]);

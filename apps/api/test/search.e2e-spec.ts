@@ -12,6 +12,10 @@ jest.mock('meilisearch', () => {
           updateFilterableAttributes: jest.fn(),
           updateSortableAttributes: jest.fn(),
           updateSearchableAttributes: jest.fn(),
+          updateDisplayedAttributes: jest.fn(),
+          updateRankingRules: jest.fn(),
+          updateTypoTolerance: jest.fn(),
+          updatePagination: jest.fn(),
           search: jest.fn().mockResolvedValue({
             hits: [
               {
@@ -119,6 +123,36 @@ describe('SearchController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/search?page=-1')
       .expect(400);
+  });
+
+  it('/search (GET) - Max query length', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search?q=' + 'a'.repeat(101))
+      .expect(400);
+  });
+
+  it('/search (GET) - Rating filter', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search?rating=4')
+      .expect(200);
+  });
+
+  it('/search (GET) - On Sale filter', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search?onSale=true')
+      .expect(200);
+  });
+
+  it('/search (GET) - Sorting by reviewCount', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search?sort=reviewCount:desc')
+      .expect(200);
+  });
+
+  it('/search (GET) - Sorting by salePrice', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search?sort=salePrice:asc')
+      .expect(200);
   });
 
   it('Verifies search endpoint does not expose Meilisearch credentials', async () => {

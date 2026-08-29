@@ -16,6 +16,7 @@ export function SearchFilters({ categories = [], brands = [] }: { categories?: a
   const [brand, setBrand] = useState(searchParams.get('brand') || '');
   const [rating, setRating] = useState(searchParams.get('rating') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
+  const [onSale, setOnSale] = useState(searchParams.get('onSale') || '');
 
   const handleApply = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +42,9 @@ export function SearchFilters({ categories = [], brands = [] }: { categories?: a
 
     if (status) params.set('status', status);
     else params.delete('status');
+
+    if (onSale) params.set('onSale', onSale);
+    else params.delete('onSale');
     
     params.set('page', '1');
     
@@ -55,6 +59,7 @@ export function SearchFilters({ categories = [], brands = [] }: { categories?: a
     setBrand('');
     setRating('');
     setStatus('');
+    setOnSale('');
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete('minPrice');
@@ -64,6 +69,7 @@ export function SearchFilters({ categories = [], brands = [] }: { categories?: a
     params.delete('brand');
     params.delete('rating');
     params.delete('status');
+    params.delete('onSale');
     params.set('page', '1');
     router.push(`/search?${params.toString()}`);
   };
@@ -152,6 +158,18 @@ export function SearchFilters({ categories = [], brands = [] }: { categories?: a
           </div>
 
           <div className="space-y-3">
+            <h4 className="text-sm font-medium">On Sale</h4>
+            <select
+              value={onSale}
+              onChange={(e) => setOnSale(e.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Any</option>
+              <option value="true">On Sale</option>
+            </select>
+          </div>
+
+          <div className="space-y-3">
             <h4 className="text-sm font-medium">Sort By</h4>
             <select
               value={sort}
@@ -162,6 +180,9 @@ export function SearchFilters({ categories = [], brands = [] }: { categories?: a
               <option value="basePrice:asc">Price: Low to High</option>
               <option value="basePrice:desc">Price: High to Low</option>
               <option value="rating:desc">Top Rated</option>
+              <option value="reviewCount:desc">Most Popular</option>
+              <option value="salePrice:asc">Sale Price: Low to High</option>
+              <option value="salePrice:desc">Sale Price: High to Low</option>
               <option value="createdAt:desc">Newest Arrivals</option>
             </select>
           </div>

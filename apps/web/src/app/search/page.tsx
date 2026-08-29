@@ -27,13 +27,22 @@ export default async function SearchPage({
     ...(resolvedSearchParams.sort && { sort: String(resolvedSearchParams.sort) }),
     ...(resolvedSearchParams.rating && { rating: String(resolvedSearchParams.rating) }),
     ...(resolvedSearchParams.status && { status: String(resolvedSearchParams.status) }),
+    ...(resolvedSearchParams.onSale && { onSale: String(resolvedSearchParams.onSale) }),
   };
 
   const [productsData, categoriesData, brandsData] = await Promise.all([
-    searchProducts(query).catch(() => ({ items: [], meta: null })),
+    searchProducts(query).catch((err) => ({ 
+      items: [], 
+      meta: null, 
+      error: err?.message || 'Search failed' 
+    })),
     getCategories().catch(() => []),
     getBrands().catch(() => []),
   ]);
+
+  const hasError = productsData.error;
+  const products = productsData.items || [];
+  const meta = productsData.meta;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -42,11 +51,16 @@ export default async function SearchPage({
         {query.q ? (
           <p className="mt-2 text-muted-foreground">
             Showing results for <span className="font-medium text-foreground">&quot;{query.q}&quot;</span>
-            {productsData.meta && ` (${productsData.meta.total} found)`}
+            {meta && ` (${meta.total} found)`}
           </p>
         ) : (
           <p className="mt-2 text-muted-foreground">
-            {productsData.meta ? `${productsData.meta.total} products found` : 'Enter a search term'}
+            {meta ? `${meta.total} products found` : 'Enter a search term'}
+          </p>
+        )}
+        {hasError && (
+          <p className="mt-2 text-sm text-destructive">
+            Search is temporarily unavailable. Please try again later.
           </p>
         )}
       </div>
@@ -58,13 +72,18 @@ export default async function SearchPage({
       <Suspense fallback={<div className="w-full lg:w-64 shrink-0 animate-pulse rounded-lg bg-muted h-[420px]" />}>
         <SearchFilters categories={categoriesData} brands={brandsData} />
       </Suspense>
-        
+         
         <div className="flex-1 flex flex-col gap-6">
           <Suspense fallback={<div className="animate-pulse bg-muted h-[400px] rounded-lg w-full" />}>
-            {productsData.items && productsData.items.length > 0 ? (
+            {hasError ? (
+              <div className="flex flex-col items-center justify-center p-12 border rounded-lg bg-card text-center">
+                <p className="text-lg font-semibold mb-2 text-destructive">Search Error</p>
+                <p className="text-muted-foreground">We couldn&apos;t load search results. Please try again later.</p>
+              </div>
+            ) : products.length > 0 ? (
               <ProductGrid 
-                products={productsData.items} 
-                meta={productsData.meta} 
+                products={products} 
+                meta={meta} 
                 searchParams={Object.fromEntries(Object.entries(resolvedSearchParams).map(([k, v]) => [k, String(v)]))} 
               />
             ) : (

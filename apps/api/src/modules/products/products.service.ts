@@ -120,7 +120,7 @@ export class ProductsService {
     });
 
     this.searchSyncQueue
-      .add('upsert-product', { productId: product.id })
+      .add('upsert-product', { productId: product.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
       .catch((err) => {
         console.error('Failed to enqueue upsert-product job', err);
       });
@@ -384,7 +384,7 @@ export class ProductsService {
     });
 
     this.searchSyncQueue
-      .add('upsert-product', { productId: updatedProduct.id })
+      .add('upsert-product', { productId: updatedProduct.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
       .catch((err) => {
         console.error('Failed to enqueue upsert-product job', err);
       });
@@ -408,7 +408,7 @@ export class ProductsService {
     });
 
     this.searchSyncQueue
-      .add('delete-product', { productId: id })
+      .add('delete-product', { productId: id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
       .catch((err) => {
         console.error('Failed to enqueue delete-product job', err);
       });
@@ -450,7 +450,7 @@ export class ProductsService {
     });
 
     this.searchSyncQueue
-      .add('upsert-product', { productId: product.id })
+      .add('upsert-product', { productId: product.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
       .catch((err) => {
         console.error('Failed to enqueue upsert-product job', err);
       });
