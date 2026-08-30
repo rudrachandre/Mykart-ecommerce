@@ -19,6 +19,46 @@ export function OrderStatusStepper({ currentStatus }: { currentStatus: string })
     );
   }
 
+  if (currentStatus === 'RETURN_REQUESTED') {
+    return (
+      <div className="p-4 mb-8 bg-yellow-50 border border-yellow-200 text-yellow-900 font-medium rounded-lg text-center uppercase tracking-widest text-sm">
+        Return Requested
+      </div>
+    );
+  }
+
+  if (currentStatus === 'RETURNED') {
+    return (
+      <div className="p-4 mb-8 bg-blue-50 border border-blue-200 text-blue-900 font-medium rounded-lg text-center uppercase tracking-widest text-sm">
+        Returned
+      </div>
+    );
+  }
+
+  if (currentStatus === 'REPLACEMENT_REQUESTED') {
+    return (
+      <div className="p-4 mb-8 bg-purple-50 border border-purple-200 text-purple-900 font-medium rounded-lg text-center uppercase tracking-widest text-sm">
+        Replacement Requested
+      </div>
+    );
+  }
+
+  if (currentStatus === 'REPLACED') {
+    return (
+      <div className="p-4 mb-8 bg-green-50 border border-green-200 text-green-900 font-medium rounded-lg text-center uppercase tracking-widest text-sm">
+        Replaced
+      </div>
+    );
+  }
+
+  if (currentStatus === 'REFUND_PENDING' || currentStatus === 'REFUNDED') {
+    return (
+      <div className="p-4 mb-8 bg-orange-50 border border-orange-200 text-orange-900 font-medium rounded-lg text-center uppercase tracking-widest text-sm">
+        {currentStatus === 'REFUNDED' ? 'Refunded' : 'Refund Pending'}
+      </div>
+    );
+  }
+
   const currentIndex = STEPS.findIndex(s => s.id === currentStatus);
   const activeIndex = currentIndex === -1 ? 0 : currentIndex;
 

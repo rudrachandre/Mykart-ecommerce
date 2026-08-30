@@ -55,3 +55,60 @@ export async function getOrderById(token: string, id: string) {
   if (!res.ok) throw new Error('Failed to fetch order');
   return res.json();
 }
+
+export async function cancelOrder(token: string, id: string, reason?: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/orders/${id}/cancel`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || 'Failed to cancel order');
+  }
+  return res.json();
+}
+
+export async function requestReturn(token: string, id: string, data: any) {
+  const res = await fetch(`${BASE_URL}/api/v1/orders/${id}/return`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || 'Failed to request return');
+  }
+  return res.json();
+}
+
+export async function requestReplacement(token: string, id: string, data: any) {
+  const res = await fetch(`${BASE_URL}/api/v1/orders/${id}/replacement`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || 'Failed to request replacement');
+  }
+  return res.json();
+}
+
+export async function getInvoice(token: string, id: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/orders/${id}/invoice`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to fetch invoice');
+  return res.json();
+}

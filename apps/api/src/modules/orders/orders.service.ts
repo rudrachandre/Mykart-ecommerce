@@ -8,6 +8,9 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { CheckoutDto, PaymentMethodDto } from './dto/checkout.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
+import { ReturnRequestDto } from './dto/return-request.dto';
+import { ReplacementRequestDto } from './dto/replacement-request.dto';
+import { OrderStatus } from '@prisma/client';
 import * as crypto from 'crypto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AnalyticsService } from '../analytics/analytics.service';
@@ -29,7 +32,7 @@ const RESERVATION_TTL_MS = parseInt(
 
 @Injectable()
 export class OrdersService {
-  private razorpay: any | null;
+  private razorpay: any;
 
   constructor(
     private prisma: PrismaService,
@@ -83,6 +86,225 @@ export class OrdersService {
 
     if (!order) throw new NotFoundException('Order not found');
     return order;
+  }
+
+  async getInvoice(orderId: string, userId?: string) {
+    const where: any = { id: orderId };
+    if (userId) {
+      where.userId = userId;
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where,
+      include: {
+        items: {
+          include: {
+            product: { select: { id: true, name: true, slug: true } },
+            variant: { select: { id: true, color: true, size: true } },
+            seller: { select: { id: true, storeName: true } },
+          },
+        },
+        payments: true,
+      },
+    });
+
+    if (!order) throw new NotFoundException('Order not found');
+    return order;
+  }
+
+  async cancelOrder(userId: string, orderId: string, reason?: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, userId },
+      include: { payments: true, items: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (
+      order.status !== OrderStatus.PENDING &&
+      order.status !== OrderStatus.PROCESSING
+    ) {
+      throw new BadRequestException(
+        `Order cannot be cancelled in its current status: ${order.status}`,
+      );
+    }
+
+    const pendingPayment = order.payments.find((p) => p.status === 'PENDING');
+
+    if (pendingPayment) {
+      await this.releaseOrderReservation(orderId, pendingPayment.id, 'FAILED');
+    }
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: OrderStatus.CANCELLED },
+    });
+
+    const updated = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: { id: true, name: true, slug: true, images: { take: 1 } },
+            },
+            variant: { select: { id: true, color: true, size: true } },
+          },
+        },
+        payments: true,
+      },
+    });
+
+    if (updated) {
+      await this.notificationsService.createNotification(
+        userId,
+        'ORDER_UPDATE',
+        'Order Cancelled',
+        `Your order #${orderId} has been cancelled.${reason ? ` Reason: ${reason}` : ''}`,
+      );
+      await this.analyticsService.logAction(
+        userId,
+        'ORDER_CANCELLED',
+        orderId,
+        {
+          reason,
+          previousStatus: order.status,
+        },
+      );
+    }
+
+    return updated;
+  }
+
+  async requestReturn(userId: string, orderId: string, dto: ReturnRequestDto) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, userId },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.status !== OrderStatus.DELIVERED) {
+      throw new BadRequestException(
+        `Returns can only be requested for delivered orders. Current status: ${order.status}`,
+      );
+    }
+
+    const validOrderItemIds = dto.items.map((item) => item.orderItemId);
+    const orderItems = await this.prisma.orderItem.findMany({
+      where: { id: { in: validOrderItemIds }, orderId },
+      include: { product: { select: { name: true } } },
+    });
+
+    if (orderItems.length !== validOrderItemIds.length) {
+      throw new BadRequestException(
+        'One or more items do not belong to this order',
+      );
+    }
+
+    const returnRecord = await this.prisma.$transaction(async (prisma) => {
+      const returnEntry = await prisma.return.create({
+        data: {
+          orderId,
+          userId,
+          reason: dto.reason,
+          items: dto.items as any,
+          status: 'REQUESTED',
+        },
+      });
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: OrderStatus.RETURN_REQUESTED },
+      });
+
+      return returnEntry;
+    });
+
+    await this.notificationsService.createNotification(
+      userId,
+      'ORDER_UPDATE',
+      'Return Requested',
+      `Your return request for order #${orderId} has been submitted.`,
+    );
+    await this.analyticsService.logAction(userId, 'RETURN_REQUESTED', orderId, {
+      itemCount: dto.items.length,
+      reason: dto.reason,
+    });
+
+    return returnRecord;
+  }
+
+  async requestReplacement(
+    userId: string,
+    orderId: string,
+    dto: ReplacementRequestDto,
+  ) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, userId },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.status !== OrderStatus.DELIVERED) {
+      throw new BadRequestException(
+        `Replacements can only be requested for delivered orders. Current status: ${order.status}`,
+      );
+    }
+
+    const validOrderItemIds = dto.items.map((item) => item.orderItemId);
+    const orderItems = await this.prisma.orderItem.findMany({
+      where: { id: { in: validOrderItemIds }, orderId },
+      include: { product: { select: { name: true } } },
+    });
+
+    if (orderItems.length !== validOrderItemIds.length) {
+      throw new BadRequestException(
+        'One or more items do not belong to this order',
+      );
+    }
+
+    const replacementRecord = await this.prisma.$transaction(async (prisma) => {
+      const replacementEntry = await prisma.replacement.create({
+        data: {
+          orderId,
+          userId,
+          reason: dto.reason,
+          items: dto.items as any,
+          status: 'REQUESTED',
+        },
+      });
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: OrderStatus.REPLACEMENT_REQUESTED },
+      });
+
+      return replacementEntry;
+    });
+
+    await this.notificationsService.createNotification(
+      userId,
+      'ORDER_UPDATE',
+      'Replacement Requested',
+      `Your replacement request for order #${orderId} has been submitted.`,
+    );
+    await this.analyticsService.logAction(
+      userId,
+      'REPLACEMENT_REQUESTED',
+      orderId,
+      {
+        itemCount: dto.items.length,
+        reason: dto.reason,
+      },
+    );
+
+    return replacementRecord;
   }
   async checkout(userId: string, dto: CheckoutDto) {
     const isCod = dto.paymentMethod === PaymentMethodDto.COD;
@@ -232,7 +454,9 @@ export class OrdersService {
         const detail: string =
           err?.error?.description ||
           err?.description ||
-          (typeof err?.message === 'string' ? err.message.split('\n')[0] : '') ||
+          (typeof err?.message === 'string'
+            ? err.message.split('\n')[0]
+            : '') ||
           'unknown gateway error';
         throw new InternalServerErrorException(
           `Online payment could not be initialized: ${detail}`.slice(0, 300),
@@ -532,7 +756,7 @@ export class OrdersService {
         return;
       }
 
-      const paymentStatus: 'FAILED' = 'FAILED';
+      const paymentStatus = 'FAILED' as const;
       if (payment.status !== paymentStatus) {
         await prisma.payment.update({
           where: { id: paymentId },

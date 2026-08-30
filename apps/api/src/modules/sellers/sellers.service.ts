@@ -35,6 +35,12 @@ export class SellersService {
     [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
     [OrderStatus.DELIVERED]: [],
     [OrderStatus.CANCELLED]: [],
+    [OrderStatus.RETURN_REQUESTED]: [],
+    [OrderStatus.RETURNED]: [],
+    [OrderStatus.REFUND_PENDING]: [],
+    [OrderStatus.REFUNDED]: [],
+    [OrderStatus.REPLACEMENT_REQUESTED]: [],
+    [OrderStatus.REPLACED]: [],
   };
 
   constructor(
@@ -225,7 +231,6 @@ export class SellersService {
     if (!seller) throw new NotFoundException('Seller profile not found');
     this.assertSellerActive(seller);
 
-    // A seller may only see/modify orders that contain at least one of their items.
     const orderItems = await this.prisma.orderItem.findMany({
       where: { orderId, sellerId: seller.id },
     });
@@ -241,7 +246,6 @@ export class SellersService {
 
     const nextStatus = dto.status;
 
-    // Idempotent no-op when the requested status is already the current one.
     if (order.status === nextStatus) {
       return order;
     }
@@ -255,8 +259,6 @@ export class SellersService {
     }
 
     if (nextStatus === OrderStatus.CANCELLED) {
-      // Reuse the Module 13 reservation-release logic (payment FAILED + stock
-      // restored atomically). Never reimplement inventory/payment handling here.
       return this.ordersService.cancelPendingOrder(orderId);
     }
 
@@ -264,5 +266,146 @@ export class SellersService {
       where: { id: orderId },
       data: { status: nextStatus },
     });
+  }
+
+  async getOrderDetail(userId: string, orderId: string) {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new NotFoundException('Seller profile not found');
+    this.assertSellerActive(seller);
+
+    const orderItems = await this.prisma.orderItem.findMany({
+      where: { orderId, sellerId: seller.id },
+    });
+
+    if (orderItems.length === 0) {
+      throw new NotFoundException('Order not found or unauthorized');
+    }
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: { id: true, name: true, slug: true, images: { take: 1 } },
+            },
+            variant: { select: { id: true, color: true, size: true } },
+          },
+        },
+        payments: true,
+        user: { select: { name: true, email: true } },
+      },
+    });
+
+    if (!order) throw new NotFoundException('Order not found');
+
+    return order;
+  }
+
+  async approveReturn(userId: string, orderId: string, returnId: string) {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new NotFoundException('Seller profile not found');
+    this.assertSellerActive(seller);
+
+    const orderItems = await this.prisma.orderItem.findMany({
+      where: { orderId, sellerId: seller.id },
+    });
+
+    if (orderItems.length === 0) {
+      throw new NotFoundException('Order not found or unauthorized');
+    }
+
+    const returnRecord = await this.prisma.return.findFirst({
+      where: { id: returnId, orderId },
+      include: { order: { include: { items: true } } },
+    });
+
+    if (!returnRecord) {
+      throw new NotFoundException('Return request not found');
+    }
+
+    const updated = await this.prisma.$transaction(async (prisma) => {
+      const updatedReturn = await prisma.return.update({
+        where: { id: returnId },
+        data: { status: 'APPROVED' },
+      });
+
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'RETURNED' },
+      });
+
+      for (const item of returnRecord.order.items) {
+        await prisma.inventory.updateMany({
+          where: {
+            variantId: item.variantId,
+            reserved: { gte: item.quantity },
+          },
+          data: {
+            reserved: { decrement: item.quantity },
+            quantity: { increment: item.quantity },
+          },
+        });
+      }
+
+      const payment = await prisma.payment.findFirst({
+        where: { orderId, status: 'COMPLETED' },
+      });
+
+      if (payment) {
+        await prisma.refund.create({
+          data: {
+            orderId,
+            paymentId: payment.id,
+            amount: payment.amount,
+            reason: `Approved return: ${returnRecord.reason}`,
+            status: 'PENDING',
+          },
+        });
+
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { status: 'REFUNDED' },
+        });
+      }
+
+      return updatedReturn;
+    });
+
+    return updated;
+  }
+
+  async rejectReturn(userId: string, orderId: string, returnId: string) {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new NotFoundException('Seller profile not found');
+    this.assertSellerActive(seller);
+
+    const orderItems = await this.prisma.orderItem.findMany({
+      where: { orderId, sellerId: seller.id },
+    });
+
+    if (orderItems.length === 0) {
+      throw new NotFoundException('Order not found or unauthorized');
+    }
+
+    const returnRecord = await this.prisma.return.findFirst({
+      where: { id: returnId, orderId },
+    });
+
+    if (!returnRecord) {
+      throw new NotFoundException('Return request not found');
+    }
+
+    const updated = await this.prisma.return.update({
+      where: { id: returnId },
+      data: { status: 'REJECTED' },
+    });
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'DELIVERED' },
+    });
+
+    return updated;
   }
 }

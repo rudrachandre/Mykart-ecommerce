@@ -41,6 +41,12 @@ export function OrderStatusClient({
     SHIPPED: ["DELIVERED"],
     DELIVERED: [],
     CANCELLED: [],
+    RETURN_REQUESTED: [],
+    RETURNED: [],
+    REFUND_PENDING: [],
+    REFUNDED: [],
+    REPLACEMENT_REQUESTED: [],
+    REPLACED: [],
   };
   const nextStatuses = NEXT_STATUSES[initialStatus] ?? [];
 

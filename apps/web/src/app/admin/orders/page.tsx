@@ -110,9 +110,9 @@ export default function AdminOrdersPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Button variant="outline" size="sm" onClick={() => toast.info('Admin order view — coming soon')}>
-                          View
-                        </Button>
+                        <Link href={`/admin/orders/${order.id}`}>
+                          <Button variant="outline" size="sm">View</Button>
+                        </Link>
                       </td>
                     </tr>
                   ))

@@ -8,6 +8,7 @@ import {
   UseGuards,
   ParseIntPipe,
   DefaultValuePipe,
+  Post,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -21,6 +22,7 @@ import { Role } from '@prisma/client';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpdateSellerStatusDto } from './dto/update-seller-status.dto';
 import { UpdateProductStatusDto } from './dto/update-product-status.dto';
+import { RefundProcessDto } from '../orders/dto/refund-process.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
@@ -66,6 +68,18 @@ export class AdminController {
     return this.adminService.getOrders(skip, take, search, status);
   }
 
+  @Get('orders/:id')
+  @RequirePermissions(PERMISSIONS.ORDER_READ)
+  getOrderDetail(@Param('id') id: string) {
+    return this.adminService.getOrderDetail(id);
+  }
+
+  @Post('orders/:id/refund')
+  @RequirePermissions(PERMISSIONS.ORDER_REFUND)
+  processRefund(@Param('id') id: string, @Body() dto: RefundProcessDto) {
+    return this.adminService.processRefund(id, dto);
+  }
+
   @Get('products')
   @RequirePermissions(PERMISSIONS.PRODUCT_READ)
   getAdminProducts(
@@ -87,10 +101,7 @@ export class AdminController {
   }
 
   @Patch('sellers/:id/status')
-  @RequirePermissions(
-    PERMISSIONS.SELLER_APPROVE,
-    PERMISSIONS.SELLER_SUSPEND,
-  )
+  @RequirePermissions(PERMISSIONS.SELLER_APPROVE, PERMISSIONS.SELLER_SUSPEND)
   setSellerStatus(
     @CurrentUser() admin: { userId: string },
     @Param('id') id: string,

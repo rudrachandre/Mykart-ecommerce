@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { Prisma, Role, ProductStatus } from '@prisma/client';
+import { RefundProcessDto } from '../orders/dto/refund-process.dto';
 
 @Injectable()
 export class AdminService {
@@ -110,6 +115,89 @@ export class AdminService {
     ]);
 
     return { orders, total };
+  }
+
+  async getOrderDetail(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            product: { select: { id: true, name: true, slug: true } },
+            variant: { select: { id: true, color: true, size: true } },
+            seller: { select: { id: true, storeName: true } },
+          },
+        },
+        payments: true,
+        user: { select: { id: true, name: true, email: true } },
+        refunds: true,
+        returns: true,
+        replacements: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return order;
+  }
+
+  async processRefund(orderId: string, dto: RefundProcessDto) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payments: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    const payment = order.payments.find((p) => p.status === 'COMPLETED');
+
+    if (!payment) {
+      throw new BadRequestException(
+        'No completed payment found for this order',
+      );
+    }
+
+    const existingRefunds = await this.prisma.refund.aggregate({
+      where: { paymentId: payment.id },
+      _sum: { amount: true },
+    });
+
+    const refundedAmount = Number(existingRefunds._sum.amount || 0);
+    const availableAmount = Number(payment.amount) - refundedAmount;
+
+    if (dto.amount > availableAmount + 0.001) {
+      throw new BadRequestException(
+        `Refund amount exceeds available balance. Available: ${availableAmount.toFixed(2)}`,
+      );
+    }
+
+    const refund = await this.prisma.refund.create({
+      data: {
+        orderId,
+        paymentId: payment.id,
+        amount: dto.amount,
+        reason: dto.reason,
+        status: 'PENDING',
+      },
+    });
+
+    if (dto.amount >= availableAmount - 0.001) {
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'REFUNDED' },
+      });
+
+      await this.prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'REFUNDED' },
+      });
+    }
+
+    return refund;
   }
 
   async getSellerById(id: string) {

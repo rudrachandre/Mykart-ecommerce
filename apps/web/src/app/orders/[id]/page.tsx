@@ -7,6 +7,7 @@ import { CheckCircle2, Clock, XCircle, Package } from 'lucide-react';
 import Image from 'next/image';
 
 import { OrderStatusStepper } from '@/components/orders/OrderStatusStepper';
+import { OrderActionsClient } from '@/components/orders/OrderActionsClient';
 
 export const metadata = {
   title: 'Order Details | MyKart',
@@ -76,6 +77,11 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
       </div>
 
       <OrderStatusStepper currentStatus={order.status} />
+      <OrderActionsClient
+        orderId={order.id}
+        status={order.status}
+        paymentStatus={order.payments?.[0]?.status}
+      />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-12">

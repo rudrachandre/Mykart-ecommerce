@@ -128,3 +128,36 @@ export async function updateOrderStatus(
   if (!res.ok) throw new Error("Failed to update order status");
   return res.json();
 }
+
+export async function getSellerOrderDetail(token: string, orderId: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/sellers/orders/${orderId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch seller order detail");
+  return res.json();
+}
+
+export async function approveReturn(token: string, orderId: string, returnId: string) {
+  const res = await fetch(
+    `${BASE_URL}/api/v1/sellers/orders/${orderId}/returns/${returnId}/approve`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  if (!res.ok) throw new Error("Failed to approve return");
+  return res.json();
+}
+
+export async function rejectReturn(token: string, orderId: string, returnId: string) {
+  const res = await fetch(
+    `${BASE_URL}/api/v1/sellers/orders/${orderId}/returns/${returnId}/reject`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  if (!res.ok) throw new Error("Failed to reject return");
+  return res.json();
+}

@@ -72,4 +72,33 @@ export class SellersController {
   ) {
     return this.sellersService.updateOrderStatus(user.userId, orderId, dto);
   }
+
+  @Get('orders/:orderId')
+  @Roles(Role.SELLER, Role.ADMIN)
+  getOrderDetail(
+    @CurrentUser() user: { userId: string },
+    @Param('orderId') orderId: string,
+  ) {
+    return this.sellersService.getOrderDetail(user.userId, orderId);
+  }
+
+  @Post('orders/:orderId/returns/:returnId/approve')
+  @Roles(Role.SELLER, Role.ADMIN)
+  approveReturn(
+    @CurrentUser() user: { userId: string },
+    @Param('orderId') orderId: string,
+    @Param('returnId') returnId: string,
+  ) {
+    return this.sellersService.approveReturn(user.userId, orderId, returnId);
+  }
+
+  @Post('orders/:orderId/returns/:returnId/reject')
+  @Roles(Role.SELLER, Role.ADMIN)
+  rejectReturn(
+    @CurrentUser() user: { userId: string },
+    @Param('orderId') orderId: string,
+    @Param('returnId') returnId: string,
+  ) {
+    return this.sellersService.rejectReturn(user.userId, orderId, returnId);
+  }
 }

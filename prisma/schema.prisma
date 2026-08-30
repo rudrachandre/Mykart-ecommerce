@@ -25,6 +25,12 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  RETURN_REQUESTED
+  RETURNED
+  REFUND_PENDING
+  REFUNDED
+  REPLACEMENT_REQUESTED
+  REPLACED
 }
 
 enum PaymentStatus {
@@ -54,6 +60,8 @@ model User {
   seller        Seller?
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
+  returns       Return[]
+  replacements  Replacement[]
 
   @@index([email])
 }
@@ -235,6 +243,9 @@ model Order {
 
   items    OrderItem[]
   payments Payment[]
+  returns  Return[]
+  replacements Replacement[]
+  refunds Refund[]
 
   @@index([userId])
   @@index([status])
@@ -266,8 +277,55 @@ model Payment {
   amount        Decimal       @db.Decimal(10, 2)
   currency      String        @default("USD")
   status        PaymentStatus @default(PENDING)
+  refunds       Refund[]
 
   @@index([orderId])
+}
+
+model Return {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  status      String   @default("REQUESTED")
+  reason      String
+  items       Json
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([userId])
+}
+
+model Replacement {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  status      String   @default("REQUESTED")
+  reason      String
+  items       Json
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([userId])
+}
+
+model Refund {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  amount      Decimal  @db.Decimal(10, 2)
+  reason      String
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  processedAt DateTime?
+
+  @@index([orderId])
+  @@index([paymentId])
 }
 
 model Review {
