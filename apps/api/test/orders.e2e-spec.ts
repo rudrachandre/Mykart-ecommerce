@@ -161,10 +161,12 @@ describe('OrdersController (e2e)', () => {
     expect(response.body.order).toHaveProperty('id');
 
     // Server-authoritative shipping rule: subtotal 100 (2 x 50) is below the
-    // 10,000 threshold, so the flat 50 fee applies -> total 150.
+    // 10,000 threshold, so the flat 50 fee applies.
+    // Tax is 18% of subtotal (100) = 18.
     expect(Number(response.body.order.subtotal)).toBe(100);
     expect(Number(response.body.order.shippingFee)).toBe(50);
-    expect(Number(response.body.order.total)).toBe(150);
+    expect(Number(response.body.order.tax)).toBe(18);
+    expect(Number(response.body.order.total)).toBe(168);
     expect(response.body.order.status).toBe('PENDING');
 
     const cartAfter = await request(app.getHttpServer())

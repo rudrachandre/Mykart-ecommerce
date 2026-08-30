@@ -13,6 +13,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { calculateShippingFee } from './shipping';
+import { calculateTax } from './tax';
 import {
   signHmacSha256,
   safeSignatureEqual,
@@ -168,7 +169,7 @@ export class OrdersService {
     // threshold, otherwise a flat fee. This is the same rule documented in the
     // storefront UI; client-sent totals are never trusted.
     const shippingFee = calculateShippingFee(subtotal);
-    const tax = 0;
+    const tax = calculateTax(subtotal, discount);
     const total = Math.max(0, subtotal - discount + shippingFee + tax);
 
     const orderId = crypto.randomUUID();

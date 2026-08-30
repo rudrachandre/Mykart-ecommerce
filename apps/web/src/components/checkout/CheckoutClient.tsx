@@ -160,7 +160,8 @@ export function CheckoutClient({
   // Display-only mirror of the server-authoritative shipping rule. The amount
   // actually charged is computed by the backend in OrdersService.checkout().
   const deliveryFee = calculateShippingFee(subtotal);
-  const finalTotal = total + deliveryFee;
+  const tax = Math.round((total) * 0.18 * 100) / 100;
+  const finalTotal = total + deliveryFee + tax;
 
   return (
     <>
@@ -405,6 +406,16 @@ export function CheckoutClient({
                         currency: "INR",
                         maximumFractionDigits: 0,
                       }).format(deliveryFee)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax (18%)</span>
+                <span className="text-foreground">
+                  {new Intl.NumberFormat("en-IN", {
+                    style: "currency",
+                    currency: "INR",
+                    maximumFractionDigits: 0,
+                  }).format(tax)}
                 </span>
               </div>
               <div className="flex justify-between items-end pt-6 border-t border-border/40 mt-6">

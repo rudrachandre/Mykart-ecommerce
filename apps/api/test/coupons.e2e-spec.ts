@@ -246,10 +246,11 @@ describe('Coupon usage limits (e2e)', () => {
     const res = await checkoutWithCoupon(customer1Token, 'SAVE20');
 
     expect(res.status).toBe(201);
-    // subtotal 100 - discount 20 + shipping 50 = 130
+    // subtotal 100 - discount 20 + shipping 50 + tax (18% of 80) = 144.4
     expect(Number(res.body.order.discount)).toBe(20);
     expect(Number(res.body.order.shippingFee)).toBe(50);
-    expect(Number(res.body.order.total)).toBe(130);
+    expect(Number(res.body.order.tax)).toBe(14.4);
+    expect(Number(res.body.order.total)).toBe(144.4);
 
     const coupon = await prisma.coupon.findUniqueOrThrow({
       where: { code: 'SAVE20' },
@@ -316,9 +317,9 @@ describe('Coupon usage limits (e2e)', () => {
     expect(first.status).toBe(201);
     expect(second.status).toBe(201);
 
-    // subtotal 100 - 10% + shipping 50 = 140
-    expect(Number(first.body.order.total)).toBe(140);
-    expect(Number(second.body.order.total)).toBe(140);
+    // subtotal 100 - 10% + shipping 50 + tax (18% of 90) = 156.2
+    expect(Number(first.body.order.total)).toBe(156.2);
+    expect(Number(second.body.order.total)).toBe(156.2);
 
     const coupon = await prisma.coupon.findUniqueOrThrow({
       where: { code: 'TENOFF' },
@@ -354,8 +355,8 @@ describe('Coupon usage limits (e2e)', () => {
     const res = await checkoutWithCoupon(customer1Token);
 
     expect(res.status).toBe(201);
-    // subtotal 100 + shipping 50 = 150
-    expect(Number(res.body.order.total)).toBe(150);
+    // subtotal 100 + shipping 50 + tax (18% of 100) = 168
+    expect(Number(res.body.order.total)).toBe(168);
 
     const usedCounts = await prisma.coupon.findMany({
       where: { code: { in: ['SAVE20', 'TENOFF'] } },
