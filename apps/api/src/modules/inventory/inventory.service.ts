@@ -6,10 +6,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Role } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class InventoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async getInventoryByVariantId(variantId: string, user: any) {
     const inventory = await this.prisma.inventory.findUnique({
@@ -106,30 +110,8 @@ export class InventoryService {
       );
     }
 
-    const updated = await this.prisma.inventory.update({
-      where: { variantId },
-      data: { quantity },
-    });
-
-    return {
-      id: updated.id,
-      variantId: updated.variantId,
-      quantity: updated.quantity,
-      reserved: updated.reserved,
-      available: updated.quantity - updated.reserved,
-      updatedAt: updated.updatedAt,
-      variant: {
-        id: variant.id,
-        sku: variant.sku,
-        color: variant.color,
-        size: variant.size,
-        product: {
-          id: variant.product.id,
-          name: variant.product.name,
-          sellerId: variant.product.sellerId,
-        },
-      },
-    };
+    const quantityChange = quantity - variant.inventory.quantity;
+    return this.adjustStock(variantId, user, quantityChange, 'ADJUSTMENT', reason);
   }
 
   async getLowStockItems(
@@ -283,24 +265,15 @@ export class InventoryService {
     const results = await this.prisma.$transaction(async (prisma: any) => {
       return Promise.all(
         updates.map((update) => {
-          const variant = variantMap.get(update.variantId)!;
-          return prisma.inventory.update({
-            where: { variantId: update.variantId },
-            data: { quantity: update.quantity },
-            include: {
-              variant: {
-                include: {
-                  product: {
-                    select: {
-                      id: true,
-                      name: true,
-                      sellerId: true,
-                    },
-                  },
-                },
-              },
-            },
-          });
+          const quantityChange =
+            update.quantity - variantMap.get(update.variantId)!.inventory!.quantity;
+          return this.adjustStock(
+            update.variantId,
+            user,
+            quantityChange,
+            'ADJUSTMENT',
+            'Bulk update',
+          );
         }),
       );
     });
@@ -324,5 +297,199 @@ export class InventoryService {
         },
       },
     }));
+  }
+
+  async adjustStock(
+    variantId: string,
+    user: any,
+    quantityChange: number,
+    type: string,
+    reason?: string,
+  ) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id: variantId },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            sellerId: true,
+          },
+        },
+        inventory: true,
+      },
+    });
+
+    if (!variant || !variant.inventory) {
+      throw new NotFoundException('Variant or inventory not found');
+    }
+
+    if (user.role !== Role.ADMIN) {
+      const seller = await this.prisma.seller.findUnique({
+        where: { userId: user.userId },
+      });
+      if (!seller || variant.product.sellerId !== seller.id) {
+        throw new ForbiddenException('You can only adjust your own inventory');
+      }
+    }
+
+    const currentQuantity = variant.inventory.quantity;
+    const currentReserved = variant.inventory.reserved;
+    const newQuantity = currentQuantity + quantityChange;
+
+    if (newQuantity < 0) {
+      throw new BadRequestException(
+        `Quantity cannot be negative. Current: ${currentQuantity}, Change: ${quantityChange}`,
+      );
+    }
+
+    if (newQuantity < currentReserved) {
+      throw new BadRequestException(
+        `Quantity cannot be less than reserved stock (${currentReserved})`,
+      );
+    }
+
+    const updated = await this.prisma.$transaction(async (prisma) => {
+      const inv = await prisma.inventory.update({
+        where: { variantId },
+        data: { quantity: newQuantity },
+        include: {
+          variant: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  sellerId: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      await prisma.inventoryTransaction.create({
+        data: {
+          inventoryId: inv.id,
+          type,
+          quantityChange,
+          previousQuantity: currentQuantity,
+          previousReserved: currentReserved,
+          newQuantity: inv.quantity,
+          newReserved: inv.reserved,
+          reason: reason ?? null,
+        },
+      });
+
+      return inv;
+    });
+
+    const available = updated.quantity - updated.reserved;
+    if (available <= updated.lowStockThreshold && available > 0) {
+      await this.notificationsService.createNotification(
+        variant.product.sellerId,
+        'LOW_STOCK',
+        'Low Stock Alert',
+        `Product "${variant.product.name}" (SKU: ${variant.sku}) is running low. Available: ${available}, Threshold: ${updated.lowStockThreshold}`,
+      );
+    }
+
+    return {
+      id: updated.id,
+      variantId: updated.variantId,
+      quantity: updated.quantity,
+      reserved: updated.reserved,
+      available,
+      updatedAt: updated.updatedAt,
+      variant: {
+        id: variant.id,
+        sku: variant.sku,
+        color: variant.color,
+        size: variant.size,
+        product: {
+          id: variant.product.id,
+          name: variant.product.name,
+          sellerId: variant.product.sellerId,
+        },
+      },
+    };
+  }
+
+  async getTransactionHistory(
+    variantId: string,
+    user: any,
+    page: number = 1,
+    limit: number = 20,
+  ) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id: variantId },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            sellerId: true,
+          },
+        },
+      },
+    });
+
+    if (!variant) {
+      throw new NotFoundException('Variant not found');
+    }
+
+    if (user.role !== Role.ADMIN) {
+      const seller = await this.prisma.seller.findUnique({
+        where: { userId: user.userId },
+      });
+      if (!seller || variant.product.sellerId !== seller.id) {
+        throw new ForbiddenException(
+          'You can only access your own inventory history',
+        );
+      }
+    }
+
+    const inventory = await this.prisma.inventory.findUnique({
+      where: { variantId },
+      select: { id: true },
+    });
+
+    if (!inventory) {
+      throw new NotFoundException('Inventory not found for this variant');
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.inventoryTransaction.findMany({
+        where: { inventoryId: inventory.id },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.inventoryTransaction.count({
+        where: { inventoryId: inventory.id },
+      }),
+    ]);
+
+    return {
+      transactions: transactions.map((tx) => ({
+        id: tx.id,
+        type: tx.type,
+        quantityChange: tx.quantityChange,
+        previousQuantity: tx.previousQuantity,
+        previousReserved: tx.previousReserved,
+        newQuantity: tx.newQuantity,
+        newReserved: tx.newReserved,
+        reason: tx.reason,
+        createdAt: tx.createdAt,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }

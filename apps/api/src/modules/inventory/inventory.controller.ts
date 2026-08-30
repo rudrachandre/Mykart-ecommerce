@@ -11,6 +11,7 @@ import {
 import { InventoryService } from './inventory.service';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 import { BulkUpdateInventoryDto } from './dto/bulk-update-inventory.dto';
+import { AdjustInventoryDto } from './dto/adjust-inventory.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -49,6 +50,44 @@ export class InventoryController {
       user,
       updateInventoryDto.quantity ?? 0,
       updateInventoryDto.reason,
+    );
+  }
+
+  @Post('variant/:variantId/adjust')
+  @Roles(Role.SELLER, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Adjust inventory with transaction record' })
+  adjustStock(
+    @CurrentUser() user: { userId: string },
+    @Param('variantId') variantId: string,
+    @Body() adjustInventoryDto: AdjustInventoryDto,
+  ) {
+    return this.inventoryService.adjustStock(
+      variantId,
+      user,
+      adjustInventoryDto.quantity,
+      'ADJUSTMENT',
+      adjustInventoryDto.reason,
+    );
+  }
+
+  @Get('variant/:variantId/transactions')
+  @Roles(Role.SELLER, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get inventory transaction history' })
+  getTransactionHistory(
+    @CurrentUser() user: { userId: string },
+    @Param('variantId') variantId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    return this.inventoryService.getTransactionHistory(
+      variantId,
+      user,
+      pageNum,
+      limitNum,
     );
   }
 

@@ -179,12 +179,34 @@ model ProductVariant {
 }
 
 model Inventory {
-  id        String         @id @default(uuid())
-  variantId String         @unique
-  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  quantity  Int            @default(0)
-  reserved  Int            @default(0)
-  updatedAt DateTime       @updatedAt
+  id              String         @id @default(uuid())
+  variantId       String         @unique
+  variant         ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity        Int            @default(0)
+  reserved        Int            @default(0)
+  lowStockThreshold Int          @default(10)
+  updatedAt       DateTime       @updatedAt
+
+  transactions    InventoryTransaction[]
+
+  @@index([variantId])
+}
+
+model InventoryTransaction {
+  id              String   @id @default(uuid())
+  inventoryId     String
+  inventory       Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  type            String
+  quantityChange  Int
+  previousQuantity Int
+  previousReserved Int
+  newQuantity     Int
+  newReserved     Int
+  reason          String?
+  createdAt       DateTime @default(now())
+
+  @@index([inventoryId])
+  @@index([createdAt])
 }
 
 model Cart {

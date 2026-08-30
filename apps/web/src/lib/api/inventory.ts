@@ -74,3 +74,42 @@ export async function bulkUpdateInventory(
   }
   return res.json();
 }
+
+export async function adjustInventoryStock(
+  token: string,
+  variantId: string,
+  quantity: number,
+  reason?: string,
+) {
+  const res = await fetch(`${BASE_URL}/api/v1/inventory/variant/${variantId}/adjust`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ quantity, reason }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || 'Failed to adjust inventory');
+  }
+  return res.json();
+}
+
+export async function getInventoryTransactions(
+  token: string,
+  variantId: string,
+  page: number = 1,
+  limit: number = 20,
+) {
+  const query = new URLSearchParams();
+  query.set('page', String(page));
+  query.set('limit', String(limit));
+
+  const res = await fetch(`${BASE_URL}/api/v1/inventory/variant/${variantId}/transactions?${query.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to fetch inventory transactions');
+  return res.json();
+}
