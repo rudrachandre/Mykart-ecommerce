@@ -15,6 +15,7 @@ import { ProductQueryDto, ProductSortBy } from './dto/product-query.dto';
 import { ProductStatus, Role } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { CloudinaryService } from './cloudinary.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ProductsService {
@@ -22,6 +23,7 @@ export class ProductsService {
     private readonly prisma: PrismaService,
     @InjectQueue('search-sync-queue') private readonly searchSyncQueue: Queue,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private async getSellerId(userId: string): Promise<string> {
@@ -443,6 +445,27 @@ export class ProductsService {
       }
       throw error;
     }) as Awaited<ReturnType<typeof this.prisma.product.update>>;
+
+    const oldPrice = Number(product.salePrice ?? product.basePrice);
+    const newPrice = Number(updatedProduct.salePrice ?? updatedProduct.basePrice);
+
+    if (newPrice < oldPrice) {
+      const wishlists = await this.prisma.wishlistItem.findMany({
+        where: { productId: id },
+        include: { wishlist: { select: { userId: true } } },
+      });
+      const formattedOldPrice = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(oldPrice);
+      const formattedNewPrice = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(newPrice);
+
+      for (const w of wishlists) {
+        await this.notificationsService.createNotification(
+          w.wishlist.userId,
+          'WISHLIST_UPDATE',
+          'Price Drop Alert',
+          `An item in your wishlist, "${updatedProduct.name}", has dropped in price from ${formattedOldPrice} to ${formattedNewPrice}!`,
+        );
+      }
+    }
 
     this.searchSyncQueue
       .add('upsert-product', { productId: updatedProduct.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })

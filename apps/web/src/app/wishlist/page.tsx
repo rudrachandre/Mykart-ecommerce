@@ -34,7 +34,28 @@ export default function WishlistPage() {
   const fetchWishlist = async () => {
     const token = Cookies.get('accessToken');
     if (!token) {
-      setLoading(false);
+      // Guest wishlist preservation
+      try {
+        const guestWishlist = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+        if (guestWishlist.length === 0) {
+          setItems([]);
+          setLoading(false);
+          return;
+        }
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const res = await fetch(`${apiUrl}/api/v1/wishlist/guest?productIds=${guestWishlist.join(',')}`);
+        if (res.ok) {
+          const data = await res.json();
+          setItems(data.items || []);
+        } else {
+          setItems([]);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error('Failed to load guest wishlist');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
     try {
@@ -56,7 +77,20 @@ export default function WishlistPage() {
 
   const handleRemove = async (itemId: string) => {
     const token = Cookies.get('accessToken');
-    if (!token) return;
+    if (!token) {
+      // Guest remove
+      try {
+        const guestWishlist = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+        const updated = guestWishlist.filter((id: string) => id !== itemId);
+        localStorage.setItem('guest_wishlist', JSON.stringify(updated));
+        toast.success('Removed from wishlist');
+        await fetchWishlist();
+      } catch (error) {
+        console.error(error);
+        toast.error('Failed to remove item');
+      }
+      return;
+    }
 
     try {
       const loadingToast = toast.loading('Removing from wishlist...');
@@ -94,34 +128,7 @@ export default function WishlistPage() {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="container mx-auto px-4 py-24 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-24 text-center max-w-xl">
-        <div className="bg-card border rounded-2xl p-12 shadow-sm">
-          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Heart className="w-10 h-10 text-primary" />
-          </div>
-          <h1 className="text-3xl font-extrabold mb-4 tracking-tight">Your Wishlist</h1>
-          <p className="text-muted-foreground mb-8 text-lg">Sign in to save and view your favorite items.</p>
-          <Link href="/login?callbackUrl=/wishlist">
-            <Button size="lg" className="w-full sm:w-auto rounded-full font-semibold px-8 hover:scale-105 active:scale-95 transition-all">
-              Sign In to Continue
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="container mx-auto px-4 py-24 flex justify-center items-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

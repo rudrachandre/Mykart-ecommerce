@@ -385,6 +385,26 @@ export class InventoryService {
     });
 
     const available = updated.quantity - updated.reserved;
+
+    // Back-in-stock alert for wishlist users
+    const wasOutOfStock = (currentQuantity - currentReserved) <= 0;
+    const isNowInStock = available > 0;
+
+    if (wasOutOfStock && isNowInStock) {
+      const wishlists = await this.prisma.wishlistItem.findMany({
+        where: { productId: variant.productId },
+        include: { wishlist: { select: { userId: true } } },
+      });
+      for (const w of wishlists) {
+        await this.notificationsService.createNotification(
+          w.wishlist.userId,
+          'WISHLIST_UPDATE',
+          'Product Back in Stock',
+          `An item in your wishlist, "${variant.product.name}", is now back in stock!`,
+        );
+      }
+    }
+
     if (available <= updated.lowStockThreshold && available > 0) {
       await this.notificationsService.createNotification(
         variant.product.sellerId,

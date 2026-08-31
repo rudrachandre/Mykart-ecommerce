@@ -93,7 +93,19 @@ export function ProductActions({
   const handleWishlist = async () => {
     const token = Cookies.get('accessToken');
     if (!token) {
-      router.push(`/login?callbackUrl=/products/${product.slug || product.id}`);
+      try {
+        const guestWishlist = JSON.parse(localStorage.getItem('guest_wishlist') || '[]');
+        if (!guestWishlist.includes(product.id)) {
+          guestWishlist.push(product.id);
+          localStorage.setItem('guest_wishlist', JSON.stringify(guestWishlist));
+          toast.success('Added to wishlist (saved locally)');
+        } else {
+          toast.info('Product is already in your wishlist');
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error('Failed to save to wishlist');
+      }
       return;
     }
 

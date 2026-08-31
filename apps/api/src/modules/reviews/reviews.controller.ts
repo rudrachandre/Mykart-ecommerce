@@ -3,22 +3,33 @@ import {
   Get,
   Post,
   Delete,
+  Patch,
   Body,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { PermissionsGuard } from '../../common/permissions/permissions.guard';
+import { RequirePermissions } from '../../common/permissions/permissions.decorator';
+import { PERMISSIONS } from '../../common/permissions/permissions';
 
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Get('product/:productId')
-  getProductReviews(@Param('productId') productId: string) {
-    return this.reviewsService.getProductReviews(productId);
+  getProductReviews(
+    @Param('productId') productId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const p = page ? parseInt(page, 10) : 1;
+    const l = limit ? parseInt(limit, 10) : 10;
+    return this.reviewsService.getProductReviews(productId, p, l);
   }
 
   @Post()
@@ -33,9 +44,45 @@ export class ReviewsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   deleteReview(
-    @CurrentUser() user: { userId: string },
+    @CurrentUser() user: { userId: string; role: string },
     @Param('id') id: string,
   ) {
-    return this.reviewsService.deleteReview(user.userId, id);
+    return this.reviewsService.deleteReview(user.userId, user.role, id);
+  }
+
+  @Post(':id/helpful')
+  @UseGuards(JwtAuthGuard)
+  markHelpful(@Param('id') id: string) {
+    return this.reviewsService.markHelpful(id);
+  }
+
+  @Post(':id/report')
+  @UseGuards(JwtAuthGuard)
+  reportReview(@Param('id') id: string) {
+    return this.reviewsService.reportReview(id);
+  }
+
+  // Admin moderation: get reported reviews
+  @Get('reported')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PERMISSIONS.REVIEW_MODERATE)
+  getReportedReviews(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const p = page ? parseInt(page, 10) : 1;
+    const l = limit ? parseInt(limit, 10) : 10;
+    return this.reviewsService.getReportedReviews(p, l);
+  }
+
+  // Admin moderation: approve/reject status
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PERMISSIONS.REVIEW_MODERATE)
+  moderateReview(
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    return this.reviewsService.moderateReview(id, status);
   }
 }

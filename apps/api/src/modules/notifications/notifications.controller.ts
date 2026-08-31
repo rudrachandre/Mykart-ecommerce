@@ -4,6 +4,7 @@ import {
   Patch,
   Post,
   Param,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -16,8 +17,14 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get()
-  async getNotifications(@Request() req: any) {
-    return this.notificationsService.getUserNotifications(req.user.userId);
+  async getNotifications(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const p = page ? parseInt(page, 10) : 1;
+    const l = limit ? parseInt(limit, 10) : 20;
+    return this.notificationsService.getUserNotifications(req.user.userId, p, l);
   }
 
   @Patch(':id/read')

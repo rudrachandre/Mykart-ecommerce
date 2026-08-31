@@ -360,6 +360,9 @@ model Review {
   title            String?
   comment          String?
   verifiedPurchase Boolean  @default(false)
+  helpfulVotes     Int      @default(0)
+  reported         Boolean  @default(false)
+  status           String   @default("APPROVED") // APPROVED, PENDING, SPAM
   createdAt        DateTime @default(now())
 
   @@index([productId])

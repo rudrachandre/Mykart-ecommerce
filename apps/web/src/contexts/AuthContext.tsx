@@ -44,6 +44,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data);
+
+        // Merge guest wishlist
+        const guestWishlistRaw = localStorage.getItem('guest_wishlist');
+        if (guestWishlistRaw) {
+          try {
+            const productIds = JSON.parse(guestWishlistRaw);
+            if (Array.isArray(productIds) && productIds.length > 0) {
+              await fetch(`${apiUrl}/api/v1/wishlist/merge`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ productIds }),
+              });
+            }
+          } catch (e) {
+            console.error('Failed to merge guest wishlist', e);
+          } finally {
+            localStorage.removeItem('guest_wishlist');
+          }
+        }
       } else {
         // Token might be invalid or expired
         setUser(null);

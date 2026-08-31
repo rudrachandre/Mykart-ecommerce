@@ -53,4 +53,43 @@ export class MailService {
       this.logger.error('Resend delivery failed', error);
     }
   }
+
+  async sendNotificationEmail(to: string, subject: string, message: string): Promise<void> {
+    const apiKey = process.env.RESEND_API_KEY;
+    const from = process.env.MAIL_FROM || 'MyKart <onboarding@resend.dev>';
+
+    if (!apiKey) {
+      this.logger.log(
+        `Notification email skipped for ${to} (RESEND_API_KEY not configured): Subject: ${subject}`,
+      );
+      if (process.env.NODE_ENV !== 'production') {
+        this.logger.log(`[DEV ONLY] Message: ${message}`);
+      }
+      return;
+    }
+
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from,
+          to,
+          subject,
+          html: `<p>${message}</p>`,
+        }),
+      });
+
+      if (!response.ok) {
+        this.logger.error(
+          `Resend delivery failed with status ${response.status}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Resend delivery failed', error);
+    }
+  }
 }
