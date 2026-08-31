@@ -11,7 +11,8 @@ export async function getNotifications(token: string) {
     cache: 'no-store'
   });
   if (!res.ok) throw new Error('Failed to fetch notifications');
-  return res.json();
+  const data = await res.json();
+  return data.items || [];
 }
 
 export async function markAsRead(token: string, id: string) {
