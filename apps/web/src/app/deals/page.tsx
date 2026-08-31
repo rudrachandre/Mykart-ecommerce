@@ -2,6 +2,7 @@ import { getProducts, getCategories, getBrands } from '@/lib/api/catalog';
 import { DealProductCard } from '@/components/deals/DealProductCard';
 import { FilterSidebar } from '@/components/catalog/FilterSidebar';
 import { MobileFilterDrawer } from '@/components/catalog/MobileFilterDrawer';
+import { SortSelect } from '@/components/catalog/SortSelect';
 import { Sparkles, ArrowUpDown } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -163,29 +164,5 @@ export default async function DealsPage({
         </div>
       </div>
     </div>
-  );
-}
-
-function SortSelect({ currentSort }: { currentSort: string }) {
-  return (
-    <form method="GET">
-      <select
-        defaultValue={currentSort}
-        name="sortBy"
-        aria-label="Sort products by"
-        className="h-9 rounded-lg border border-input bg-background px-3 py-1 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
-        onChange={(e) => {
-          const form = e.target.form;
-          if (form) form.submit();
-        }}
-      >
-        <option value="NEWEST">Newest</option>
-        <option value="DISCOUNT_DESC">Biggest Discount</option>
-        <option value="POPULARITY">Popularity</option>
-        <option value="PRICE_ASC">Price: Low to High</option>
-        <option value="PRICE_DESC">Price: High to Low</option>
-        <option value="RATING">Highest Rated</option>
-      </select>
-    </form>
   );
 }
