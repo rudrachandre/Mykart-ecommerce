@@ -1,6 +1,9 @@
-﻿const API_URL = process.env.NEXT_PUBLIC_API_URL;
-if (!API_URL && process.env.NODE_ENV === 'production') throw new Error('NEXT_PUBLIC_API_URL is required in production');
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+if (!API_URL && process.env.NODE_ENV === 'production') {
+  console.warn('[search] NEXT_PUBLIC_API_URL is not set — falling back to localhost');
+}
 const BASE_URL = API_URL || 'http://localhost:3001';
+
 
 const autocompleteCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;

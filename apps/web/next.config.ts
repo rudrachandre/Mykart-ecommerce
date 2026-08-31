@@ -20,6 +20,17 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  async redirects() {
+    return [
+      // /account/orders is a dead route — orders live at /orders
+      {
+        source: '/account/orders',
+        destination: '/orders',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
+
