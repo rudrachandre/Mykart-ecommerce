@@ -184,4 +184,10 @@ export class AdminController {
   updateSettings(@Body() dto: any) {
     return this.adminService.updateSettings(dto);
   }
+
+  @Post('seed-catalog')
+  @RequirePermissions(PERMISSIONS.PRODUCT_MODERATE)
+  seedCatalog() {
+    return this.adminService.seedCatalog();
+  }
 }

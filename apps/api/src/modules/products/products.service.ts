@@ -177,8 +177,21 @@ export class ProductsService {
       status: ProductStatus.ACTIVE,
     };
 
+
     if (categorySlug) {
-      where.category = { slug: categorySlug };
+      // Resolve category + all children so filtering by a parent slug (e.g. "electronics")
+      // also returns products that belong to its sub-categories (e.g. "laptops", "smartphones").
+      const resolvedCat = await this.prisma.category.findUnique({
+        where: { slug: categorySlug },
+        include: { children: true },
+      });
+      if (resolvedCat) {
+        const categoryIds = [resolvedCat.id, ...resolvedCat.children.map((c) => c.id)];
+        where.categoryId = { in: categoryIds };
+      } else {
+        // Unknown slug — return empty result set
+        where.categoryId = '__no_match__';
+      }
     }
 
     if (brandSlug) {
