@@ -80,5 +80,25 @@ export class HealthController {
       };
     }
   }
+
+  @Get('run-seed')
+  async runSeed() {
+    try {
+      const { execSync } = require('child_process');
+      const output = execSync('node dist/seed-data.js', { encoding: 'utf-8' });
+      return {
+        status: 'ok',
+        output: output
+      };
+    } catch (e) {
+      return {
+        status: 'error',
+        error: e.message,
+        stdout: e.stdout,
+        stderr: e.stderr
+      };
+    }
+  }
 }
+
 
