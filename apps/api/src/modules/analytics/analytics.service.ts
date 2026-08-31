@@ -1,67 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma } from '@prisma/client';
 import { RedisService } from '../../redis/redis.service';
 
 @Injectable()
 export class AnalyticsService {
+  private readonly logger = new Logger(AnalyticsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
   ) {}
-
-  async logAction(
-    userId: string,
-    action: string,
-    entityId?: string,
-    details?: any,
-    ipAddress?: string,
-    userAgent?: string,
-  ) {
-    return this.prisma.auditLog.create({
-      data: {
-        userId,
-        action,
-        entityId,
-        details: details || {},
-        ipAddress,
-        userAgent,
-      },
-    });
-  }
-
-  async getAuditLogs(skip: number = 0, take: number = 20, action?: string, userId?: string) {
-    const where: Prisma.AuditLogWhereInput = {};
-    if (action) {
-      where.action = action;
-    }
-    if (userId) {
-      where.userId = userId;
-    }
-
-    const [logs, total] = await Promise.all([
-      this.prisma.auditLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take,
-        include: {
-          user: { select: { id: true, email: true, role: true } },
-        },
-      }),
-      this.prisma.auditLog.count({ where }),
-    ]);
-
-    return { logs, total };
-  }
 
   async getDashboardStats() {
     try {
       const cacheKey = 'analytics:dashboard-stats';
       try {
         const cached = await this.redisService.get(cacheKey);
-        if (cached) {
-          return JSON.parse(cached);
+        if (cached && typeof cached === 'string') {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === 'object') return parsed;
         }
       } catch {}
 
@@ -69,6 +26,8 @@ export class AnalyticsService {
       const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const p = this.prisma as any;
 
       const [
         totalUsers,
@@ -95,92 +54,60 @@ export class AnalyticsService {
         couponsData,
       ] = await Promise.all([
         // USERS
-        this.prisma.user.count().catch(() => 0),
-        this.prisma.user.count({ where: { role: 'CUSTOMER' } }).catch(() => 0),
-        this.prisma.user.count({ where: { role: 'SELLER' } }).catch(() => 0),
-        this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0),
+        p.user?.count ? p.user.count().catch(() => 0) : 0,
+        p.user?.count ? p.user.count({ where: { role: 'CUSTOMER' } }).catch(() => 0) : 0,
+        p.user?.count ? p.user.count({ where: { role: 'SELLER' } }).catch(() => 0) : 0,
+        p.user?.count ? p.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0) : 0,
 
         // ORDERS
-        this.prisma.order.count().catch(() => 0),
-        this.prisma.order.count({ where: { createdAt: { gte: oneDayAgo } } }).catch(() => 0),
-        this.prisma.order.count({ where: { createdAt: { gte: sevenDaysAgo } } }).catch(() => 0),
-        this.prisma.order.count({ where: { createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0),
+        p.order?.count ? p.order.count().catch(() => 0) : 0,
+        p.order?.count ? p.order.count({ where: { createdAt: { gte: oneDayAgo } } }).catch(() => 0) : 0,
+        p.order?.count ? p.order.count({ where: { createdAt: { gte: sevenDaysAgo } } }).catch(() => 0) : 0,
+        p.order?.count ? p.order.count({ where: { createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0) : 0,
 
         // REVENUE
-        this.prisma.order.aggregate({
-          _sum: { total: true },
-          where: { status: { not: 'CANCELLED' } },
-        }).catch(() => ({ _sum: { total: null } })),
-        this.prisma.order.aggregate({
-          _sum: { total: true },
-          where: { createdAt: { gte: oneDayAgo }, status: { not: 'CANCELLED' } },
-        }).catch(() => ({ _sum: { total: null } })),
-        this.prisma.order.aggregate({
-          _sum: { total: true },
-          where: { createdAt: { gte: sevenDaysAgo }, status: { not: 'CANCELLED' } },
-        }).catch(() => ({ _sum: { total: null } })),
-        this.prisma.order.aggregate({
-          _sum: { total: true },
-          where: { createdAt: { gte: thirtyDaysAgo }, status: { not: 'CANCELLED' } },
-        }).catch(() => ({ _sum: { total: null } })),
+        p.order?.aggregate ? p.order.aggregate({ _sum: { total: true }, where: { status: { not: 'CANCELLED' } } }).catch(() => ({ _sum: { total: null } })) : { _sum: { total: null } },
+        p.order?.aggregate ? p.order.aggregate({ _sum: { total: true }, where: { createdAt: { gte: oneDayAgo }, status: { not: 'CANCELLED' } } }).catch(() => ({ _sum: { total: null } })) : { _sum: { total: null } },
+        p.order?.aggregate ? p.order.aggregate({ _sum: { total: true }, where: { createdAt: { gte: sevenDaysAgo }, status: { not: 'CANCELLED' } } }).catch(() => ({ _sum: { total: null } })) : { _sum: { total: null } },
+        p.order?.aggregate ? p.order.aggregate({ _sum: { total: true }, where: { createdAt: { gte: thirtyDaysAgo }, status: { not: 'CANCELLED' } } }).catch(() => ({ _sum: { total: null } })) : { _sum: { total: null } },
 
         // STATUS DISTRIBUTION
-        this.prisma.order.groupBy({
-          by: ['status'],
-          _count: { id: true },
-        }).catch(() => []),
-        this.prisma.seller.groupBy({
-          by: ['status'],
-          _count: { id: true },
-        }).catch(() => []),
+        p.order?.groupBy ? p.order.groupBy({ by: ['status'], _count: { id: true } }).catch(() => []) : [],
+        p.seller?.groupBy ? p.seller.groupBy({ by: ['status'], _count: { id: true } }).catch(() => []) : [],
 
         // PRODUCTS
-        this.prisma.product.count().catch(() => 0),
-        this.prisma.product.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
+        p.product?.count ? p.product.count().catch(() => 0) : 0,
+        p.product?.count ? p.product.count({ where: { status: 'ACTIVE' } }).catch(() => 0) : 0,
 
         // INVENTORY
-        this.prisma.inventory.findMany({
-          select: { quantity: true, reserved: true },
-        }).catch(() => []),
+        p.inventory?.findMany ? p.inventory.findMany({ select: { quantity: true, reserved: true } }).catch(() => []) : [],
 
         // PAYMENTS
-        this.prisma.payment.groupBy({
-          by: ['status'],
-          _count: { id: true },
-        }).catch(() => []),
+        p.payment?.groupBy ? p.payment.groupBy({ by: ['status'], _count: { id: true } }).catch(() => []) : [],
 
         // REFUNDS
-        this.prisma.refund.aggregate({
-          _count: { id: true },
-          _sum: { amount: true },
-        }).catch(() => ({ _count: { id: 0 }, _sum: { amount: null } })),
+        p.refund?.aggregate ? p.refund.aggregate({ _count: { id: true }, _sum: { amount: true } }).catch(() => ({ _count: { id: 0 }, _sum: { amount: null } })) : { _count: { id: 0 }, _sum: { amount: null } },
 
         // RETURNS & REPLACEMENTS
         Promise.all([
-          this.prisma.return.count().catch(() => 0),
-          this.prisma.return.count({ where: { status: 'APPROVED' } }).catch(() => 0),
-          this.prisma.return.count({ where: { status: 'REJECTED' } }).catch(() => 0),
-          this.prisma.replacement.count().catch(() => 0),
+          p.return?.count ? p.return.count().catch(() => 0) : 0,
+          p.return?.count ? p.return.count({ where: { status: 'APPROVED' } }).catch(() => 0) : 0,
+          p.return?.count ? p.return.count({ where: { status: 'REJECTED' } }).catch(() => 0) : 0,
+          p.replacement?.count ? p.replacement.count().catch(() => 0) : 0,
         ]).catch(() => [0, 0, 0, 0]),
 
         // REVIEWS
-        this.prisma.review.aggregate({
-          _count: { id: true },
-          _avg: { rating: true },
-        }).catch(() => ({ _count: { id: 0 }, _avg: { rating: null } })),
+        p.review?.aggregate ? p.review.aggregate({ _count: { id: true }, _avg: { rating: true } }).catch(() => ({ _count: { id: 0 }, _avg: { rating: null } })) : { _count: { id: 0 }, _avg: { rating: null } },
 
         // COUPONS
-        this.prisma.coupon.aggregate({
-          _count: { id: true },
-          _sum: { usedCount: true },
-        }).catch(() => ({ _count: { id: 0 }, _sum: { usedCount: null } })),
+        p.coupon?.aggregate ? p.coupon.aggregate({ _count: { id: true }, _sum: { usedCount: true } }).catch(() => ({ _count: { id: 0 }, _sum: { usedCount: null } })) : { _count: { id: 0 }, _sum: { usedCount: null } },
       ]);
 
       // Map order status distribution
       const orderDistribution: Record<string, number> = {};
       if (Array.isArray(orderStatuses)) {
         orderStatuses.forEach((g) => {
-          orderDistribution[g.status] = g._count.id;
+          if (g && g.status && g._count) orderDistribution[g.status] = g._count.id || 0;
         });
       }
 
@@ -188,7 +115,7 @@ export class AnalyticsService {
       const sellerDistribution: Record<string, number> = {};
       if (Array.isArray(sellerStatuses)) {
         sellerStatuses.forEach((g) => {
-          sellerDistribution[g.status] = g._count.id;
+          if (g && g.status && g._count) sellerDistribution[g.status] = g._count.id || 0;
         });
       }
 
@@ -196,7 +123,7 @@ export class AnalyticsService {
       const paymentDistribution: Record<string, number> = {};
       if (Array.isArray(paymentsData)) {
         paymentsData.forEach((g) => {
-          paymentDistribution[g.status] = g._count.id;
+          if (g && g.status && g._count) paymentDistribution[g.status] = g._count.id || 0;
         });
       }
 
@@ -209,13 +136,15 @@ export class AnalyticsService {
 
       if (Array.isArray(inventoryData)) {
         inventoryData.forEach((item) => {
-          const qty = item.quantity;
-          const res = item.reserved;
-          const avail = qty - res;
-          availableStock += avail;
-          reservedStock += res;
-          if (avail <= 0) outOfStockCount += 1;
-          else if (avail <= 10) lowStockCount += 1;
+          if (item) {
+            const qty = item.quantity || 0;
+            const res = item.reserved || 0;
+            const avail = qty - res;
+            availableStock += avail;
+            reservedStock += res;
+            if (avail <= 0) outOfStockCount += 1;
+            else if (avail <= 10) lowStockCount += 1;
+          }
         });
       }
 
@@ -223,59 +152,48 @@ export class AnalyticsService {
       const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       // Process reported reviews
-      const reportedReviewsCount = await this.prisma.review.count({ where: { reported: true } }).catch(() => 0);
-      const pendingModerationCount = await this.prisma.review.count({ where: { status: 'PENDING' } }).catch(() => 0);
+      const reportedReviewsCount = p.review?.count ? await p.review.count({ where: { reported: true } }).catch(() => 0) : 0;
+      const pendingModerationCount = p.review?.count ? await p.review.count({ where: { status: 'PENDING' } }).catch(() => 0) : 0;
 
       // Active coupons
-      const activeCouponsCount = await this.prisma.coupon.count({ where: { active: true } }).catch(() => 0);
+      const activeCouponsCount = p.coupon?.count ? await p.coupon.count({ where: { active: true } }).catch(() => 0) : 0;
 
       const stats = {
-        // Users
-        totalUsers,
-        totalCustomers,
-        totalSellers,
-        newCustomers,
-        // Orders
-        totalOrders,
-        ordersToday,
-        ordersLast7Days,
-        ordersLast30Days,
+        totalUsers: totalUsers || 0,
+        totalCustomers: totalCustomers || 0,
+        totalSellers: totalSellers || 0,
+        newCustomers: newCustomers || 0,
+        totalOrders: totalOrders || 0,
+        ordersToday: ordersToday || 0,
+        ordersLast7Days: ordersLast7Days || 0,
+        ordersLast30Days: ordersLast30Days || 0,
         orderDistribution,
-        // Revenue
-        totalRevenue,
+        totalRevenue: totalRevenue || 0,
         revenueToday: Number(revenueTodayData?._sum?.total ?? 0),
         revenueLast7Days: Number(revenueLast7DaysData?._sum?.total ?? 0),
         revenueLast30Days: Number(revenueLast30DaysData?._sum?.total ?? 0),
-        avgOrderValue,
-        // Sellers
+        avgOrderValue: avgOrderValue || 0,
         sellerDistribution,
-        // Products
-        totalProducts,
-        activeProducts,
+        totalProducts: totalProducts || 0,
+        activeProducts: activeProducts || 0,
         outOfStockCount,
-        // Inventory
         availableStock,
         reservedStock,
         lowStockCount,
         totalInventoryValue,
-        // Payments
         paymentDistribution,
-        // Refunds
         totalRefunds: refundsData?._count?.id ?? 0,
         totalRefundAmount: Number(refundsData?._sum?.amount ?? 0),
-        // Returns
-        totalReturns: Array.isArray(returnsData) ? returnsData[0] : 0,
-        approvedReturns: Array.isArray(returnsData) ? returnsData[1] : 0,
-        rejectedReturns: Array.isArray(returnsData) ? returnsData[2] : 0,
-        totalReplacements: Array.isArray(returnsData) ? returnsData[3] : 0,
-        // Reviews
+        totalReturns: Array.isArray(returnsData) ? returnsData[0] || 0 : 0,
+        approvedReturns: Array.isArray(returnsData) ? returnsData[1] || 0 : 0,
+        rejectedReturns: Array.isArray(returnsData) ? returnsData[2] || 0 : 0,
+        totalReplacements: Array.isArray(returnsData) ? returnsData[3] || 0 : 0,
         totalReviews: reviewsData?._count?.id ?? 0,
         avgRating: reviewsData?._avg?.rating || 0,
-        reportedReviewsCount,
-        pendingModerationCount,
-        // Coupons
+        reportedReviewsCount: reportedReviewsCount || 0,
+        pendingModerationCount: pendingModerationCount || 0,
         totalCoupons: couponsData?._count?.id ?? 0,
-        activeCoupons: activeCouponsCount,
+        activeCoupons: activeCouponsCount || 0,
         couponsUsedCount: couponsData?._sum?.usedCount || 0,
       };
 
@@ -285,7 +203,7 @@ export class AnalyticsService {
 
       return stats;
     } catch (err: any) {
-      console.error('[AnalyticsService] getDashboardStats error:', err);
+      this.logger.error('[AnalyticsService] getDashboardStats error:', err);
       return {
         totalUsers: 0,
         totalCustomers: 0,
@@ -329,10 +247,12 @@ export class AnalyticsService {
 
   async getAnalyticsTrends(range: string = '30days') {
     const cacheKey = `analytics:trends:${range}`;
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
-    }
+    try {
+      const cached = await this.redisService.get(cacheKey);
+      if (cached && typeof cached === 'string') {
+        return JSON.parse(cached);
+      }
+    } catch {}
 
     let days = 30;
     if (range === '7days') days = 7;
@@ -342,30 +262,24 @@ export class AnalyticsService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // 1. Orders and Revenue trends
-    const orders = await this.prisma.order.findMany({
-      where: {
-        createdAt: { gte: startDate },
-        status: { not: 'CANCELLED' },
-      },
-      select: {
-        total: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'asc' },
-    });
+    const p = this.prisma as any;
 
-    // 2. Customer growth trend
-    const customers = await this.prisma.user.findMany({
-      where: {
-        role: 'CUSTOMER',
-        createdAt: { gte: startDate },
-      },
-      select: { createdAt: true },
-      orderBy: { createdAt: 'asc' },
-    });
+    const orders = p.order?.findMany
+      ? await p.order.findMany({
+          where: { createdAt: { gte: startDate }, status: { not: 'CANCELLED' } },
+          select: { total: true, createdAt: true },
+          orderBy: { createdAt: 'asc' },
+        }).catch(() => [])
+      : [];
 
-    // Process trends in memory with pre-filled daily date buckets
+    const customers = p.user?.findMany
+      ? await p.user.findMany({
+          where: { role: 'CUSTOMER', createdAt: { gte: startDate } },
+          select: { createdAt: true },
+          orderBy: { createdAt: 'asc' },
+        }).catch(() => [])
+      : [];
+
     const revenueAndOrderTrend: Record<string, { revenue: number; orders: number }> = {};
     const customerGrowth: Record<string, number> = {};
 
@@ -377,103 +291,108 @@ export class AnalyticsService {
       customerGrowth[dateStr] = 0;
     }
 
-    orders.forEach((o) => {
-      const dateStr = o.createdAt.toISOString().split('T')[0];
-      if (revenueAndOrderTrend[dateStr]) {
-        revenueAndOrderTrend[dateStr].revenue += Number(o.total);
-        revenueAndOrderTrend[dateStr].orders += 1;
-      }
-    });
+    if (Array.isArray(orders)) {
+      orders.forEach((o: any) => {
+        if (o?.createdAt) {
+          const dateStr = o.createdAt.toISOString().split('T')[0];
+          if (revenueAndOrderTrend[dateStr]) {
+            revenueAndOrderTrend[dateStr].revenue += Number(o.total || 0);
+            revenueAndOrderTrend[dateStr].orders += 1;
+          }
+        }
+      });
+    }
 
-    customers.forEach((c) => {
-      const dateStr = c.createdAt.toISOString().split('T')[0];
-      if (customerGrowth[dateStr] !== undefined) {
-        customerGrowth[dateStr] += 1;
-      }
-    });
+    if (Array.isArray(customers)) {
+      customers.forEach((c: any) => {
+        if (c?.createdAt) {
+          const dateStr = c.createdAt.toISOString().split('T')[0];
+          if (customerGrowth[dateStr] !== undefined) {
+            customerGrowth[dateStr] += 1;
+          }
+        }
+      });
+    }
 
-    // Convert to lists sorted by date
     const revenueAndOrderTrendList = Object.entries(revenueAndOrderTrend)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, data]) => ({
-        date,
-        ...data,
-      }));
+      .map(([date, data]) => ({ date, ...data }));
 
     const customerGrowthList = Object.entries(customerGrowth)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({
-        date,
-        count,
-      }));
+      .map(([date, count]) => ({ date, count }));
 
-    // 3. Top Performers
     const [topProducts, topCategories, topSellers] = await Promise.all([
-      // Top products
-      this.prisma.orderItem.groupBy({
-        by: ['productId'],
-        _sum: { quantity: true, price: true },
-        orderBy: { _sum: { quantity: 'desc' } },
-        take: 5,
-      }),
-      // Top categories
-      this.prisma.product.groupBy({
-        by: ['categoryId'],
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-        take: 5,
-      }),
-      // Top sellers
-      this.prisma.orderItem.groupBy({
-        by: ['sellerId'],
-        _sum: { price: true, quantity: true },
-        orderBy: { _sum: { price: 'desc' } },
-        take: 5,
-      }),
+      p.orderItem?.groupBy
+        ? p.orderItem.groupBy({
+            by: ['productId'],
+            _sum: { quantity: true, price: true },
+            orderBy: { _sum: { quantity: 'desc' } },
+            take: 5,
+          }).catch(() => [])
+        : [],
+      p.product?.groupBy
+        ? p.product.groupBy({
+            by: ['categoryId'],
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } },
+            take: 5,
+          }).catch(() => [])
+        : [],
+      p.orderItem?.groupBy
+        ? p.orderItem.groupBy({
+            by: ['sellerId'],
+            _sum: { price: true, quantity: true },
+            orderBy: { _sum: { price: 'desc' } },
+            take: 5,
+          }).catch(() => [])
+        : [],
     ]);
 
-    // Hydrate names
-    const topProductsWithDetails = await Promise.all(
-      topProducts.map(async (item) => {
-        const prod = await this.prisma.product.findUnique({
-          where: { id: item.productId },
-          select: { name: true },
-        });
-        return {
-          name: prod?.name || 'Unknown',
-          quantity: item._sum.quantity || 0,
-          revenue: Number(item._sum.price || 0) * (item._sum.quantity || 0),
-        };
-      }),
-    );
+    const topProductsWithDetails = Array.isArray(topProducts)
+      ? await Promise.all(
+          topProducts.map(async (item: any) => {
+            const prod = p.product?.findUnique
+              ? await p.product.findUnique({ where: { id: item.productId }, select: { name: true } }).catch(() => null)
+              : null;
+            return {
+              name: prod?.name || 'Unknown',
+              quantity: item?._sum?.quantity || 0,
+              revenue: Number(item?._sum?.price || 0) * (item?._sum?.quantity || 0),
+            };
+          }),
+        )
+      : [];
 
-    const topCategoriesWithDetails = await Promise.all(
-      topCategories.map(async (item) => {
-        if (!item.categoryId) return { name: 'Uncategorized', count: item._count.id };
-        const cat = await this.prisma.category.findUnique({
-          where: { id: item.categoryId },
-          select: { name: true },
-        });
-        return {
-          name: cat?.name || 'Unknown',
-          count: item._count.id,
-        };
-      }),
-    );
+    const topCategoriesWithDetails = Array.isArray(topCategories)
+      ? await Promise.all(
+          topCategories.map(async (item: any) => {
+            if (!item.categoryId) return { name: 'Uncategorized', count: item?._count?.id || 0 };
+            const cat = p.category?.findUnique
+              ? await p.category.findUnique({ where: { id: item.categoryId }, select: { name: true } }).catch(() => null)
+              : null;
+            return {
+              name: cat?.name || 'Unknown',
+              count: item?._count?.id || 0,
+            };
+          }),
+        )
+      : [];
 
-    const topSellersWithDetails = await Promise.all(
-      topSellers.map(async (item) => {
-        if (!item.sellerId) return { storeName: 'Unknown', revenue: 0 };
-        const sel = await this.prisma.seller.findUnique({
-          where: { id: item.sellerId },
-          select: { storeName: true },
-        });
-        return {
-          storeName: sel?.storeName || 'Unknown',
-          revenue: Number(item._sum.price || 0) * (item._sum.quantity || 0),
-        };
-      }),
-    );
+    const topSellersWithDetails = Array.isArray(topSellers)
+      ? await Promise.all(
+          topSellers.map(async (item: any) => {
+            if (!item.sellerId) return { storeName: 'Unknown', revenue: 0 };
+            const sel = p.seller?.findUnique
+              ? await p.seller.findUnique({ where: { id: item.sellerId }, select: { storeName: true } }).catch(() => null)
+              : null;
+            return {
+              storeName: sel?.storeName || 'Unknown',
+              revenue: Number(item?._sum?.price || 0) * (item?._sum?.quantity || 0),
+            };
+          }),
+        )
+      : [];
 
     const result = {
       trends: revenueAndOrderTrendList,
@@ -483,7 +402,32 @@ export class AnalyticsService {
       topSellers: topSellersWithDetails,
     };
 
-    await this.redisService.set(cacheKey, JSON.stringify(result), 300); // 5 minutes cache
+    try {
+      await this.redisService.set(cacheKey, JSON.stringify(result), 300);
+    } catch {}
+
     return result;
+  }
+
+  async getAuditLogs(skip: number = 0, take: number = 20, action?: string, userId?: string) {
+    const p = this.prisma as any;
+    if (!p.auditLog?.findMany) return { logs: [], total: 0 };
+
+    const where: any = {};
+    if (action) where.action = action;
+    if (userId) where.userId = userId;
+
+    const [logs, total] = await Promise.all([
+      p.auditLog.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { id: true, name: true, email: true, role: true } } },
+      }).catch(() => []),
+      p.auditLog.count({ where }).catch(() => 0),
+    ]);
+
+    return { logs, total };
   }
 }
