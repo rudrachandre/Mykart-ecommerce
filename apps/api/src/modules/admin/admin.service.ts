@@ -17,6 +17,10 @@ export class AdminService {
     private readonly analytics: AnalyticsService,
   ) {}
 
+  async getDashboardStats() {
+    return this.analytics.getDashboardStats();
+  }
+
   async getUsers(
     skip: number = 0,
     take: number = 20,

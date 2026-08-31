@@ -47,9 +47,9 @@ async function run() {
     const token = login.data.accessToken;
 
     if (token) {
-      const dash = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/dashboard', token);
-      console.log('/analytics/dashboard Status:', dash.status);
-      console.log('/analytics/dashboard Data:', dash.data.substring(0, 200));
+      const adminDash = await getJson('https://mykart-ecommerce.onrender.com/api/v1/admin/dashboard', token);
+      console.log('/admin/dashboard Status:', adminDash.status);
+      console.log('/admin/dashboard Data:', adminDash.data.substring(0, 200));
     }
   } catch (err) {
     console.error('Error:', err);

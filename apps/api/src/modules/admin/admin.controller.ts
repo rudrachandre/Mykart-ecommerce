@@ -31,15 +31,12 @@ import { AnalyticsService } from '../analytics/analytics.service';
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Roles(Role.ADMIN)
 export class AdminController {
-  constructor(
-    private readonly adminService: AdminService,
-    private readonly analyticsService: AnalyticsService,
-  ) {}
+  constructor(private readonly adminService: AdminService) {}
 
   @Get('dashboard')
   @RequirePermissions(PERMISSIONS.ANALYTICS_READ)
   getDashboard() {
-    return this.analyticsService.getDashboardStats();
+    return this.adminService.getDashboardStats();
   }
 
   @Get('users')
