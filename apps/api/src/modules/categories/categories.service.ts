@@ -6,10 +6,19 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { RedisService } from '../../redis/redis.service';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
+
+  private async invalidateCache() {
+    await this.redisService.del('categories:all:includeChildren:true');
+    await this.redisService.del('categories:all:includeChildren:false');
+  }
 
   async create(createCategoryDto: CreateCategoryDto) {
     const existing = await this.prisma.category.findUnique({
@@ -29,13 +38,22 @@ export class CategoriesService {
       }
     }
 
-    return this.prisma.category.create({
+    const category = await this.prisma.category.create({
       data: createCategoryDto,
     });
+
+    await this.invalidateCache();
+    return category;
   }
 
   async findAll(includeChildren: boolean = false) {
-    return this.prisma.category.findMany({
+    const cacheKey = `categories:all:includeChildren:${includeChildren}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
+    const categories = await this.prisma.category.findMany({
       where: {
         parentId: null, // Get top-level categories by default
       },
@@ -57,9 +75,18 @@ export class CategoriesService {
         name: 'asc',
       },
     });
+
+    await this.redisService.set(cacheKey, JSON.stringify(categories), 3600); // Cache for 1 hour
+    return categories;
   }
 
   async findOneBySlug(slug: string) {
+    const cacheKey = `category:slug:${slug}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
     const category = await this.prisma.category.findUnique({
       where: { slug },
       include: {
@@ -72,6 +99,7 @@ export class CategoriesService {
       throw new NotFoundException(`Category with slug ${slug} not found`);
     }
 
+    await this.redisService.set(cacheKey, JSON.stringify(category), 3600); // Cache for 1 hour
     return category;
   }
 
@@ -90,10 +118,18 @@ export class CategoriesService {
       }
     }
 
-    return this.prisma.category.update({
+    const updated = await this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
     });
+
+    await this.invalidateCache();
+    await this.redisService.del(`category:slug:${category.slug}`);
+    if (updated.slug !== category.slug) {
+      await this.redisService.del(`category:slug:${updated.slug}`);
+    }
+
+    return updated;
   }
 
   async remove(id: string) {
@@ -124,8 +160,13 @@ export class CategoriesService {
       );
     }
 
-    return this.prisma.category.delete({
+    const deleted = await this.prisma.category.delete({
       where: { id },
     });
+
+    await this.invalidateCache();
+    await this.redisService.del(`category:slug:${category.slug}`);
+
+    return deleted;
   }
 }

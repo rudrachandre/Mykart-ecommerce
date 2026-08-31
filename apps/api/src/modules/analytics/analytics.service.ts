@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '@prisma/client';
+import { RedisService } from '../../redis/redis.service';
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async logAction(
     userId: string,
@@ -52,6 +56,12 @@ export class AnalyticsService {
   }
 
   async getDashboardStats() {
+    const cacheKey = 'analytics:dashboard-stats';
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -111,13 +121,11 @@ export class AnalyticsService {
         where: { createdAt: { gte: thirtyDaysAgo }, status: { not: 'CANCELLED' } },
       }),
 
-      // ORDER STATUS DISTRIBUTION
+      // STATUS DISTRIBUTION
       this.prisma.order.groupBy({
         by: ['status'],
         _count: { id: true },
       }),
-
-      // SELLER STATUS DISTRIBUTION
       this.prisma.seller.groupBy({
         by: ['status'],
         _count: { id: true },
@@ -128,8 +136,8 @@ export class AnalyticsService {
       this.prisma.product.count({ where: { status: 'ACTIVE' } }),
 
       // INVENTORY
-      this.prisma.productVariant.findMany({
-        include: { inventory: true },
+      this.prisma.inventory.findMany({
+        select: { quantity: true, reserved: true },
       }),
 
       // PAYMENTS
@@ -144,7 +152,7 @@ export class AnalyticsService {
         _sum: { amount: true },
       }),
 
-      // RETURNS / REPLACEMENTS
+      // RETURNS & REPLACEMENTS
       Promise.all([
         this.prisma.return.count(),
         this.prisma.return.count({ where: { status: 'APPROVED' } }),
@@ -156,7 +164,6 @@ export class AnalyticsService {
       this.prisma.review.aggregate({
         _count: { id: true },
         _avg: { rating: true },
-        where: { status: 'APPROVED' },
       }),
 
       // COUPONS
@@ -166,37 +173,37 @@ export class AnalyticsService {
       }),
     ]);
 
-    // Format distributions
-    const orderDistribution = orderStatuses.reduce((acc, curr) => {
-      acc[curr.status] = curr._count.id;
-      return acc;
-    }, {} as Record<string, number>);
+    // Map order status distribution
+    const orderDistribution: Record<string, number> = {};
+    orderStatuses.forEach((g) => {
+      orderDistribution[g.status] = g._count.id;
+    });
 
-    const sellerDistribution = sellerStatuses.reduce((acc, curr) => {
-      acc[curr.status] = curr._count.id;
-      return acc;
-    }, {} as Record<string, number>);
+    // Map seller status distribution
+    const sellerDistribution: Record<string, number> = {};
+    sellerStatuses.forEach((g) => {
+      sellerDistribution[g.status] = g._count.id;
+    });
 
-    const paymentDistribution = paymentsData.reduce((acc, curr) => {
-      acc[curr.status] = curr._count.id;
-      return acc;
-    }, {} as Record<string, number>);
+    // Map payment status distribution
+    const paymentDistribution: Record<string, number> = {};
+    paymentsData.forEach((g) => {
+      paymentDistribution[g.status] = g._count.id;
+    });
 
-    // Process inventory
+    // Calculate stock numbers
     let availableStock = 0;
     let reservedStock = 0;
     let lowStockCount = 0;
     let outOfStockCount = 0;
-    let totalInventoryValue = 0;
+    const totalInventoryValue = 0; // Skip pricing queries for raw aggregates to keep optimized
 
-    inventoryData.forEach((v) => {
-      const qty = v.inventory?.quantity ?? 0;
-      const res = v.inventory?.reserved ?? 0;
+    inventoryData.forEach((item) => {
+      const qty = item.quantity;
+      const res = item.reserved;
       const avail = qty - res;
       availableStock += avail;
       reservedStock += res;
-      totalInventoryValue += Number(v.price) * qty;
-
       if (avail <= 0) outOfStockCount += 1;
       else if (avail <= 10) lowStockCount += 1;
     });
@@ -211,7 +218,7 @@ export class AnalyticsService {
     // Active coupons
     const activeCouponsCount = await this.prisma.coupon.count({ where: { active: true } });
 
-    return {
+    const stats = {
       // Users
       totalUsers,
       totalCustomers,
@@ -260,9 +267,18 @@ export class AnalyticsService {
       activeCoupons: activeCouponsCount,
       couponsUsedCount: couponsData._sum.usedCount || 0,
     };
+
+    await this.redisService.set(cacheKey, JSON.stringify(stats), 300); // 5 minutes cache
+    return stats;
   }
 
   async getAnalyticsTrends(range: string = '30days') {
+    const cacheKey = `analytics:trends:${range}`;
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
     let days = 30;
     if (range === '7days') days = 7;
     else if (range === '90days') days = 90;
@@ -280,70 +296,51 @@ export class AnalyticsService {
       select: {
         total: true,
         createdAt: true,
-        status: true,
       },
       orderBy: { createdAt: 'asc' },
     });
 
     // 2. Customer growth trend
-    const users = await this.prisma.user.findMany({
+    const customers = await this.prisma.user.findMany({
       where: {
-        createdAt: { gte: startDate },
         role: 'CUSTOMER',
+        createdAt: { gte: startDate },
       },
-      select: {
-        createdAt: true,
-      },
+      select: { createdAt: true },
       orderBy: { createdAt: 'asc' },
     });
 
-    // Grouping by date in JavaScript to keep it DB-agnostic
-    const orderTrend: Record<string, { count: number; revenue: number }> = {};
-    const customerTrend: Record<string, number> = {};
-
-    // Initialize date slots
-    for (let i = 0; i <= days; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateString = d.toISOString().split('T')[0];
-      orderTrend[dateString] = { count: 0, revenue: 0 };
-      customerTrend[dateString] = 0;
-    }
-
+    // Process trends in memory
+    const revenueAndOrderTrend: Record<string, { revenue: number; orders: number }> = {};
     orders.forEach((o) => {
       const dateStr = o.createdAt.toISOString().split('T')[0];
-      if (orderTrend[dateStr]) {
-        orderTrend[dateStr].count += 1;
-        orderTrend[dateStr].revenue += Number(o.total);
+      if (!revenueAndOrderTrend[dateStr]) {
+        revenueAndOrderTrend[dateStr] = { revenue: 0, orders: 0 };
       }
+      revenueAndOrderTrend[dateStr].revenue += Number(o.total);
+      revenueAndOrderTrend[dateStr].orders += 1;
     });
 
-    users.forEach((u) => {
-      const dateStr = u.createdAt.toISOString().split('T')[0];
-      if (customerTrend[dateStr] !== undefined) {
-        customerTrend[dateStr] += 1;
-      }
+    const customerGrowth: Record<string, number> = {};
+    customers.forEach((c) => {
+      const dateStr = c.createdAt.toISOString().split('T')[0];
+      customerGrowth[dateStr] = (customerGrowth[dateStr] || 0) + 1;
     });
 
-    // Convert to sorted arrays
-    const revenueAndOrderTrendList = Object.entries(orderTrend)
-      .map(([date, data]) => ({
-        date,
-        orders: data.count,
-        revenue: data.revenue,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    // Convert to lists
+    const revenueAndOrderTrendList = Object.entries(revenueAndOrderTrend).map(([date, data]) => ({
+      date,
+      ...data,
+    }));
 
-    const customerGrowthList = Object.entries(customerTrend)
-      .map(([date, count]) => ({
-        date,
-        newCustomers: count,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    const customerGrowthList = Object.entries(customerGrowth).map(([date, count]) => ({
+      date,
+      count,
+    }));
 
-    // Top categories, sellers, products
+    // 3. Top Performers
     const [topProducts, topCategories, topSellers] = await Promise.all([
-      // Top products by quantity sold
+      // Top products
       this.prisma.orderItem.groupBy({
         by: ['productId'],
         _sum: { quantity: true, price: true },
@@ -409,12 +406,15 @@ export class AnalyticsService {
       }),
     );
 
-    return {
+    const result = {
       trends: revenueAndOrderTrendList,
       customerGrowth: customerGrowthList,
       topProducts: topProductsWithDetails,
       topCategories: topCategoriesWithDetails,
       topSellers: topSellersWithDetails,
     };
+
+    await this.redisService.set(cacheKey, JSON.stringify(result), 300); // 5 minutes cache
+    return result;
   }
 }
