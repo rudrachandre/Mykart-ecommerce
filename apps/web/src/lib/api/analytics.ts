@@ -60,15 +60,6 @@ async function fetchWithAuth(url: string, token?: string, options: RequestInit =
 
 export async function getDashboardStats(token?: string) {
   try {
-    return await fetchWithAuth(`${BASE_URL}/api/v1/admin/dashboard`, token);
-  } catch {}
-
-  try {
-    return await fetchWithAuth(`${BASE_URL}/api/v1/analytics/dashboard`, token);
-  } catch {}
-
-  // Fallback: Aggregate metrics from live admin endpoints
-  try {
     const [usersRes, sellersRes, paymentsRes] = await Promise.all([
       fetchWithAuth(`${BASE_URL}/api/v1/admin/users?take=1`, token).catch(() => ({ total: 1 })),
       fetchWithAuth(`${BASE_URL}/api/v1/admin/sellers?take=1`, token).catch(() => ({ total: 1 })),
