@@ -27,7 +27,7 @@ async function fetchWithAuth(url: string, token?: string, options: RequestInit =
   // If 401 Unauthorized, attempt refresh token via HttpOnly cookie
   if (res.status === 401 && typeof window !== 'undefined') {
     try {
-      const refreshRes = await fetch(`${BASE_URL}/api/v1/auth/refresh-token`, {
+      const refreshRes = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
