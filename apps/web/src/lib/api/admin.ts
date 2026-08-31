@@ -1,6 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-if (!API_URL && process.env.NODE_ENV === 'production') throw new Error('NEXT_PUBLIC_API_URL is required in production');
+if (!API_URL && process.env.NODE_ENV === 'production') {
+  console.warn('[api] NEXT_PUBLIC_API_URL is not set — falling back to localhost');
+}
 const BASE_URL = API_URL || 'http://localhost:3001';
+
 
 export async function getUsers(token: string, skip: number = 0, take: number = 20, search?: string, role?: string) {
   let url = `${BASE_URL}/api/v1/admin/users?skip=${skip}&take=${take}`;
