@@ -108,14 +108,16 @@ export function CategoryDrawer({ dynamicCategories = [] }: { dynamicCategories?:
   // Handle ESC key at window capture level
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' || e.key === 'Esc') {
+      if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
         setIsOpen(false);
         setActiveCategory(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('keydown', handleKeyDown, true);
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('keydown', handleKeyDown, true);
     };
   }, []);
 

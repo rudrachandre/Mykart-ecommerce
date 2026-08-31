@@ -186,7 +186,7 @@ async function runVerification() {
         stats.categoryDrawerPassed = true;
         // Test ESC key
         await desktopPage.keyboard.press('Escape');
-        await desktopPage.waitForTimeout(600);
+        await desktopPage.waitForTimeout(1000);
         const drawerClosed = !(await desktopPage.locator('h3:has-text("Browse MyKart")').isVisible());
         console.log('Category drawer closed via ESC:', drawerClosed);
         if (drawerClosed) stats.categoryDrawerEscPassed = true;

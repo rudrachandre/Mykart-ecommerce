@@ -28,7 +28,7 @@ export default function AdminAnalyticsPage() {
       setError('');
 
       try {
-        const data = await getAnalyticsTrends(undefined, range);
+        const data = await getAnalyticsTrends(range);
         setTrends(data);
       } catch (err: any) {
         console.error('[AdminAnalytics] error:', err);
