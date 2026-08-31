@@ -12,8 +12,8 @@ export class AnalyticsService {
   ) {}
 
   async getDashboardStats() {
+    const cacheKey = 'analytics:dashboard-stats-v3';
     try {
-      const cacheKey = 'analytics:dashboard-stats';
       try {
         const cached = await this.redisService.get(cacheKey);
         if (cached && typeof cached === 'string') {
@@ -107,7 +107,7 @@ export class AnalyticsService {
       const orderDistribution: Record<string, number> = {};
       if (Array.isArray(orderStatuses)) {
         orderStatuses.forEach((g) => {
-          if (g && g.status && g._count) orderDistribution[g.status] = g._count.id || 0;
+          if (g && g.status && g._count) orderDistribution[g.status] = Number(g._count.id || 0);
         });
       }
 
@@ -115,7 +115,7 @@ export class AnalyticsService {
       const sellerDistribution: Record<string, number> = {};
       if (Array.isArray(sellerStatuses)) {
         sellerStatuses.forEach((g) => {
-          if (g && g.status && g._count) sellerDistribution[g.status] = g._count.id || 0;
+          if (g && g.status && g._count) sellerDistribution[g.status] = Number(g._count.id || 0);
         });
       }
 
@@ -123,7 +123,7 @@ export class AnalyticsService {
       const paymentDistribution: Record<string, number> = {};
       if (Array.isArray(paymentsData)) {
         paymentsData.forEach((g) => {
-          if (g && g.status && g._count) paymentDistribution[g.status] = g._count.id || 0;
+          if (g && g.status && g._count) paymentDistribution[g.status] = Number(g._count.id || 0);
         });
       }
 
