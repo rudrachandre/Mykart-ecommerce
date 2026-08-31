@@ -335,7 +335,11 @@ export class SellersService {
         data: { status: 'RETURNED' },
       });
 
-      for (const item of returnRecord.order.items) {
+      const sellerItems = returnRecord.order.items.filter(
+        (item) => item.sellerId === seller.id,
+      );
+
+      for (const item of sellerItems) {
         await prisma.inventory.updateMany({
           where: {
             variantId: item.variantId,
@@ -353,19 +357,30 @@ export class SellersService {
       });
 
       if (payment) {
+        let sellerAmount = 0;
+        for (const item of sellerItems) {
+          sellerAmount += Number(item.price) * item.quantity;
+        }
+
         await prisma.refund.create({
           data: {
             orderId,
             paymentId: payment.id,
-            amount: payment.amount,
+            amount: sellerAmount,
             reason: `Approved return: ${returnRecord.reason}`,
             status: 'PENDING',
           },
         });
 
+        const totalOrderAmount = returnRecord.order.items.reduce(
+          (acc, item) => acc + Number(item.price) * item.quantity,
+          0,
+        );
+        const isFullRefund = sellerAmount >= totalOrderAmount;
+
         await prisma.payment.update({
           where: { id: payment.id },
-          data: { status: 'REFUNDED' },
+          data: { status: isFullRefund ? 'REFUNDED' : 'COMPLETED' },
         });
       }
 
