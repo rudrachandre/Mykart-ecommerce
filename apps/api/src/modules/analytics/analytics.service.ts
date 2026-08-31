@@ -57,10 +57,12 @@ export class AnalyticsService {
 
   async getDashboardStats() {
     const cacheKey = 'analytics:dashboard-stats';
-    const cached = await this.redisService.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
-    }
+    try {
+      const cached = await this.redisService.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch {}
 
     const now = new Date();
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -175,40 +177,48 @@ export class AnalyticsService {
 
     // Map order status distribution
     const orderDistribution: Record<string, number> = {};
-    orderStatuses.forEach((g) => {
-      orderDistribution[g.status] = g._count.id;
-    });
+    if (Array.isArray(orderStatuses)) {
+      orderStatuses.forEach((g) => {
+        orderDistribution[g.status] = g._count.id;
+      });
+    }
 
     // Map seller status distribution
     const sellerDistribution: Record<string, number> = {};
-    sellerStatuses.forEach((g) => {
-      sellerDistribution[g.status] = g._count.id;
-    });
+    if (Array.isArray(sellerStatuses)) {
+      sellerStatuses.forEach((g) => {
+        sellerDistribution[g.status] = g._count.id;
+      });
+    }
 
     // Map payment status distribution
     const paymentDistribution: Record<string, number> = {};
-    paymentsData.forEach((g) => {
-      paymentDistribution[g.status] = g._count.id;
-    });
+    if (Array.isArray(paymentsData)) {
+      paymentsData.forEach((g) => {
+        paymentDistribution[g.status] = g._count.id;
+      });
+    }
 
     // Calculate stock numbers
     let availableStock = 0;
     let reservedStock = 0;
     let lowStockCount = 0;
     let outOfStockCount = 0;
-    const totalInventoryValue = 0; // Skip pricing queries for raw aggregates to keep optimized
+    const totalInventoryValue = 0;
 
-    inventoryData.forEach((item) => {
-      const qty = item.quantity;
-      const res = item.reserved;
-      const avail = qty - res;
-      availableStock += avail;
-      reservedStock += res;
-      if (avail <= 0) outOfStockCount += 1;
-      else if (avail <= 10) lowStockCount += 1;
-    });
+    if (Array.isArray(inventoryData)) {
+      inventoryData.forEach((item) => {
+        const qty = item.quantity;
+        const res = item.reserved;
+        const avail = qty - res;
+        availableStock += avail;
+        reservedStock += res;
+        if (avail <= 0) outOfStockCount += 1;
+        else if (avail <= 10) lowStockCount += 1;
+      });
+    }
 
-    const totalRevenue = Number(totalRevenueData._sum.total ?? 0);
+    const totalRevenue = Number(totalRevenueData?._sum?.total ?? 0);
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     // Process reported reviews
@@ -232,9 +242,9 @@ export class AnalyticsService {
       orderDistribution,
       // Revenue
       totalRevenue,
-      revenueToday: Number(revenueTodayData._sum.total ?? 0),
-      revenueLast7Days: Number(revenueLast7DaysData._sum.total ?? 0),
-      revenueLast30Days: Number(revenueLast30DaysData._sum.total ?? 0),
+      revenueToday: Number(revenueTodayData?._sum?.total ?? 0),
+      revenueLast7Days: Number(revenueLast7DaysData?._sum?.total ?? 0),
+      revenueLast30Days: Number(revenueLast30DaysData?._sum?.total ?? 0),
       avgOrderValue,
       // Sellers
       sellerDistribution,
@@ -250,25 +260,28 @@ export class AnalyticsService {
       // Payments
       paymentDistribution,
       // Refunds
-      totalRefunds: refundsData._count.id,
-      totalRefundAmount: Number(refundsData._sum.amount ?? 0),
+      totalRefunds: refundsData?._count?.id ?? 0,
+      totalRefundAmount: Number(refundsData?._sum?.amount ?? 0),
       // Returns
-      totalReturns: returnsData[0],
-      approvedReturns: returnsData[1],
-      rejectedReturns: returnsData[2],
-      totalReplacements: returnsData[3],
+      totalReturns: Array.isArray(returnsData) ? returnsData[0] : 0,
+      approvedReturns: Array.isArray(returnsData) ? returnsData[1] : 0,
+      rejectedReturns: Array.isArray(returnsData) ? returnsData[2] : 0,
+      totalReplacements: Array.isArray(returnsData) ? returnsData[3] : 0,
       // Reviews
-      totalReviews: reviewsData._count.id,
-      avgRating: reviewsData._avg.rating || 0,
+      totalReviews: reviewsData?._count?.id ?? 0,
+      avgRating: reviewsData?._avg?.rating || 0,
       reportedReviewsCount,
       pendingModerationCount,
       // Coupons
-      totalCoupons: couponsData._count.id,
+      totalCoupons: couponsData?._count?.id ?? 0,
       activeCoupons: activeCouponsCount,
-      couponsUsedCount: couponsData._sum.usedCount || 0,
+      couponsUsedCount: couponsData?._sum?.usedCount || 0,
     };
 
-    await this.redisService.set(cacheKey, JSON.stringify(stats), 300); // 5 minutes cache
+    try {
+      await this.redisService.set(cacheKey, JSON.stringify(stats), 300);
+    } catch {}
+
     return stats;
   }
 
