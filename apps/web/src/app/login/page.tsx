@@ -74,12 +74,17 @@ function LoginForm() {
       }
 
       Cookies.set("accessToken", data.accessToken, {
-        sameSite: "strict",
+        sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
       });
-      await refreshUser();
-      router.replace(callbackUrl);
-      router.refresh();
+
+      try {
+        await refreshUser();
+      } catch (err) {
+        console.error("[Login] refreshUser error:", err);
+      }
+
+      window.location.href = callbackUrl;
     } catch {
       setError("Unable to reach the sign-in service. Please try again.");
     } finally {

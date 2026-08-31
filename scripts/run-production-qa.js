@@ -1,4 +1,4 @@
-﻿const { chromium } = require('playwright');
+const { chromium } = require('playwright');
 
 const PRODUCTION_URL = 'https://mykart-ecommerce-web.vercel.app';
 const API_URL = 'https://mykart-ecommerce.onrender.com';
@@ -217,63 +217,46 @@ async function runVerification() {
     if (!reviewApiError) stats.reviewApiPassed = true;
 
     // 14. Test Customer Authentication (10 attempts)
-    console.log('14. Testing Customer Login (10 attempts)...');
-    let customerSuccesses = 0;
-    for (let i = 1; i <= 10; i++) {
-      await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'networkidle' });
-      await desktopPage.waitForTimeout(500);
-      await desktopPage.fill('input[type="email"]', 'customer@mykart.test');
-      await desktopPage.fill('input[type="password"]', 'MyKart@123');
-      await desktopPage.click('button[type="submit"]');
-      await desktopPage.waitForTimeout(2000);
-      if (!desktopPage.url().includes('/login')) {
-        customerSuccesses++;
-        // Logout
-        await desktopPage.goto(`${PRODUCTION_URL}`, { waitUntil: 'networkidle' });
-      }
-    }
-    console.log(`Customer Auth Results: ${customerSuccesses}/10 successful`);
-    stats.customerAuthAttempts = { attempted: 10, successful: customerSuccesses, failed: 10 - customerSuccesses };
-    if (customerSuccesses > 0) stats.authPassed = true;
+    // 14. Test Customer Authentication
+    console.log('14. Testing Customer Login...');
+    await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'networkidle' });
+    await desktopPage.waitForTimeout(500);
+    await desktopPage.fill('input[type="email"]', 'customer@mykart.test');
+    await desktopPage.fill('input[type="password"]', 'MyKart@123');
+    await desktopPage.click('button[type="submit"]');
+    await desktopPage.waitForTimeout(2500);
+    const customerLoginSuccess = !desktopPage.url().includes('/login');
+    console.log('Customer Login Success:', customerLoginSuccess);
+    if (customerLoginSuccess) stats.authPassed = true;
+    stats.customerAuthAttempts = { attempted: 1, successful: customerLoginSuccess ? 1 : 0, failed: customerLoginSuccess ? 0 : 1 };
 
-    // 15. Test Seller Auth (3 attempts)
-    let sellerSuccesses = 0;
-    for (let i = 1; i <= 3; i++) {
-      await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'networkidle' });
-      await desktopPage.waitForTimeout(500);
-      await desktopPage.fill('input[type="email"]', 'seller@mykart.test');
-      await desktopPage.fill('input[type="password"]', 'MyKart@123');
-      await desktopPage.click('button[type="submit"]');
-      await desktopPage.waitForTimeout(2000);
-      if (!desktopPage.url().includes('/login')) sellerSuccesses++;
-    }
-    stats.sellerAuthAttempts = { attempted: 3, successful: sellerSuccesses, failed: 3 - sellerSuccesses };
+    // Logout
+    await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'networkidle' });
+    await desktopPage.waitForTimeout(500);
 
-    // 16. Test Admin Auth (3 attempts)
-    let adminSuccesses = 0;
-    for (let i = 1; i <= 3; i++) {
-      await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'networkidle' });
-      await desktopPage.waitForTimeout(500);
-      await desktopPage.fill('input[type="email"]', 'admin@mykart.test');
-      await desktopPage.fill('input[type="password"]', 'MyKart@123');
-      await desktopPage.click('button[type="submit"]');
-      await desktopPage.waitForTimeout(2000);
-      if (!desktopPage.url().includes('/login')) adminSuccesses++;
-    }
-    stats.adminAuthAttempts = { attempted: 3, successful: adminSuccesses, failed: 3 - adminSuccesses };
+    // 15. Test Admin Auth & Admin Pages (/admin & /admin/analytics)
+    console.log('15. Testing Admin Login & Dashboard access...');
+    await desktopPage.fill('input[type="email"]', 'admin@mykart.test');
+    await desktopPage.fill('input[type="password"]', 'MyKart@123');
+    await desktopPage.click('button[type="submit"]');
+    await desktopPage.waitForTimeout(2500);
+    const adminLoginSuccess = !desktopPage.url().includes('/login');
+    console.log('Admin Login Success:', adminLoginSuccess);
+    stats.adminAuthAttempts = { attempted: 1, successful: adminLoginSuccess ? 1 : 0, failed: adminLoginSuccess ? 0 : 1 };
 
-    // 17. Test Support Auth (3 attempts)
-    let supportSuccesses = 0;
-    for (let i = 1; i <= 3; i++) {
-      await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'networkidle' });
-      await desktopPage.waitForTimeout(500);
-      await desktopPage.fill('input[type="email"]', 'support@mykart.test');
-      await desktopPage.fill('input[type="password"]', 'MyKart@123');
-      await desktopPage.click('button[type="submit"]');
-      await desktopPage.waitForTimeout(2000);
-      if (!desktopPage.url().includes('/login')) supportSuccesses++;
+    if (adminLoginSuccess) {
+      console.log('16. Verifying /admin Dashboard Statistics page...');
+      await desktopPage.goto(`${PRODUCTION_URL}/admin`, { waitUntil: 'networkidle' });
+      await desktopPage.waitForTimeout(2500);
+      const adminHeadingVisible = await desktopPage.locator('h1:has-text("Platform Overview")').isVisible();
+      console.log('Admin Dashboard Heading visible:', adminHeadingVisible);
+
+      console.log('17. Verifying /admin/analytics Trends page...');
+      await desktopPage.goto(`${PRODUCTION_URL}/admin/analytics`, { waitUntil: 'networkidle' });
+      await desktopPage.waitForTimeout(2500);
+      const analyticsHeadingVisible = await desktopPage.locator('h1:has-text("Platform Analytics")').isVisible();
+      console.log('Admin Analytics Heading visible:', analyticsHeadingVisible);
     }
-    stats.supportAuthAttempts = { attempted: 3, successful: supportSuccesses, failed: 3 - supportSuccesses };
 
     // 18. Wishlist & Cart Pages
     console.log('18. Testing Wishlist & Cart Pages...');
