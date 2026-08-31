@@ -43,4 +43,42 @@ export class HealthController {
       },
     };
   }
+
+  @Get('check-db')
+  async checkDb() {
+    try {
+      const result = await this.prisma.$queryRawUnsafe(`
+        SELECT 
+          current_database() as database,
+          current_user as "user",
+          version() as db_version
+      `);
+      
+      const tables = await this.prisma.$queryRawUnsafe(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+      `);
+      
+      const users = await this.prisma.$queryRawUnsafe(`
+        SELECT id, email, role FROM "User"
+      `);
+
+      return {
+        status: 'ok',
+        env: {
+          database_url_exists: !!process.env.DATABASE_URL,
+        },
+        connection: result,
+        tables: tables,
+        users: users
+      };
+    } catch (e) {
+      return {
+        status: 'error',
+        error: e.message,
+      };
+    }
+  }
 }
+
