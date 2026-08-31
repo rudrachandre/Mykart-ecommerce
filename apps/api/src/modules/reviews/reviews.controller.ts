@@ -1,4 +1,4 @@
-import {
+﻿import {
   Controller,
   Get,
   Post,
@@ -22,14 +22,21 @@ export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Get('product/:productId')
-  getProductReviews(
+  async getProductReviews(
     @Param('productId') productId: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const p = page ? parseInt(page, 10) : 1;
-    const l = limit ? parseInt(limit, 10) : 10;
-    return this.reviewsService.getProductReviews(productId, p, l);
+    try {
+      const p = page ? parseInt(page, 10) : 1;
+      const l = limit ? parseInt(limit, 10) : 10;
+      return await this.reviewsService.getProductReviews(productId, p, l);
+    } catch {
+      return {
+        items: [],
+        meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      };
+    }
   }
 
   @Post()
@@ -62,7 +69,6 @@ export class ReviewsController {
     return this.reviewsService.reportReview(id);
   }
 
-  // Admin moderation: get reported reviews
   @Get('reported')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions(PERMISSIONS.REVIEW_MODERATE)
@@ -75,7 +81,6 @@ export class ReviewsController {
     return this.reviewsService.getReportedReviews(p, l);
   }
 
-  // Admin moderation: approve/reject status
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions(PERMISSIONS.REVIEW_MODERATE)
