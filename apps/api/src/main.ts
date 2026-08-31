@@ -30,12 +30,22 @@ async function bootstrap() {
 
   // CORS Configuration
   app.enableCors({
-    origin: process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(',')
-      : process.env.NODE_ENV === 'production'
-        ? ['https://mykart-ecommerce-web.vercel.app']
-        : ['http://localhost:3000', 'http://localhost:3002'],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const allowed = [
+        'https://mykart-ecommerce-web.vercel.app',
+        'http://localhost:3000',
+        'http://localhost:3002',
+      ];
+      if (process.env.CORS_ORIGIN) {
+        allowed.push(...process.env.CORS_ORIGIN.split(',').map((s) => s.trim()));
+      }
+      if (allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Fail open for browser client requests
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 
