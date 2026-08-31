@@ -47,17 +47,9 @@ async function run() {
     const token = login.data.accessToken;
 
     if (token) {
-      const pmts = await getJson('https://mykart-ecommerce.onrender.com/api/v1/admin/payments', token);
-      console.log('/admin/payments Status:', pmts.status);
-
-      const rfds = await getJson('https://mykart-ecommerce.onrender.com/api/v1/admin/refunds', token);
-      console.log('/admin/refunds Status:', rfds.status);
-
-      const logs = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/audit-logs', token);
-      console.log('/analytics/audit-logs Status:', logs.status);
-
-      const dash = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/dashboard', token);
-      console.log('/analytics/dashboard Status:', dash.status);
+      const overview = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/overview', token);
+      console.log('/analytics/overview Status:', overview.status);
+      console.log('/analytics/overview Data preview:', overview.data.substring(0, 150));
     }
   } catch (err) {
     console.error('Error:', err);
