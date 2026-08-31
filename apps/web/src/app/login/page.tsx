@@ -10,8 +10,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-if (!apiUrl && process.env.NODE_ENV === "production")
-  throw new Error("NEXT_PUBLIC_API_URL is required");
+if (!apiUrl && process.env.NODE_ENV === "production") {
+  console.warn("NEXT_PUBLIC_API_URL is required");
+}
 const finalApiUrl = apiUrl || "http://localhost:3001";
 
 function getSafeCallbackUrl(callbackUrl: string | null) {
@@ -48,7 +49,7 @@ function LoginForm() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
 
       const data = await response.json().catch(() => null);

@@ -1,6 +1,7 @@
 const API_URL_ENV = process.env.NEXT_PUBLIC_API_URL;
-if (!API_URL_ENV && process.env.NODE_ENV === 'production')
-  throw new Error("NEXT_PUBLIC_API_URL is required in production");
+if (!API_URL_ENV && process.env.NODE_ENV === 'production') {
+  console.warn('[api] NEXT_PUBLIC_API_URL is not set — falling back to localhost');
+}
 const BASE_URL = API_URL_ENV || 'http://localhost:3001';
 const API_URL = `${BASE_URL}/api/v1`;
 

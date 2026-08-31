@@ -21,13 +21,55 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+let inProgressRefreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  if (inProgressRefreshPromise) {
+    return inProgressRefreshPromise;
+  }
+
+  inProgressRefreshPromise = (async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.accessToken) {
+          Cookies.set('accessToken', data.accessToken, {
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production',
+          });
+          return data.accessToken;
+        }
+      }
+      Cookies.remove('accessToken');
+      return null;
+    } catch (e) {
+      console.error('[AuthContext] Token refresh failed:', e);
+      return null;
+    } finally {
+      inProgressRefreshPromise = null;
+    }
+  })();
+
+  return inProgressRefreshPromise;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const fetchUser = async () => {
-    const token = Cookies.get('accessToken');
+    let token = Cookies.get('accessToken');
+
+    if (!token) {
+      token = (await refreshAccessToken()) || undefined;
+    }
+
     if (!token) {
       setUser(null);
       setLoading(false);
@@ -36,11 +78,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/v1/users/me`, {
+      let response = await fetch(`${apiUrl}/api/v1/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      if (response.status === 401) {
+        // Try refreshing once
+        token = (await refreshAccessToken()) || undefined;
+        if (token) {
+          response = await fetch(`${apiUrl}/api/v1/users/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        }
+      }
+
       if (response.ok) {
         const data = await response.json();
         setUser(data);
@@ -67,7 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } else {
-        // Token might be invalid or expired
         setUser(null);
       }
     } catch (error) {
@@ -82,6 +136,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     startTransition(() => {
       fetchUser();
     });
+
+    // Refresh access token periodically in the background every 8 minutes
+    const interval = setInterval(() => {
+      if (Cookies.get('accessToken')) {
+        refreshAccessToken();
+      }
+    }, 8 * 60 * 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const logout = async () => {
