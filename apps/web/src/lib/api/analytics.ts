@@ -37,6 +37,7 @@ async function fetchWithAuth(url: string, tokenParam?: string) {
 
   let res = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: 'include',
     cache: 'no-store',
   });
 
@@ -45,6 +46,7 @@ async function fetchWithAuth(url: string, tokenParam?: string) {
     if (newToken) {
       res = await fetch(url, {
         headers: { Authorization: `Bearer ${newToken}` },
+        credentials: 'include',
         cache: 'no-store',
       });
     }
