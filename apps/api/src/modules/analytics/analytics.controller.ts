@@ -15,6 +15,7 @@ export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get('dashboard')
+  @Get('overview')
   @RequirePermissions(PERMISSIONS.ANALYTICS_READ)
   async getDashboardStats() {
     try {

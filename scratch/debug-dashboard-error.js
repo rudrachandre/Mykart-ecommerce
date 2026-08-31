@@ -44,19 +44,20 @@ async function run() {
       email: 'admin@mykart.test',
       password: 'MyKart@123',
     });
-    console.log('Login Status:', login.status);
     const token = login.data.accessToken;
 
     if (token) {
-      const users = await getJson('https://mykart-ecommerce.onrender.com/api/v1/admin/users', token);
-      console.log('/admin/users Status:', users.status);
+      const pmts = await getJson('https://mykart-ecommerce.onrender.com/api/v1/admin/payments', token);
+      console.log('/admin/payments Status:', pmts.status);
 
-      const trends = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/trends', token);
-      console.log('/analytics/trends Status:', trends.status);
+      const rfds = await getJson('https://mykart-ecommerce.onrender.com/api/v1/admin/refunds', token);
+      console.log('/admin/refunds Status:', rfds.status);
+
+      const logs = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/audit-logs', token);
+      console.log('/analytics/audit-logs Status:', logs.status);
 
       const dash = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/dashboard', token);
       console.log('/analytics/dashboard Status:', dash.status);
-      console.log('/analytics/dashboard Body:', dash.data);
     }
   } catch (err) {
     console.error('Error:', err);

@@ -61,7 +61,7 @@ async function fetchWithAuth(url: string, tokenParam?: string) {
 }
 
 export async function getDashboardStats(token?: string) {
-  return fetchWithAuth(`${BASE_URL}/api/v1/analytics/dashboard`, token);
+  return fetchWithAuth(`${BASE_URL}/api/v1/analytics/overview`, token);
 }
 
 export async function getAuditLogs(token?: string, skip: number = 0, take: number = 20, action?: string, userId?: string) {
