@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, ShieldCheck, Truck, RotateCcw, CreditCard, Tag, Sparkles, HelpCircle, Store } from 'lucide-react';
+import { Heart, Truck, Sparkles, HelpCircle, Store } from 'lucide-react';
 import { SearchBar } from '../search/SearchBar';
 import { NotificationDropdown } from './NotificationDropdown';
 import { UserDropdown } from './UserDropdown';
@@ -20,14 +20,6 @@ export function Header() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  const benefits = [
-    { icon: Truck, label: 'Free Delivery' },
-    { icon: RotateCcw, label: '7 Days Return' },
-    { icon: ShieldCheck, label: 'Secure Payment' },
-    { icon: CreditCard, label: 'Pay on Delivery' },
-    { icon: Tag, label: 'Best Prices' },
-  ];
 
   return (
     <header
@@ -107,20 +99,6 @@ export function Header() {
         <SearchBar />
       </div>
 
-      {/* 3. BENEFITS BAR */}
-      <div className="hidden md:block bg-card border-t py-2 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-[1600px] justify-between items-center text-xs font-medium text-muted-foreground">
-          {benefits.map((b, idx) => {
-            const Icon = b.icon;
-            return (
-              <div key={idx} className="flex items-center gap-1.5">
-                <Icon className="w-4 h-4 text-primary shrink-0" />
-                <span>{b.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </header>
   );
 }
