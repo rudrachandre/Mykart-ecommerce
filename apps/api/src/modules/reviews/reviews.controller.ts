@@ -30,12 +30,10 @@ export class ReviewsController {
     try {
       const p = page ? parseInt(page, 10) : 1;
       const l = limit ? parseInt(limit, 10) : 10;
-      return await this.reviewsService.getProductReviews(productId, p, l);
+      const res = await this.reviewsService.getProductReviews(productId, p, l);
+      return res || { items: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
     } catch {
-      return {
-        items: [],
-        meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
-      };
+      return { items: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
     }
   }
 
