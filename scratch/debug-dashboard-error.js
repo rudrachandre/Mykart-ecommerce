@@ -47,9 +47,9 @@ async function run() {
     const token = login.data.accessToken;
 
     if (token) {
-      const overview = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/overview', token);
-      console.log('/analytics/overview Status:', overview.status);
-      console.log('/analytics/overview Data preview:', overview.data.substring(0, 150));
+      const dash = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/dashboard', token);
+      console.log('/analytics/dashboard Status:', dash.status);
+      console.log('/analytics/dashboard Data:', dash.data.substring(0, 200));
     }
   } catch (err) {
     console.error('Error:', err);
