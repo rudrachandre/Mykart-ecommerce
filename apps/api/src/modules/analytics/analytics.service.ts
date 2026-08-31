@@ -237,4 +237,27 @@ export class AnalyticsService {
 
     return { logs, total };
   }
+
+  async logAction(
+    userId: string,
+    action: string,
+    targetId?: string,
+    metadata?: Record<string, any>,
+  ) {
+    try {
+      const p = this.prisma as any;
+      if (p.auditLog?.create) {
+        await p.auditLog.create({
+          data: {
+            userId,
+            action,
+            targetId,
+            metadata: metadata || {},
+          },
+        });
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed to log action ${action}: ${err?.message}`);
+    }
+  }
 }

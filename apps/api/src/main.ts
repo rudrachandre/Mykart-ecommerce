@@ -31,7 +31,7 @@ async function bootstrap() {
 
   // CORS Configuration
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (!origin) return callback(null, true);
       const allowed = [
         'https://mykart-ecommerce-web.vercel.app',
