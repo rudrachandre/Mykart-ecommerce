@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { createContext, useContext, useState, useEffect, startTransition, ReactNode } from 'react';
 import Cookies from 'js-cookie';
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${refreshedToken || token}`
+                  'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ productIds }),
               });
