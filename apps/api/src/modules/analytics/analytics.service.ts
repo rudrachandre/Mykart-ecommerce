@@ -92,85 +92,85 @@ export class AnalyticsService {
       couponsData,
     ] = await Promise.all([
       // USERS
-      this.prisma.user.count(),
-      this.prisma.user.count({ where: { role: 'CUSTOMER' } }),
-      this.prisma.user.count({ where: { role: 'SELLER' } }),
-      this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: thirtyDaysAgo } } }),
+      this.prisma.user.count().catch(() => 0),
+      this.prisma.user.count({ where: { role: 'CUSTOMER' } }).catch(() => 0),
+      this.prisma.user.count({ where: { role: 'SELLER' } }).catch(() => 0),
+      this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0),
 
       // ORDERS
-      this.prisma.order.count(),
-      this.prisma.order.count({ where: { createdAt: { gte: oneDayAgo } } }),
-      this.prisma.order.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
-      this.prisma.order.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+      this.prisma.order.count().catch(() => 0),
+      this.prisma.order.count({ where: { createdAt: { gte: oneDayAgo } } }).catch(() => 0),
+      this.prisma.order.count({ where: { createdAt: { gte: sevenDaysAgo } } }).catch(() => 0),
+      this.prisma.order.count({ where: { createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0),
 
       // REVENUE
       this.prisma.order.aggregate({
         _sum: { total: true },
         where: { status: { not: 'CANCELLED' } },
-      }),
+      }).catch(() => ({ _sum: { total: null } })),
       this.prisma.order.aggregate({
         _sum: { total: true },
         where: { createdAt: { gte: oneDayAgo }, status: { not: 'CANCELLED' } },
-      }),
+      }).catch(() => ({ _sum: { total: null } })),
       this.prisma.order.aggregate({
         _sum: { total: true },
         where: { createdAt: { gte: sevenDaysAgo }, status: { not: 'CANCELLED' } },
-      }),
+      }).catch(() => ({ _sum: { total: null } })),
       this.prisma.order.aggregate({
         _sum: { total: true },
         where: { createdAt: { gte: thirtyDaysAgo }, status: { not: 'CANCELLED' } },
-      }),
+      }).catch(() => ({ _sum: { total: null } })),
 
       // STATUS DISTRIBUTION
       this.prisma.order.groupBy({
         by: ['status'],
         _count: { id: true },
-      }),
+      }).catch(() => []),
       this.prisma.seller.groupBy({
         by: ['status'],
         _count: { id: true },
-      }),
+      }).catch(() => []),
 
       // PRODUCTS
-      this.prisma.product.count(),
-      this.prisma.product.count({ where: { status: 'ACTIVE' } }),
+      this.prisma.product.count().catch(() => 0),
+      this.prisma.product.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
 
       // INVENTORY
       this.prisma.inventory.findMany({
         select: { quantity: true, reserved: true },
-      }),
+      }).catch(() => []),
 
       // PAYMENTS
       this.prisma.payment.groupBy({
         by: ['status'],
         _count: { id: true },
-      }),
+      }).catch(() => []),
 
       // REFUNDS
       this.prisma.refund.aggregate({
         _count: { id: true },
         _sum: { amount: true },
-      }),
+      }).catch(() => ({ _count: { id: 0 }, _sum: { amount: null } })),
 
       // RETURNS & REPLACEMENTS
       Promise.all([
-        this.prisma.return.count(),
-        this.prisma.return.count({ where: { status: 'APPROVED' } }),
-        this.prisma.return.count({ where: { status: 'REJECTED' } }),
-        this.prisma.replacement.count(),
-      ]),
+        this.prisma.return.count().catch(() => 0),
+        this.prisma.return.count({ where: { status: 'APPROVED' } }).catch(() => 0),
+        this.prisma.return.count({ where: { status: 'REJECTED' } }).catch(() => 0),
+        this.prisma.replacement.count().catch(() => 0),
+      ]).catch(() => [0, 0, 0, 0]),
 
       // REVIEWS
       this.prisma.review.aggregate({
         _count: { id: true },
         _avg: { rating: true },
-      }),
+      }).catch(() => ({ _count: { id: 0 }, _avg: { rating: null } })),
 
       // COUPONS
       this.prisma.coupon.aggregate({
         _count: { id: true },
         _sum: { usedCount: true },
-      }),
+      }).catch(() => ({ _count: { id: 0 }, _sum: { usedCount: null } })),
     ]);
 
     // Map order status distribution
@@ -212,11 +212,11 @@ export class AnalyticsService {
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     // Process reported reviews
-    const reportedReviewsCount = await this.prisma.review.count({ where: { reported: true } });
-    const pendingModerationCount = await this.prisma.review.count({ where: { status: 'PENDING' } });
+    const reportedReviewsCount = await this.prisma.review.count({ where: { reported: true } }).catch(() => 0);
+    const pendingModerationCount = await this.prisma.review.count({ where: { status: 'PENDING' } }).catch(() => 0);
 
     // Active coupons
-    const activeCouponsCount = await this.prisma.coupon.count({ where: { active: true } });
+    const activeCouponsCount = await this.prisma.coupon.count({ where: { active: true } }).catch(() => 0);
 
     const stats = {
       // Users

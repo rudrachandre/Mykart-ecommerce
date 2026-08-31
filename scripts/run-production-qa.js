@@ -223,31 +223,33 @@ async function runVerification() {
     await desktopPage.waitForTimeout(500);
     await desktopPage.fill('input[type="email"]', 'customer@mykart.test');
     await desktopPage.fill('input[type="password"]', 'MyKart@123');
-    await desktopPage.click('button[type="submit"]');
-    await desktopPage.waitForTimeout(2500);
+    await Promise.all([
+      desktopPage.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(() => null),
+      desktopPage.click('button[type="submit"]'),
+    ]);
+    await desktopPage.waitForTimeout(1000);
     const customerLoginSuccess = !desktopPage.url().includes('/login');
-    console.log('Customer Login Success:', customerLoginSuccess);
+    console.log('Customer Login Success:', customerLoginSuccess, 'URL:', desktopPage.url());
     if (customerLoginSuccess) stats.authPassed = true;
     stats.customerAuthAttempts = { attempted: 1, successful: customerLoginSuccess ? 1 : 0, failed: customerLoginSuccess ? 0 : 1 };
 
-    // Logout
-    await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'networkidle' });
-    await desktopPage.waitForTimeout(500);
-
     // 15. Test Admin Auth & Admin Pages (/admin & /admin/analytics)
     console.log('15. Testing Admin Login & Dashboard access...');
+    await desktopPage.goto(`${PRODUCTION_URL}/login?callbackUrl=/admin`, { waitUntil: 'networkidle' });
+    await desktopPage.waitForTimeout(500);
     await desktopPage.fill('input[type="email"]', 'admin@mykart.test');
     await desktopPage.fill('input[type="password"]', 'MyKart@123');
-    await desktopPage.click('button[type="submit"]');
-    await desktopPage.waitForTimeout(2500);
-    const adminLoginSuccess = !desktopPage.url().includes('/login');
-    console.log('Admin Login Success:', adminLoginSuccess);
+    await Promise.all([
+      desktopPage.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(() => null),
+      desktopPage.click('button[type="submit"]'),
+    ]);
+    await desktopPage.waitForTimeout(1500);
+    const adminLoginSuccess = desktopPage.url().includes('/admin');
+    console.log('Admin Login & Redirect to /admin Success:', adminLoginSuccess, 'URL:', desktopPage.url());
     stats.adminAuthAttempts = { attempted: 1, successful: adminLoginSuccess ? 1 : 0, failed: adminLoginSuccess ? 0 : 1 };
 
     if (adminLoginSuccess) {
       console.log('16. Verifying /admin Dashboard Statistics page...');
-      await desktopPage.goto(`${PRODUCTION_URL}/admin`, { waitUntil: 'networkidle' });
-      await desktopPage.waitForTimeout(2500);
       const adminHeadingVisible = await desktopPage.locator('h1:has-text("Platform Overview")').isVisible();
       console.log('Admin Dashboard Heading visible:', adminHeadingVisible);
 
