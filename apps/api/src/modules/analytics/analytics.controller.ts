@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -20,9 +20,20 @@ export class AnalyticsController {
     return this.analyticsService.getDashboardStats();
   }
 
+  @Get('trends')
+  @RequirePermissions(PERMISSIONS.ANALYTICS_READ)
+  getAnalyticsTrends(@Query('range') range?: string) {
+    return this.analyticsService.getAnalyticsTrends(range);
+  }
+
   @Get('audit-logs')
   @RequirePermissions(PERMISSIONS.ANALYTICS_READ)
-  getAuditLogs() {
-    return this.analyticsService.getAuditLogs();
+  getAuditLogs(
+    @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number,
+    @Query('take', new DefaultValuePipe(20), ParseIntPipe) take: number,
+    @Query('action') action?: string,
+    @Query('userId') userId?: string,
+  ) {
+    return this.analyticsService.getAuditLogs(skip, take, action, userId);
   }
 }

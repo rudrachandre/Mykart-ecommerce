@@ -4,8 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import { getDashboardStats } from '@/lib/api/analytics';
-import { Users, Package, ShoppingCart, DollarSign, Activity } from 'lucide-react';
-import { motion } from 'framer-motion';
+import {
+  DollarSign,
+  ShoppingCart,
+  Users,
+  Store,
+  Package,
+  TrendingUp,
+  Activity,
+  Percent,
+  MessageSquare,
+  FileText,
+  Boxes,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboardPage() {
@@ -45,7 +56,7 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
@@ -57,93 +68,134 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
+
+  const kpis = [
+    {
+      title: 'Total Revenue',
+      value: `₹${Number(stats?.totalRevenue ?? 0).toFixed(2)}`,
+      desc: `Today: ₹${Number(stats?.revenueToday ?? 0).toFixed(2)}`,
+      icon: DollarSign,
+      color: 'text-green-600',
+    },
+    {
+      title: 'Total Orders',
+      value: stats?.totalOrders || 0,
+      desc: `Today: ${stats?.ordersToday || 0}`,
+      icon: ShoppingCart,
+      color: 'text-blue-500',
+    },
+    {
+      title: 'Total Customers',
+      value: stats?.totalCustomers || 0,
+      desc: `Sellers: ${stats?.totalSellers || 0} | New (30d): ${stats?.newCustomers || 0}`,
+      icon: Users,
+      color: 'text-indigo-500',
+    },
+    {
+      title: 'Total Products',
+      value: stats?.totalProducts || 0,
+      desc: `Active: ${stats?.activeProducts || 0} | Out of Stock: ${stats?.outOfStockCount || 0}`,
+      icon: Package,
+      color: 'text-orange-500',
+    },
+    {
+      title: 'Inventory Value',
+      value: `₹${Number(stats?.totalInventoryValue ?? 0).toFixed(2)}`,
+      desc: `Low Stock Items: ${stats?.lowStockCount || 0}`,
+      icon: Boxes,
+      color: 'text-cyan-600',
+    },
+    {
+      title: 'Average Order Value',
+      value: `₹${Number(stats?.avgOrderValue ?? 0).toFixed(2)}`,
+      desc: `Total Refunds: ${stats?.totalRefunds || 0} (₹${Number(stats?.totalRefundAmount ?? 0).toFixed(2)})`,
+      icon: TrendingUp,
+      color: 'text-emerald-600',
+    },
+    {
+      title: 'Product Reviews',
+      value: stats?.totalReviews || 0,
+      desc: `Avg Rating: ${Number(stats?.avgRating ?? 0).toFixed(1)} ★ | Reported: ${stats?.reportedReviewsCount || 0}`,
+      icon: MessageSquare,
+      color: 'text-pink-500',
+    },
+    {
+      title: 'Active Coupons',
+      value: stats?.activeCoupons || 0,
+      desc: `Total Coupons: ${stats?.totalCoupons || 0} | Used: ${stats?.couponsUsedCount || 0}`,
+      icon: Percent,
+      color: 'text-yellow-600',
+    },
+  ];
+
   return (
-    <div className="py-12 max-w-6xl mx-auto">
-      <div className="mb-16">
-        <h1 className="text-4xl lg:text-5xl font-medium tracking-tight text-foreground">Platform Overview</h1>
-        <p className="text-foreground/60 mt-3 font-light">High-level metrics and system status.</p>
+    <div className="max-w-6xl mx-auto py-8">
+      <div className="mb-10">
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">Platform Overview</h1>
+        <p className="text-muted-foreground mt-2">Real-time business indicators and metrics.</p>
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Link href="/admin/users" className="block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="bg-secondary p-8 relative overflow-hidden group hover:bg-accent transition-colors h-full cursor-pointer rounded-lg"
-          >
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-foreground/5 rounded-full group-hover:scale-150 transition-transform duration-700" />
-            <div className="flex justify-between items-start mb-8 relative z-10">
-              <div className="w-12 h-12 bg-background border border-border/40 flex items-center justify-center">
-                <Users className="w-5 h-5 text-foreground" />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        {kpis.map((kpi, idx) => {
+          const Icon = kpi.icon;
+          return (
+            <div key={idx} className="bg-card border rounded-lg p-6 shadow-sm flex flex-col justify-between">
+              <div className="flex justify-between items-start mb-4">
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{kpi.title}</p>
+                <div className={`p-2 bg-muted/50 rounded ${kpi.color}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+              </div>
+              <div>
+                <p className="text-3xl font-bold mb-2">{kpi.value}</p>
+                <p className="text-xs text-muted-foreground">{kpi.desc}</p>
               </div>
             </div>
-            <div className="relative z-10">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 mb-2">Total Users</h3>
-              <p className="text-4xl font-medium text-foreground">{stats?.totalUsers || 0}</p>
-            </div>
-          </motion.div>
-        </Link>
-        
-        <Link href="/admin/products" className="block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-              className="group relative h-full cursor-pointer overflow-hidden rounded-2xl border bg-secondary p-8 transition-colors duration-200 hover:bg-accent"
-            >
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-foreground/5 rounded-full group-hover:scale-150 transition-transform duration-700" />
-            <div className="flex justify-between items-start mb-8 relative z-10">
-              <div className="w-12 h-12 bg-background border border-border/40 flex items-center justify-center">
-                <Package className="w-5 h-5 text-foreground" />
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Order Status Distribution Card */}
+        <div className="border rounded-lg p-6 bg-card">
+          <h3 className="text-lg font-bold mb-4">Order Status Distribution</h3>
+          <div className="space-y-3">
+            {Object.entries(stats?.orderDistribution || {}).map(([status, count]: any) => (
+              <div key={status} className="flex justify-between items-center text-sm">
+                <span className="font-mono text-xs uppercase tracking-wider">{status}</span>
+                <span className="font-bold px-2 py-0.5 bg-muted rounded">{count}</span>
               </div>
+            ))}
+            {Object.keys(stats?.orderDistribution || {}).length === 0 && (
+              <p className="text-sm text-muted-foreground">No orders recorded.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Links Card */}
+        <div className="border rounded-lg p-6 bg-card flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold mb-4">Quick Management Actions</h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <Link href="/admin/users" className="p-3 border rounded hover:bg-muted text-center font-medium block">
+                Manage Users
+              </Link>
+              <Link href="/admin/sellers" className="p-3 border rounded hover:bg-muted text-center font-medium block">
+                Manage Sellers
+              </Link>
+              <Link href="/admin/products" className="p-3 border rounded hover:bg-muted text-center font-medium block">
+                Manage Products
+              </Link>
+              <Link href="/admin/categories" className="p-3 border rounded hover:bg-muted text-center font-medium block">
+                Categories & Brands
+              </Link>
             </div>
-            <div className="relative z-10">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 mb-2">Total Products</h3>
-              <p className="text-4xl font-medium text-foreground">{stats?.totalProducts || 0}</p>
-            </div>
-          </motion.div>
-        </Link>
-        
-        <Link href="/admin/orders" className="block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            className="bg-secondary p-8 relative overflow-hidden group hover:bg-accent transition-colors h-full cursor-pointer rounded-lg"
-          >
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-foreground/5 rounded-full group-hover:scale-150 transition-transform duration-700" />
-            <div className="flex justify-between items-start mb-8 relative z-10">
-              <div className="w-12 h-12 bg-background border border-border/40 flex items-center justify-center">
-                <ShoppingCart className="w-5 h-5 text-foreground" />
-              </div>
-            </div>
-            <div className="relative z-10">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 mb-2">Total Orders</h3>
-              <p className="text-4xl font-medium text-foreground">{stats?.totalOrders || 0}</p>
-            </div>
-          </motion.div>
-        </Link>
-        
-        <Link href="/admin/analytics" className="block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-            className="bg-secondary p-8 relative overflow-hidden group hover:bg-accent transition-colors h-full cursor-pointer rounded-lg"
-          >
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-foreground/5 rounded-full group-hover:scale-150 transition-transform duration-700" />
-            <div className="flex justify-between items-start mb-8 relative z-10">
-              <div className="w-12 h-12 bg-background border border-border/40 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-foreground" />
-              </div>
-            </div>
-            <div className="relative z-10">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 mb-2">Total Revenue</h3>
-              <p className="text-4xl font-medium text-foreground">₹{Number(stats?.totalRevenue ?? 0).toFixed(2)}</p>
-            </div>
-          </motion.div>
-        </Link>
+          </div>
+          <div className="pt-6 border-t flex justify-between text-xs text-muted-foreground">
+            <span>System: Online</span>
+            <span>Version: 1.0.0</span>
+          </div>
+        </div>
       </div>
     </div>
   );

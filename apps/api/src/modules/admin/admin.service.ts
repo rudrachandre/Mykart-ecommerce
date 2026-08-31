@@ -7,6 +7,8 @@ import { PrismaService } from '../../database/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { Prisma, Role, ProductStatus } from '@prisma/client';
 import { RefundProcessDto } from '../orders/dto/refund-process.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class AdminService {
@@ -349,6 +351,125 @@ export class AdminService {
       { from: product.status, to: status, productName: product.name },
     );
 
+    return updated;
+  }
+
+  async getPayments(skip = 0, take = 20) {
+    const [payments, total] = await Promise.all([
+      this.prisma.payment.findMany({
+        skip,
+        take,
+        orderBy: { id: 'desc' },
+        include: {
+          order: {
+            select: {
+              id: true,
+              user: { select: { name: true, email: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.payment.count(),
+    ]);
+
+    return { payments, total };
+  }
+
+  async getRefunds(skip = 0, take = 20) {
+    const [refunds, total] = await Promise.all([
+      this.prisma.refund.findMany({
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          order: {
+            select: {
+              id: true,
+              user: { select: { name: true, email: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.refund.count(),
+    ]);
+
+    return { refunds, total };
+  }
+
+  async getReviews(skip = 0, take = 20, reported = false) {
+    const where: Prisma.ReviewWhereInput = {};
+    if (reported) {
+      where.reported = true;
+    }
+
+    const [reviews, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true, email: true } },
+          product: { select: { name: true, slug: true } },
+        },
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+
+    return { reviews, total };
+  }
+
+  async updateReviewStatus(id: string, status: string) {
+    const review = await this.prisma.review.findUnique({ where: { id } });
+    if (!review) throw new NotFoundException('Review not found');
+
+    return this.prisma.review.update({
+      where: { id },
+      data: { status, reported: status === 'APPROVED' ? false : undefined },
+    });
+  }
+
+  async deleteReview(id: string) {
+    const review = await this.prisma.review.findUnique({ where: { id } });
+    if (!review) throw new NotFoundException('Review not found');
+
+    return this.prisma.review.delete({ where: { id } });
+  }
+
+  private getSettingsFilePath() {
+    return path.join(process.cwd(), 'apps', 'api', 'src', 'modules', 'admin', 'platform-settings.json');
+  }
+
+  async getSettings() {
+    const filePath = this.getSettingsFilePath();
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    if (!fs.existsSync(filePath)) {
+      const defaultSettings = {
+        siteName: 'MyKart',
+        supportEmail: 'support@mykart.local',
+        maintenanceMode: false,
+        allowSellerRegistration: true,
+      };
+      fs.writeFileSync(filePath, JSON.stringify(defaultSettings, null, 2));
+      return defaultSettings;
+    }
+    const data = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(data);
+  }
+
+  async updateSettings(dto: any) {
+    const filePath = this.getSettingsFilePath();
+    const current = await this.getSettings();
+    const updated = {
+      siteName: dto.siteName ?? current.siteName,
+      supportEmail: dto.supportEmail ?? current.supportEmail,
+      maintenanceMode: dto.maintenanceMode !== undefined ? !!dto.maintenanceMode : current.maintenanceMode,
+      allowSellerRegistration: dto.allowSellerRegistration !== undefined ? !!dto.allowSellerRegistration : current.allowSellerRegistration,
+    };
+    fs.writeFileSync(filePath, JSON.stringify(updated, null, 2));
     return updated;
   }
 }

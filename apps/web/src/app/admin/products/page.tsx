@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
-import { getAdminProducts } from '@/lib/api/admin';
+import { getAdminProducts, setProductStatus } from '@/lib/api/admin';
 import { deleteProduct } from '@/lib/api/sellers';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -14,33 +14,34 @@ export default function AdminProductsPage() {
   const [data, setData] = useState<{ products: any[], total: number }>({ products: [], total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const limit = 10;
-  
+
   const router = useRouter();
 
+  const fetchProducts = async () => {
+    setLoading(true);
+    const token = Cookies.get('accessToken');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const skip = (page - 1) * limit;
+      const result = await getAdminProducts(token, skip, limit, search);
+      setData(result);
+    } catch (err: any) {
+      setError('Failed to load products.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      const token = Cookies.get('accessToken');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
-      try {
-        const skip = (page - 1) * limit;
-        const result = await getAdminProducts(token, skip, limit, search);
-        setData(result);
-      } catch (err: any) {
-        setError('Failed to load products.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const timeout = setTimeout(() => {
       fetchProducts();
     }, 300); // debounce
@@ -62,6 +63,22 @@ export default function AdminProductsPage() {
       toast.success('Product deleted');
     } catch (err: any) {
       toast.error('Failed to delete product');
+    }
+  };
+
+  const handleStatusChange = async (productId: string, newStatus: string) => {
+    const token = Cookies.get('accessToken');
+    if (!token) return;
+
+    try {
+      setUpdatingId(productId);
+      await setProductStatus(token, productId, newStatus);
+      toast.success('Product status updated successfully');
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update product status');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -95,14 +112,15 @@ export default function AdminProductsPage() {
                   <th className="px-4 py-3">Price</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Stock</th>
-                  <th className="px-4 py-3">Action</th>
+                  <th className="px-4 py-3">Moderation</th>
+                  <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {loading ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading...</td></tr>
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Loading...</td></tr>
                 ) : data.products.length === 0 ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No products found.</td></tr>
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No products found.</td></tr>
                 ) : (
                   data.products.map((product) => {
                     const imageUrl = product.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80';
@@ -141,7 +159,19 @@ export default function AdminProductsPage() {
                           })}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
+                          <select
+                            value={product.status}
+                            disabled={updatingId === product.id}
+                            onChange={(e) => handleStatusChange(product.id, e.target.value)}
+                            className="border p-1 rounded bg-background text-xs"
+                          >
+                            <option value="DRAFT">DRAFT</option>
+                            <option value="ACTIVE">ACTIVE</option>
+                            <option value="ARCHIVED">ARCHIVED</option>
+                          </select>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end items-center gap-2">
                             <Link href={`/admin/products/${product.slug}/edit`}>
                               <Button variant="outline" size="sm">Edit</Button>
                             </Link>
@@ -157,14 +187,14 @@ export default function AdminProductsPage() {
           </div>
 
           <div className="flex justify-between items-center mt-6">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Showing {data.products.length} of {data.total}
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+              <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
                 Previous
               </Button>
-              <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
                 Next
               </Button>
             </div>
