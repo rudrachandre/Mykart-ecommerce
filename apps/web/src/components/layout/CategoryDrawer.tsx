@@ -88,7 +88,6 @@ export function CategoryDrawer({ dynamicCategories = [] }: { dynamicCategories?:
   const [isOpen, setIsOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CategoryItem | null>(null);
 
-  // Combine dynamic categories with rich tree data
   const categoriesList: CategoryItem[] =
     dynamicCategories.length > 0
       ? dynamicCategories.map((c) => {
@@ -106,15 +105,20 @@ export function CategoryDrawer({ dynamicCategories = [] }: { dynamicCategories?:
         })
       : DEFAULT_CATEGORIES;
 
-  // Handle ESC key
+  // Handle ESC key at window capture level
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         setIsOpen(false);
+        setActiveCategory(null);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown, true);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
   }, [isOpen]);
 
   // Lock body scroll
@@ -162,6 +166,7 @@ export function CategoryDrawer({ dynamicCategories = [] }: { dynamicCategories?:
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 26, stiffness: 280 }}
               className="fixed inset-y-0 left-0 z-50 flex w-full max-w-[340px] sm:max-w-[380px] flex-col bg-background shadow-2xl overflow-hidden"
+              tabIndex={-1}
             >
               {/* Drawer Header */}
               <div className="flex items-center justify-between bg-primary px-5 py-3.5 text-primary-foreground">

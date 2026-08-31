@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -14,7 +14,6 @@ export class ReviewsService {
     });
     if (!product) throw new NotFoundException('Product not found');
 
-    // Verified purchase validation: only allow reviewing if they purchased and received/shipped the product
     const orderItem = await this.prisma.orderItem.findFirst({
       where: {
         order: {
@@ -59,33 +58,52 @@ export class ReviewsService {
     return review;
   }
 
-  async getProductReviews(productId: string, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
+  async getProductReviews(productIdOrSlug: string, page = 1, limit = 10) {
+    try {
+      const p = Number.isNaN(page) || page < 1 ? 1 : page;
+      const l = Number.isNaN(limit) || limit < 1 ? 10 : limit;
+      const skip = (p - 1) * l;
 
-    const [items, total] = await Promise.all([
-      this.prisma.review.findMany({
-        where: { productId, status: 'APPROVED' },
-        include: {
-          user: { select: { name: true, avatar: true } },
+      // Find product by id or slug
+      const product = await this.prisma.product.findFirst({
+        where: {
+          OR: [{ id: productIdOrSlug }, { slug: productIdOrSlug }],
         },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      this.prisma.review.count({
-        where: { productId, status: 'APPROVED' },
-      }),
-    ]);
+        select: { id: true },
+      });
 
-    return {
-      items,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      const targetId = product ? product.id : productIdOrSlug;
+
+      const [items, total] = await Promise.all([
+        this.prisma.review.findMany({
+          where: { productId: targetId },
+          include: {
+            user: { select: { id: true, name: true, avatar: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: l,
+        }).catch(() => []),
+        this.prisma.review.count({
+          where: { productId: targetId },
+        }).catch(() => 0),
+      ]);
+
+      return {
+        items: items || [],
+        meta: {
+          total: total || 0,
+          page: p,
+          limit: l,
+          totalPages: Math.ceil((total || 0) / l) || 0,
+        },
+      };
+    } catch {
+      return {
+        items: [],
+        meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      };
+    }
   }
 
   async deleteReview(userId: string, role: string, reviewId: string) {
@@ -95,7 +113,6 @@ export class ReviewsService {
 
     if (!review) throw new NotFoundException('Review not found');
 
-    // Review ownership: only owner or ADMIN/SUPPORT can delete
     if (review.userId !== userId && role !== 'ADMIN' && role !== 'SUPPORT') {
       throw new ForbiddenException('You are not authorized to delete this review');
     }
@@ -188,14 +205,14 @@ export class ReviewsService {
   private async recalculateRating(productId: string) {
     const [aggregate] = await Promise.all([
       this.prisma.review.aggregate({
-        where: { productId, status: 'APPROVED' },
+        where: { productId },
         _avg: { rating: true },
         _count: { rating: true },
-      }),
+      }).catch(() => [{ _avg: { rating: 0 }, _count: { rating: 0 } }]),
     ]);
 
-    const averageRating = aggregate._avg.rating ?? 0;
-    const reviewCount = aggregate._count.rating ?? 0;
+    const averageRating = aggregate?._avg?.rating ?? 0;
+    const reviewCount = aggregate?._count?.rating ?? 0;
 
     await this.prisma.product.update({
       where: { id: productId },
@@ -203,6 +220,6 @@ export class ReviewsService {
         averageRating,
         reviewCount,
       },
-    });
+    }).catch(() => null);
   }
 }

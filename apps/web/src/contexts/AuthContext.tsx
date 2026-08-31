@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { createContext, useContext, useState, useEffect, startTransition, ReactNode } from 'react';
 import Cookies from 'js-cookie';
@@ -47,8 +47,7 @@ async function refreshAccessToken(): Promise<string | null> {
       }
       Cookies.remove('accessToken');
       return null;
-    } catch (e) {
-      console.error('[AuthContext] Token refresh failed:', e);
+    } catch {
       return null;
     } finally {
       inProgressRefreshPromise = null;
@@ -64,11 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const fetchUser = async () => {
-    let token = Cookies.get('accessToken');
-
-    if (!token) {
-      token = (await refreshAccessToken()) || undefined;
-    }
+    const token = Cookies.get('accessToken');
 
     if (!token) {
       setUser(null);
@@ -85,12 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.status === 401) {
-        // Try refreshing once
-        token = (await refreshAccessToken()) || undefined;
-        if (token) {
+        const refreshedToken = await refreshAccessToken();
+        if (refreshedToken) {
           response = await fetch(`${apiUrl}/api/v1/users/me`, {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${refreshedToken}`
             }
           });
         }
@@ -110,13 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
+                  'Authorization': `Bearer ${refreshedToken || token}`
                 },
                 body: JSON.stringify({ productIds }),
               });
             }
-          } catch (e) {
-            console.error('Failed to merge guest wishlist', e);
+          } catch {
           } finally {
             localStorage.removeItem('guest_wishlist');
           }
@@ -124,8 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null);
       }
-    } catch (error) {
-      console.error('Failed to fetch user', error);
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -137,7 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fetchUser();
     });
 
-    // Refresh access token periodically in the background every 8 minutes
     const interval = setInterval(() => {
       if (Cookies.get('accessToken')) {
         refreshAccessToken();
@@ -155,7 +146,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         credentials: 'include',
       });
     } catch {
-      // Best-effort backend logout; still clear local session
     } finally {
       Cookies.remove('accessToken');
       setUser(null);
