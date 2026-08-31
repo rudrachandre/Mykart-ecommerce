@@ -159,49 +159,53 @@ export class AnalyticsService {
       const activeCouponsCount = p.coupon?.count ? await p.coupon.count({ where: { active: true } }).catch(() => 0) : 0;
 
       const stats = {
-        totalUsers: totalUsers || 0,
-        totalCustomers: totalCustomers || 0,
-        totalSellers: totalSellers || 0,
-        newCustomers: newCustomers || 0,
-        totalOrders: totalOrders || 0,
-        ordersToday: ordersToday || 0,
-        ordersLast7Days: ordersLast7Days || 0,
-        ordersLast30Days: ordersLast30Days || 0,
+        totalUsers: Number(totalUsers || 0),
+        totalCustomers: Number(totalCustomers || 0),
+        totalSellers: Number(totalSellers || 0),
+        newCustomers: Number(newCustomers || 0),
+        totalOrders: Number(totalOrders || 0),
+        ordersToday: Number(ordersToday || 0),
+        ordersLast7Days: Number(ordersLast7Days || 0),
+        ordersLast30Days: Number(ordersLast30Days || 0),
         orderDistribution,
-        totalRevenue: totalRevenue || 0,
+        totalRevenue: Number(totalRevenue || 0),
         revenueToday: Number(revenueTodayData?._sum?.total ?? 0),
         revenueLast7Days: Number(revenueLast7DaysData?._sum?.total ?? 0),
         revenueLast30Days: Number(revenueLast30DaysData?._sum?.total ?? 0),
-        avgOrderValue: avgOrderValue || 0,
+        avgOrderValue: Number(avgOrderValue || 0),
         sellerDistribution,
-        totalProducts: totalProducts || 0,
-        activeProducts: activeProducts || 0,
-        outOfStockCount,
-        availableStock,
-        reservedStock,
-        lowStockCount,
-        totalInventoryValue,
+        totalProducts: Number(totalProducts || 0),
+        activeProducts: Number(activeProducts || 0),
+        outOfStockCount: Number(outOfStockCount || 0),
+        availableStock: Number(availableStock || 0),
+        reservedStock: Number(reservedStock || 0),
+        lowStockCount: Number(lowStockCount || 0),
+        totalInventoryValue: Number(totalInventoryValue || 0),
         paymentDistribution,
-        totalRefunds: refundsData?._count?.id ?? 0,
+        totalRefunds: Number(refundsData?._count?.id ?? 0),
         totalRefundAmount: Number(refundsData?._sum?.amount ?? 0),
-        totalReturns: Array.isArray(returnsData) ? returnsData[0] || 0 : 0,
-        approvedReturns: Array.isArray(returnsData) ? returnsData[1] || 0 : 0,
-        rejectedReturns: Array.isArray(returnsData) ? returnsData[2] || 0 : 0,
-        totalReplacements: Array.isArray(returnsData) ? returnsData[3] || 0 : 0,
-        totalReviews: reviewsData?._count?.id ?? 0,
-        avgRating: reviewsData?._avg?.rating || 0,
-        reportedReviewsCount: reportedReviewsCount || 0,
-        pendingModerationCount: pendingModerationCount || 0,
-        totalCoupons: couponsData?._count?.id ?? 0,
-        activeCoupons: activeCouponsCount || 0,
-        couponsUsedCount: couponsData?._sum?.usedCount || 0,
+        totalReturns: Number(Array.isArray(returnsData) ? returnsData[0] || 0 : 0),
+        approvedReturns: Number(Array.isArray(returnsData) ? returnsData[1] || 0 : 0),
+        rejectedReturns: Number(Array.isArray(returnsData) ? returnsData[2] || 0 : 0),
+        totalReplacements: Number(Array.isArray(returnsData) ? returnsData[3] || 0 : 0),
+        totalReviews: Number(reviewsData?._count?.id ?? 0),
+        avgRating: Number(reviewsData?._avg?.rating || 0),
+        reportedReviewsCount: Number(reportedReviewsCount || 0),
+        pendingModerationCount: Number(pendingModerationCount || 0),
+        totalCoupons: Number(couponsData?._count?.id ?? 0),
+        activeCoupons: Number(activeCouponsCount || 0),
+        couponsUsedCount: Number(couponsData?._sum?.usedCount || 0),
       };
 
+      const serialized = JSON.parse(
+        JSON.stringify(stats, (_, v) => (typeof v === 'bigint' ? Number(v) : v))
+      );
+
       try {
-        await this.redisService.set(cacheKey, JSON.stringify(stats), 300);
+        await this.redisService.set(cacheKey, JSON.stringify(serialized), 300);
       } catch {}
 
-      return stats;
+      return serialized;
     } catch (err: any) {
       this.logger.error('[AnalyticsService] getDashboardStats error:', err);
       return {

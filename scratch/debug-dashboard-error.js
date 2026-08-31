@@ -46,12 +46,17 @@ async function run() {
     });
     console.log('Login Status:', login.status);
     const token = login.data.accessToken;
-    console.log('Token received:', !!token);
 
     if (token) {
+      const users = await getJson('https://mykart-ecommerce.onrender.com/api/v1/admin/users', token);
+      console.log('/admin/users Status:', users.status);
+
+      const trends = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/trends', token);
+      console.log('/analytics/trends Status:', trends.status);
+
       const dash = await getJson('https://mykart-ecommerce.onrender.com/api/v1/analytics/dashboard', token);
-      console.log('Dashboard Status:', dash.status);
-      console.log('Dashboard Body:', dash.data);
+      console.log('/analytics/dashboard Status:', dash.status);
+      console.log('/analytics/dashboard Body:', dash.data);
     }
   } catch (err) {
     console.error('Error:', err);
