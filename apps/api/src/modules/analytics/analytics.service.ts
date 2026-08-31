@@ -56,233 +56,275 @@ export class AnalyticsService {
   }
 
   async getDashboardStats() {
-    const cacheKey = 'analytics:dashboard-stats';
     try {
-      const cached = await this.redisService.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
+      const cacheKey = 'analytics:dashboard-stats';
+      try {
+        const cached = await this.redisService.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch {}
+
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const [
+        totalUsers,
+        totalCustomers,
+        totalSellers,
+        newCustomers,
+        totalOrders,
+        ordersToday,
+        ordersLast7Days,
+        ordersLast30Days,
+        totalRevenueData,
+        revenueTodayData,
+        revenueLast7DaysData,
+        revenueLast30DaysData,
+        orderStatuses,
+        sellerStatuses,
+        totalProducts,
+        activeProducts,
+        inventoryData,
+        paymentsData,
+        refundsData,
+        returnsData,
+        reviewsData,
+        couponsData,
+      ] = await Promise.all([
+        // USERS
+        this.prisma.user.count().catch(() => 0),
+        this.prisma.user.count({ where: { role: 'CUSTOMER' } }).catch(() => 0),
+        this.prisma.user.count({ where: { role: 'SELLER' } }).catch(() => 0),
+        this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0),
+
+        // ORDERS
+        this.prisma.order.count().catch(() => 0),
+        this.prisma.order.count({ where: { createdAt: { gte: oneDayAgo } } }).catch(() => 0),
+        this.prisma.order.count({ where: { createdAt: { gte: sevenDaysAgo } } }).catch(() => 0),
+        this.prisma.order.count({ where: { createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0),
+
+        // REVENUE
+        this.prisma.order.aggregate({
+          _sum: { total: true },
+          where: { status: { not: 'CANCELLED' } },
+        }).catch(() => ({ _sum: { total: null } })),
+        this.prisma.order.aggregate({
+          _sum: { total: true },
+          where: { createdAt: { gte: oneDayAgo }, status: { not: 'CANCELLED' } },
+        }).catch(() => ({ _sum: { total: null } })),
+        this.prisma.order.aggregate({
+          _sum: { total: true },
+          where: { createdAt: { gte: sevenDaysAgo }, status: { not: 'CANCELLED' } },
+        }).catch(() => ({ _sum: { total: null } })),
+        this.prisma.order.aggregate({
+          _sum: { total: true },
+          where: { createdAt: { gte: thirtyDaysAgo }, status: { not: 'CANCELLED' } },
+        }).catch(() => ({ _sum: { total: null } })),
+
+        // STATUS DISTRIBUTION
+        this.prisma.order.groupBy({
+          by: ['status'],
+          _count: { id: true },
+        }).catch(() => []),
+        this.prisma.seller.groupBy({
+          by: ['status'],
+          _count: { id: true },
+        }).catch(() => []),
+
+        // PRODUCTS
+        this.prisma.product.count().catch(() => 0),
+        this.prisma.product.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
+
+        // INVENTORY
+        this.prisma.inventory.findMany({
+          select: { quantity: true, reserved: true },
+        }).catch(() => []),
+
+        // PAYMENTS
+        this.prisma.payment.groupBy({
+          by: ['status'],
+          _count: { id: true },
+        }).catch(() => []),
+
+        // REFUNDS
+        this.prisma.refund.aggregate({
+          _count: { id: true },
+          _sum: { amount: true },
+        }).catch(() => ({ _count: { id: 0 }, _sum: { amount: null } })),
+
+        // RETURNS & REPLACEMENTS
+        Promise.all([
+          this.prisma.return.count().catch(() => 0),
+          this.prisma.return.count({ where: { status: 'APPROVED' } }).catch(() => 0),
+          this.prisma.return.count({ where: { status: 'REJECTED' } }).catch(() => 0),
+          this.prisma.replacement.count().catch(() => 0),
+        ]).catch(() => [0, 0, 0, 0]),
+
+        // REVIEWS
+        this.prisma.review.aggregate({
+          _count: { id: true },
+          _avg: { rating: true },
+        }).catch(() => ({ _count: { id: 0 }, _avg: { rating: null } })),
+
+        // COUPONS
+        this.prisma.coupon.aggregate({
+          _count: { id: true },
+          _sum: { usedCount: true },
+        }).catch(() => ({ _count: { id: 0 }, _sum: { usedCount: null } })),
+      ]);
+
+      // Map order status distribution
+      const orderDistribution: Record<string, number> = {};
+      if (Array.isArray(orderStatuses)) {
+        orderStatuses.forEach((g) => {
+          orderDistribution[g.status] = g._count.id;
+        });
       }
-    } catch {}
 
-    const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // Map seller status distribution
+      const sellerDistribution: Record<string, number> = {};
+      if (Array.isArray(sellerStatuses)) {
+        sellerStatuses.forEach((g) => {
+          sellerDistribution[g.status] = g._count.id;
+        });
+      }
 
-    const [
-      totalUsers,
-      totalCustomers,
-      totalSellers,
-      newCustomers,
-      totalOrders,
-      ordersToday,
-      ordersLast7Days,
-      ordersLast30Days,
-      totalRevenueData,
-      revenueTodayData,
-      revenueLast7DaysData,
-      revenueLast30DaysData,
-      orderStatuses,
-      sellerStatuses,
-      totalProducts,
-      activeProducts,
-      inventoryData,
-      paymentsData,
-      refundsData,
-      returnsData,
-      reviewsData,
-      couponsData,
-    ] = await Promise.all([
-      // USERS
-      this.prisma.user.count().catch(() => 0),
-      this.prisma.user.count({ where: { role: 'CUSTOMER' } }).catch(() => 0),
-      this.prisma.user.count({ where: { role: 'SELLER' } }).catch(() => 0),
-      this.prisma.user.count({ where: { role: 'CUSTOMER', createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0),
+      // Map payment status distribution
+      const paymentDistribution: Record<string, number> = {};
+      if (Array.isArray(paymentsData)) {
+        paymentsData.forEach((g) => {
+          paymentDistribution[g.status] = g._count.id;
+        });
+      }
 
-      // ORDERS
-      this.prisma.order.count().catch(() => 0),
-      this.prisma.order.count({ where: { createdAt: { gte: oneDayAgo } } }).catch(() => 0),
-      this.prisma.order.count({ where: { createdAt: { gte: sevenDaysAgo } } }).catch(() => 0),
-      this.prisma.order.count({ where: { createdAt: { gte: thirtyDaysAgo } } }).catch(() => 0),
+      // Calculate stock numbers
+      let availableStock = 0;
+      let reservedStock = 0;
+      let lowStockCount = 0;
+      let outOfStockCount = 0;
+      const totalInventoryValue = 0;
 
-      // REVENUE
-      this.prisma.order.aggregate({
-        _sum: { total: true },
-        where: { status: { not: 'CANCELLED' } },
-      }).catch(() => ({ _sum: { total: null } })),
-      this.prisma.order.aggregate({
-        _sum: { total: true },
-        where: { createdAt: { gte: oneDayAgo }, status: { not: 'CANCELLED' } },
-      }).catch(() => ({ _sum: { total: null } })),
-      this.prisma.order.aggregate({
-        _sum: { total: true },
-        where: { createdAt: { gte: sevenDaysAgo }, status: { not: 'CANCELLED' } },
-      }).catch(() => ({ _sum: { total: null } })),
-      this.prisma.order.aggregate({
-        _sum: { total: true },
-        where: { createdAt: { gte: thirtyDaysAgo }, status: { not: 'CANCELLED' } },
-      }).catch(() => ({ _sum: { total: null } })),
+      if (Array.isArray(inventoryData)) {
+        inventoryData.forEach((item) => {
+          const qty = item.quantity;
+          const res = item.reserved;
+          const avail = qty - res;
+          availableStock += avail;
+          reservedStock += res;
+          if (avail <= 0) outOfStockCount += 1;
+          else if (avail <= 10) lowStockCount += 1;
+        });
+      }
 
-      // STATUS DISTRIBUTION
-      this.prisma.order.groupBy({
-        by: ['status'],
-        _count: { id: true },
-      }).catch(() => []),
-      this.prisma.seller.groupBy({
-        by: ['status'],
-        _count: { id: true },
-      }).catch(() => []),
+      const totalRevenue = Number(totalRevenueData?._sum?.total ?? 0);
+      const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-      // PRODUCTS
-      this.prisma.product.count().catch(() => 0),
-      this.prisma.product.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
+      // Process reported reviews
+      const reportedReviewsCount = await this.prisma.review.count({ where: { reported: true } }).catch(() => 0);
+      const pendingModerationCount = await this.prisma.review.count({ where: { status: 'PENDING' } }).catch(() => 0);
 
-      // INVENTORY
-      this.prisma.inventory.findMany({
-        select: { quantity: true, reserved: true },
-      }).catch(() => []),
+      // Active coupons
+      const activeCouponsCount = await this.prisma.coupon.count({ where: { active: true } }).catch(() => 0);
 
-      // PAYMENTS
-      this.prisma.payment.groupBy({
-        by: ['status'],
-        _count: { id: true },
-      }).catch(() => []),
+      const stats = {
+        // Users
+        totalUsers,
+        totalCustomers,
+        totalSellers,
+        newCustomers,
+        // Orders
+        totalOrders,
+        ordersToday,
+        ordersLast7Days,
+        ordersLast30Days,
+        orderDistribution,
+        // Revenue
+        totalRevenue,
+        revenueToday: Number(revenueTodayData?._sum?.total ?? 0),
+        revenueLast7Days: Number(revenueLast7DaysData?._sum?.total ?? 0),
+        revenueLast30Days: Number(revenueLast30DaysData?._sum?.total ?? 0),
+        avgOrderValue,
+        // Sellers
+        sellerDistribution,
+        // Products
+        totalProducts,
+        activeProducts,
+        outOfStockCount,
+        // Inventory
+        availableStock,
+        reservedStock,
+        lowStockCount,
+        totalInventoryValue,
+        // Payments
+        paymentDistribution,
+        // Refunds
+        totalRefunds: refundsData?._count?.id ?? 0,
+        totalRefundAmount: Number(refundsData?._sum?.amount ?? 0),
+        // Returns
+        totalReturns: Array.isArray(returnsData) ? returnsData[0] : 0,
+        approvedReturns: Array.isArray(returnsData) ? returnsData[1] : 0,
+        rejectedReturns: Array.isArray(returnsData) ? returnsData[2] : 0,
+        totalReplacements: Array.isArray(returnsData) ? returnsData[3] : 0,
+        // Reviews
+        totalReviews: reviewsData?._count?.id ?? 0,
+        avgRating: reviewsData?._avg?.rating || 0,
+        reportedReviewsCount,
+        pendingModerationCount,
+        // Coupons
+        totalCoupons: couponsData?._count?.id ?? 0,
+        activeCoupons: activeCouponsCount,
+        couponsUsedCount: couponsData?._sum?.usedCount || 0,
+      };
 
-      // REFUNDS
-      this.prisma.refund.aggregate({
-        _count: { id: true },
-        _sum: { amount: true },
-      }).catch(() => ({ _count: { id: 0 }, _sum: { amount: null } })),
+      try {
+        await this.redisService.set(cacheKey, JSON.stringify(stats), 300);
+      } catch {}
 
-      // RETURNS & REPLACEMENTS
-      Promise.all([
-        this.prisma.return.count().catch(() => 0),
-        this.prisma.return.count({ where: { status: 'APPROVED' } }).catch(() => 0),
-        this.prisma.return.count({ where: { status: 'REJECTED' } }).catch(() => 0),
-        this.prisma.replacement.count().catch(() => 0),
-      ]).catch(() => [0, 0, 0, 0]),
-
-      // REVIEWS
-      this.prisma.review.aggregate({
-        _count: { id: true },
-        _avg: { rating: true },
-      }).catch(() => ({ _count: { id: 0 }, _avg: { rating: null } })),
-
-      // COUPONS
-      this.prisma.coupon.aggregate({
-        _count: { id: true },
-        _sum: { usedCount: true },
-      }).catch(() => ({ _count: { id: 0 }, _sum: { usedCount: null } })),
-    ]);
-
-    // Map order status distribution
-    const orderDistribution: Record<string, number> = {};
-    if (Array.isArray(orderStatuses)) {
-      orderStatuses.forEach((g) => {
-        orderDistribution[g.status] = g._count.id;
-      });
+      return stats;
+    } catch (err: any) {
+      console.error('[AnalyticsService] getDashboardStats error:', err);
+      return {
+        totalUsers: 0,
+        totalCustomers: 0,
+        totalSellers: 0,
+        newCustomers: 0,
+        totalOrders: 0,
+        ordersToday: 0,
+        ordersLast7Days: 0,
+        ordersLast30Days: 0,
+        orderDistribution: {},
+        totalRevenue: 0,
+        revenueToday: 0,
+        revenueLast7Days: 0,
+        revenueLast30Days: 0,
+        avgOrderValue: 0,
+        sellerDistribution: {},
+        totalProducts: 0,
+        activeProducts: 0,
+        outOfStockCount: 0,
+        availableStock: 0,
+        reservedStock: 0,
+        lowStockCount: 0,
+        totalInventoryValue: 0,
+        paymentDistribution: {},
+        totalRefunds: 0,
+        totalRefundAmount: 0,
+        totalReturns: 0,
+        approvedReturns: 0,
+        rejectedReturns: 0,
+        totalReplacements: 0,
+        totalReviews: 0,
+        avgRating: 0,
+        reportedReviewsCount: 0,
+        pendingModerationCount: 0,
+        totalCoupons: 0,
+        activeCoupons: 0,
+        couponsUsedCount: 0,
+      };
     }
-
-    // Map seller status distribution
-    const sellerDistribution: Record<string, number> = {};
-    if (Array.isArray(sellerStatuses)) {
-      sellerStatuses.forEach((g) => {
-        sellerDistribution[g.status] = g._count.id;
-      });
-    }
-
-    // Map payment status distribution
-    const paymentDistribution: Record<string, number> = {};
-    if (Array.isArray(paymentsData)) {
-      paymentsData.forEach((g) => {
-        paymentDistribution[g.status] = g._count.id;
-      });
-    }
-
-    // Calculate stock numbers
-    let availableStock = 0;
-    let reservedStock = 0;
-    let lowStockCount = 0;
-    let outOfStockCount = 0;
-    const totalInventoryValue = 0;
-
-    if (Array.isArray(inventoryData)) {
-      inventoryData.forEach((item) => {
-        const qty = item.quantity;
-        const res = item.reserved;
-        const avail = qty - res;
-        availableStock += avail;
-        reservedStock += res;
-        if (avail <= 0) outOfStockCount += 1;
-        else if (avail <= 10) lowStockCount += 1;
-      });
-    }
-
-    const totalRevenue = Number(totalRevenueData?._sum?.total ?? 0);
-    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-    // Process reported reviews
-    const reportedReviewsCount = await this.prisma.review.count({ where: { reported: true } }).catch(() => 0);
-    const pendingModerationCount = await this.prisma.review.count({ where: { status: 'PENDING' } }).catch(() => 0);
-
-    // Active coupons
-    const activeCouponsCount = await this.prisma.coupon.count({ where: { active: true } }).catch(() => 0);
-
-    const stats = {
-      // Users
-      totalUsers,
-      totalCustomers,
-      totalSellers,
-      newCustomers,
-      // Orders
-      totalOrders,
-      ordersToday,
-      ordersLast7Days,
-      ordersLast30Days,
-      orderDistribution,
-      // Revenue
-      totalRevenue,
-      revenueToday: Number(revenueTodayData?._sum?.total ?? 0),
-      revenueLast7Days: Number(revenueLast7DaysData?._sum?.total ?? 0),
-      revenueLast30Days: Number(revenueLast30DaysData?._sum?.total ?? 0),
-      avgOrderValue,
-      // Sellers
-      sellerDistribution,
-      // Products
-      totalProducts,
-      activeProducts,
-      outOfStockCount,
-      // Inventory
-      availableStock,
-      reservedStock,
-      lowStockCount,
-      totalInventoryValue,
-      // Payments
-      paymentDistribution,
-      // Refunds
-      totalRefunds: refundsData?._count?.id ?? 0,
-      totalRefundAmount: Number(refundsData?._sum?.amount ?? 0),
-      // Returns
-      totalReturns: Array.isArray(returnsData) ? returnsData[0] : 0,
-      approvedReturns: Array.isArray(returnsData) ? returnsData[1] : 0,
-      rejectedReturns: Array.isArray(returnsData) ? returnsData[2] : 0,
-      totalReplacements: Array.isArray(returnsData) ? returnsData[3] : 0,
-      // Reviews
-      totalReviews: reviewsData?._count?.id ?? 0,
-      avgRating: reviewsData?._avg?.rating || 0,
-      reportedReviewsCount,
-      pendingModerationCount,
-      // Coupons
-      totalCoupons: couponsData?._count?.id ?? 0,
-      activeCoupons: activeCouponsCount,
-      couponsUsedCount: couponsData?._sum?.usedCount || 0,
-    };
-
-    try {
-      await this.redisService.set(cacheKey, JSON.stringify(stats), 300);
-    } catch {}
-
-    return stats;
   }
 
   async getAnalyticsTrends(range: string = '30days') {
