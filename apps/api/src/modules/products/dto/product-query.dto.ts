@@ -1,4 +1,4 @@
-import {
+﻿import {
   IsOptional,
   IsString,
   IsInt,
@@ -7,7 +7,7 @@ import {
   IsNumber,
   Max,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum ProductSortBy {
@@ -66,7 +66,7 @@ export class ProductQueryDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => (value === 'true' || value === true ? true : undefined))
   onSale?: boolean;
 
   @ApiPropertyOptional()
@@ -93,7 +93,15 @@ export class ProductQueryDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @Type(() => Boolean)
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  maxDiscount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => (value === 'true' || value === true ? true : undefined))
   inStock?: boolean;
 
   @ApiPropertyOptional()

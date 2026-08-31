@@ -8,6 +8,19 @@ import { Meilisearch } from 'meilisearch';
 import { SearchQueryDto } from './dto/search-query.dto';
 import { PrismaService } from '../../database/prisma.service';
 import { ProductStatus, Prisma } from '@prisma/client';
+import { RedisService } from '../../redis/redis.service';
+
+const POPULAR_SEARCH_KEY = 'search:popular';
+const POPULAR_SEARCH_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
+const POPULAR_SEARCH_MAX_TERMS = 200; // bound distinct terms to prevent Redis growth
+const POPULAR_SEARCH_RESULT_COUNT = 10;
+const POPULAR_SEARCH_MIN_TERM_LEN = 2;
+const POPULAR_SEARCH_MAX_TERM_LEN = 40;
+
+export interface PopularSearch {
+  term: string;
+  count: number;
+}
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -15,7 +28,10 @@ export class SearchService implements OnModuleInit {
   private client: Meilisearch;
   private indexReady = false;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {
     const apiKey = process.env.MEILISEARCH_API_KEY;
     if (!apiKey) {
       throw new Error('MEILISEARCH_API_KEY is required');
@@ -113,6 +129,13 @@ export class SearchService implements OnModuleInit {
       rating,
       onSale,
     } = query as any;
+
+    // Record real user searches for the popular-searches feature. Best-effort
+    // (never rejects) and bounded so no sensitive/PII data is stored. Await is
+    // cheap (Redis get/set or in-memory fallback) and keeps counts deterministic.
+    if (q) {
+      await this.recordSearch(q);
+    }
 
     if (!this.indexReady) {
       return this.fallbackSearch({
@@ -331,6 +354,76 @@ export class SearchService implements OnModuleInit {
       throw new InternalServerErrorException(
         'Autocomplete service temporarily unavailable',
       );
+    }
+  }
+
+  /**
+   * Normalizes a search term for safe aggregation: trims, lowercases, and
+   * bounds its length so no sensitive/free-form data is retained verbatim.
+   */
+  private normalizeTerm(term: string): string {
+    return term.trim().toLowerCase().slice(0, POPULAR_SEARCH_MAX_TERM_LEN);
+  }
+
+  /**
+   * Best-effort record of a search term using the existing Redis set/get
+   * primitives (works with the in-memory fallback too). Never throws, never
+   * stores user identity, and stays bounded by a distinct-term cap + TTL.
+   */
+  private async recordSearch(term: string): Promise<void> {
+    const normalized = this.normalizeTerm(term);
+    if (normalized.length < POPULAR_SEARCH_MIN_TERM_LEN) {
+      return;
+    }
+    try {
+      const raw = await this.redisService.get(POPULAR_SEARCH_KEY);
+      let counts: Record<string, number> = {};
+      if (raw) {
+        try {
+          counts = JSON.parse(raw) as Record<string, number>;
+        } catch {
+          counts = {};
+        }
+      }
+      counts[normalized] = (counts[normalized] || 0) + 1;
+
+      const keys = Object.keys(counts);
+      if (keys.length > POPULAR_SEARCH_MAX_TERMS) {
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        counts = Object.fromEntries(sorted.slice(0, POPULAR_SEARCH_MAX_TERMS));
+      }
+
+      await this.redisService.set(
+        POPULAR_SEARCH_KEY,
+        JSON.stringify(counts),
+        POPULAR_SEARCH_TTL_SECONDS,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to record popular search: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Returns the most-searched terms (aggregate counts only; no user identity).
+   */
+  async getPopularSearches(): Promise<PopularSearch[]> {
+    try {
+      const raw = await this.redisService.get(POPULAR_SEARCH_KEY);
+      if (!raw) {
+        return [];
+      }
+      const counts = JSON.parse(raw) as Record<string, number>;
+      return Object.entries(counts)
+        .map(([term, count]) => ({ term, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, POPULAR_SEARCH_RESULT_COUNT);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to read popular searches: ${(error as Error).message}`,
+      );
+      return [];
     }
   }
 }

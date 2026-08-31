@@ -15,6 +15,13 @@ export class SearchController {
     return this.searchService.searchProducts(query);
   }
 
+  @Get('popular')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async popular() {
+    const items = await this.searchService.getPopularSearches();
+    return { items };
+  }
+
   @Get('autocomplete')
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   async autocomplete(

@@ -116,6 +116,20 @@ export class CreateProductDto {
   @IsOptional()
   salePrice?: number;
 
+  @ApiPropertyOptional({ example: 4.5 })
+  @Transform(({ value }) => (typeof value === 'string' ? Number(value) : value))
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  averageRating?: number;
+
+  @ApiPropertyOptional({ example: 120 })
+  @Transform(({ value }) => (typeof value === 'string' ? Number(value) : value))
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  reviewCount?: number;
+
   @ApiProperty({ enum: ProductStatus, default: ProductStatus.DRAFT })
   @IsEnum(ProductStatus)
   @IsOptional()

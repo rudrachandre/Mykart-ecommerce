@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
@@ -16,29 +16,26 @@ export interface CategoryItem {
 const DEFAULT_CATEGORIES: CategoryItem[] = [
   {
     id: 'mobiles',
-    name: 'Mobiles & Tablets',
-    slug: 'mobiles',
+    name: 'Mobiles & Accessories',
+    slug: 'electronics',
     children: [
-      { id: 'all-mobiles', name: 'All Mobile Phones', slug: 'mobiles' },
+      { id: 'all-mobiles', name: 'Smartphones', slug: 'smartphones' },
       { id: 'mobile-acc', name: 'Mobile Accessories', slug: 'mobile-accessories' },
-      { id: 'cases', name: 'Cases & Covers', slug: 'cases-covers' },
-      { id: 'screen-prot', name: 'Screen Protectors', slug: 'screen-protectors' },
-      { id: 'power-banks', name: 'Power Banks', slug: 'power-banks' },
-      { id: 'tablets', name: 'Tablets & iPads', slug: 'tablets' },
-      { id: 'wearables', name: 'Wearable Devices & Smartwatches', slug: 'wearables' },
+      { id: 'headphones-earbuds', name: 'Headphones & Earbuds', slug: 'headphones-earbuds' },
+      { id: 'smartwatches', name: 'Smartwatches', slug: 'smartwatches' },
+      { id: 'tablets', name: 'Tablets', slug: 'tablets' },
     ],
   },
   {
     id: 'computers',
     name: 'Computers & Accessories',
-    slug: 'computers',
+    slug: 'electronics',
     children: [
-      { id: 'all-laptops', name: 'All Laptops', slug: 'laptops' },
-      { id: 'gaming-pc', name: 'Gaming Laptops & Desktops', slug: 'gaming' },
+      { id: 'all-laptops', name: 'Laptops', slug: 'laptops' },
+      { id: 'gaming-pc', name: 'Gaming Laptops', slug: 'gaming-laptops' },
       { id: 'monitors', name: 'Monitors & Displays', slug: 'monitors' },
-      { id: 'storage', name: 'Hard Drives & SSDs', slug: 'storage' },
-      { id: 'keyboards', name: 'Keyboards & Mice', slug: 'keyboards' },
-      { id: 'networking', name: 'Routers & Networking', slug: 'networking' },
+      { id: 'keyboards', name: 'Keyboards & Mice', slug: 'keyboards-mice' },
+      { id: 'computer-acc', name: 'Computer Accessories', slug: 'computer-accessories' },
     ],
   },
   {
@@ -46,11 +43,9 @@ const DEFAULT_CATEGORIES: CategoryItem[] = [
     name: 'Electronics & Audio',
     slug: 'electronics',
     children: [
-      { id: 'headphones', name: 'Headphones & Earbuds', slug: 'headphones' },
+      { id: 'headphones', name: 'Headphones & Earbuds', slug: 'headphones-earbuds' },
       { id: 'speakers', name: 'Bluetooth Speakers', slug: 'speakers' },
       { id: 'cameras', name: 'Cameras & Photography', slug: 'cameras' },
-      { id: 'tvs', name: 'Smart TVs & Soundbars', slug: 'tvs' },
-      { id: 'home-audio', name: 'Home Theater Systems', slug: 'audio' },
     ],
   },
   {
@@ -58,11 +53,11 @@ const DEFAULT_CATEGORIES: CategoryItem[] = [
     name: 'Fashion & Apparel',
     slug: 'fashion',
     children: [
-      { id: 'mens', name: "Men's Clothing", slug: 'mens-fashion' },
-      { id: 'womens', name: "Women's Clothing", slug: 'womens-fashion' },
-      { id: 'footwear', name: 'Shoes & Footwear', slug: 'footwear' },
-      { id: 'watches', name: 'Watches & Accessories', slug: 'watches' },
-      { id: 'bags', name: 'Bags & Luggage', slug: 'bags' },
+      { id: 'mens', name: "Men's Clothing", slug: 'mens-clothing' },
+      { id: 'womens', name: "Women's Clothing", slug: 'womens-clothing' },
+      { id: 'footwear', name: 'Shoes', slug: 'shoes' },
+      { id: 'watches', name: 'Watches', slug: 'watches' },
+      { id: 'bags', name: 'Bags', slug: 'bags' },
     ],
   },
   {
@@ -70,21 +65,21 @@ const DEFAULT_CATEGORIES: CategoryItem[] = [
     name: 'Home & Kitchen',
     slug: 'home-kitchen',
     children: [
-      { id: 'kitchen', name: 'Kitchen & Dining', slug: 'kitchen' },
-      { id: 'appliances', name: 'Small Home Appliances', slug: 'appliances' },
-      { id: 'decor', name: 'Home Decor & Lighting', slug: 'decor' },
-      { id: 'furniture', name: 'Furniture & Living', slug: 'furniture' },
+      { id: 'kitchen', name: 'Kitchen Appliances', slug: 'kitchen-appliances' },
+      { id: 'appliances', name: 'Home Appliances', slug: 'home-appliances' },
+      { id: 'decor', name: 'Home Decor', slug: 'home-decor' },
+      { id: 'furniture', name: 'Furniture', slug: 'furniture' },
     ],
   },
   {
     id: 'books',
-    name: 'Books & Stationery',
+    name: 'Books',
     slug: 'books',
     children: [
-      { id: 'fiction', name: 'Fiction & Literature', slug: 'fiction' },
-      { id: 'tech-books', name: 'Technology & Programming', slug: 'tech-books' },
-      { id: 'business', name: 'Business & Management', slug: 'business-books' },
-      { id: 'stationery', name: 'Office Supplies & Notebooks', slug: 'stationery' },
+      { id: 'fiction', name: 'Fiction', slug: 'fiction' },
+      { id: 'programming', name: 'Programming', slug: 'programming' },
+      { id: 'business', name: 'Business', slug: 'business' },
+      { id: 'self-help', name: 'Self Help', slug: 'self-help' },
     ],
   },
 ];

@@ -360,4 +360,57 @@ describe('SearchController (e2e)', () => {
         expect(responseString).not.toContain('DATABASE_URL');
       });
   });
+
+  it('/search/popular (GET) - returns a safe, well-formed response', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search/popular')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('items');
+        expect(res.body.items).toBeInstanceOf(Array);
+        for (const item of res.body.items) {
+          expect(item).toHaveProperty('term');
+          expect(typeof item.term).toBe('string');
+          expect(item).toHaveProperty('count');
+          expect(typeof item.count).toBe('number');
+        }
+      });
+  });
+
+  it('/search/popular (GET) - aggregates repeated searches and normalizes case', async () => {
+    const term = `unique${Date.now()}`;
+    await request(app.getHttpServer())
+      .get(`/api/v1/search?q=${term}`)
+      .expect(200);
+    await request(app.getHttpServer())
+      .get(`/api/v1/search?q=${term.toUpperCase()} `)
+      .expect(200);
+
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/search/popular')
+      .expect(200);
+
+    // The two normalized-identical searches should collapse into one term
+    // with count 2 (case + whitespace normalized).
+    const match = res.body.items.find(
+      (item: { term: string }) => item.term === term,
+    );
+    expect(match).toBeDefined();
+    expect(match.count).toEqual(2);
+  });
+
+  it('/search/popular (GET) - does not expose sensitive data', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/search/popular')
+      .expect(200)
+      .expect((res) => {
+        const responseString = JSON.stringify(res.body);
+        expect(responseString).not.toContain('passwordHash');
+        expect(responseString).not.toContain('refreshToken');
+        expect(responseString).not.toContain('accessToken');
+        expect(responseString).not.toContain('MEILISEARCH_API_KEY');
+        expect(responseString).not.toContain('REDIS_URL');
+        expect(responseString).not.toContain('@');
+      });
+  });
 });

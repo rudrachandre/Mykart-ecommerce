@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef, useEffect } from 'react';
@@ -15,14 +15,13 @@ export interface DealTab {
 
 const DEAL_TABS: DealTab[] = [
   { id: 'all', label: 'All Deals' },
-  { id: 'for-you', label: 'For you', dealType: 'FOR_YOU' },
   { id: 'trending', label: 'Trending', dealType: 'TRENDING' },
   { id: 'most-loved', label: "Customer's most loved", dealType: 'MOST_LOVED' },
   { id: 'lightning', label: 'Lightning Deals', dealType: 'LIGHTNING' },
-  { id: 'mobiles', label: 'Mobiles', categorySlug: 'mobiles' },
+  { id: 'mobiles', label: 'Mobiles', categorySlug: 'smartphones' },
   { id: 'electronics', label: 'Electronics', categorySlug: 'electronics' },
-  { id: 'accessories', label: 'Mobiles & Computer Accessories', categorySlug: 'accessories' },
-  { id: 'appliances', label: 'Large Appliances', categorySlug: 'appliances' },
+  { id: 'accessories', label: 'Mobile Accessories', categorySlug: 'mobile-accessories' },
+  { id: 'appliances', label: 'Home Appliances', categorySlug: 'home-appliances' },
   { id: 'fashion', label: 'Fashion', categorySlug: 'fashion' },
   { id: 'home', label: 'Home & Kitchen', categorySlug: 'home-kitchen' },
 ];
@@ -85,7 +84,6 @@ export function TodaysDealsSection({ initialProducts = [] }: TodaysDealsSectionP
       if (res.ok) {
         const data = await res.json();
         const items = data.items || [];
-        // If specific category deal returns empty, fallback to active deals
         setProducts(items.length > 0 ? items : initialProducts);
       } else {
         setProducts(initialProducts);
@@ -123,7 +121,6 @@ export function TodaysDealsSection({ initialProducts = [] }: TodaysDealsSectionP
 
         {/* Category Tabs with Left/Right Arrows */}
         <div className="relative mb-6">
-          {/* Left Arrow Button */}
           {canScrollLeft && (
             <button
               type="button"
@@ -135,7 +132,6 @@ export function TodaysDealsSection({ initialProducts = [] }: TodaysDealsSectionP
             </button>
           )}
 
-          {/* Horizontally scrollable container */}
           <div
             ref={scrollContainerRef}
             onScroll={checkScroll}
@@ -161,7 +157,6 @@ export function TodaysDealsSection({ initialProducts = [] }: TodaysDealsSectionP
             })}
           </div>
 
-          {/* Right Arrow Button */}
           {canScrollRight && (
             <button
               type="button"
