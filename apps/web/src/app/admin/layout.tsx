@@ -1,4 +1,8 @@
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
   BarChart3,
@@ -14,9 +18,13 @@ import {
   Gift,
   FileText,
   Settings,
+  ShieldAlert,
+  Loader2,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
   const sidebarLinks = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
@@ -33,6 +41,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/logs', label: 'Audit Logs', icon: FileText },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-muted-foreground font-medium animate-pulse">Initializing Admin Console...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'ADMIN') {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background p-4">
+        <div className="bg-card border rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
+          <ShieldAlert className="w-14 h-14 mx-auto mb-4 text-destructive opacity-80" />
+          <h2 className="text-2xl font-bold mb-2 text-foreground">Access Denied</h2>
+          <p className="text-muted-foreground text-sm mb-6">
+            You must be logged in as an Administrator to access the Central Console.
+          </p>
+          <Button asChild className="w-full font-semibold">
+            <Link href="/login?callbackUrl=/admin">Sign In as Admin</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">

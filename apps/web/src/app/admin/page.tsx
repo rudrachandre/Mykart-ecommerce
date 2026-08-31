@@ -2,56 +2,61 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
+import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardStats } from '@/lib/api/analytics';
 import {
   DollarSign,
   ShoppingCart,
   Users,
-  Store,
   Package,
   TrendingUp,
   Activity,
   Percent,
   MessageSquare,
-  FileText,
   Boxes,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboardPage() {
+  const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const token = Cookies.get('accessToken');
-      if (!token) {
-        router.push('/login');
+    async function loadDashboard() {
+      if (authLoading) return;
+
+      if (!user || user.role !== 'ADMIN') {
+        router.push('/login?callbackUrl=/admin');
         return;
       }
 
+      setLoading(true);
+      setError('');
+
       try {
-        const data = await getDashboardStats(token);
+        const data = await getDashboardStats();
         setStats(data);
       } catch (err: any) {
-        setError('Failed to load dashboard stats. Make sure you are an admin.');
+        console.error('[AdminDashboard] error:', err);
+        setError('Failed to load dashboard stats. Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchStats();
-  }, [router]);
+    loadDashboard();
+  }, [user, authLoading, router]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground font-medium animate-pulse">Loading dashboard...</p>
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-muted-foreground font-medium animate-pulse">Loading dashboard metrics...</p>
         </div>
       </div>
     );
@@ -59,11 +64,17 @@ export default function AdminDashboardPage() {
 
   if (error) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
+      <div className="flex h-[60vh] items-center justify-center p-4">
         <div className="bg-destructive/10 text-destructive border border-destructive/20 rounded-2xl p-8 max-w-md text-center">
           <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
-          <p>{error}</p>
+          <h2 className="text-xl font-bold mb-2">Dashboard Unavailable</h2>
+          <p className="text-sm mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-xs hover:opacity-90"
+          >
+            Retry Loading
+          </button>
         </div>
       </div>
     );
@@ -72,8 +83,8 @@ export default function AdminDashboardPage() {
   const kpis = [
     {
       title: 'Total Revenue',
-      value: `₹${Number(stats?.totalRevenue ?? 0).toFixed(2)}`,
-      desc: `Today: ₹${Number(stats?.revenueToday ?? 0).toFixed(2)}`,
+      value: `₹${Number(stats?.totalRevenue ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+      desc: `Today: ₹${Number(stats?.revenueToday ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
       icon: DollarSign,
       color: 'text-green-600',
     },
@@ -100,15 +111,15 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'Inventory Value',
-      value: `₹${Number(stats?.totalInventoryValue ?? 0).toFixed(2)}`,
+      value: `₹${Number(stats?.totalInventoryValue ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
       desc: `Low Stock Items: ${stats?.lowStockCount || 0}`,
       icon: Boxes,
       color: 'text-cyan-600',
     },
     {
       title: 'Average Order Value',
-      value: `₹${Number(stats?.avgOrderValue ?? 0).toFixed(2)}`,
-      desc: `Total Refunds: ${stats?.totalRefunds || 0} (₹${Number(stats?.totalRefundAmount ?? 0).toFixed(2)})`,
+      value: `₹${Number(stats?.avgOrderValue ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+      desc: `Total Refunds: ${stats?.totalRefunds || 0} (₹${Number(stats?.totalRefundAmount ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })})`,
       icon: TrendingUp,
       color: 'text-emerald-600',
     },

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef, useEffect } from 'react';
@@ -97,7 +97,7 @@ export function TodaysDealsSection({ initialProducts = [] }: TodaysDealsSectionP
 
   return (
     <section className="w-full bg-gradient-to-b from-secondary/30 to-background py-10 sm:py-14 border-y border-border/50">
-      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between mb-6">
           <div>

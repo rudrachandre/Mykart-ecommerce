@@ -1,6 +1,7 @@
 import { getProducts, getCategories } from '@/lib/api/catalog';
 import { ProductGrid } from '@/components/catalog/ProductGrid';
 import { HeroBanner } from '@/components/marketing/hero-banner';
+import { CategoryShortcuts } from '@/components/marketing/CategoryShortcuts';
 import { FeaturedCategories } from '@/components/marketing/featured-categories';
 import { DealsBanner } from '@/components/marketing/deals-banner';
 import { TestimonialsSection } from '@/components/marketing/testimonials';
@@ -8,7 +9,7 @@ import { NewsletterSection } from '@/components/marketing/newsletter';
 import { TodaysDealsSection } from '@/components/deals/TodaysDealsSection';
 
 export const metadata = {
-  title: 'mykart — Curated everyday essentials',
+  title: 'MyKart — Curated everyday essentials',
   description:
     'Thoughtfully designed pieces from independent makers. Shop categories, trending products and limited-time offers.',
 };
@@ -26,16 +27,19 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Figma §12 — HeroBanner */}
+      {/* 1. HeroBanner */}
       <HeroBanner />
 
-      {/* Part 1 — Today's Big Deals Discovery Section */}
+      {/* 2. Category Shortcuts Bar */}
+      <CategoryShortcuts />
+
+      {/* 3. Today's Big Deals Discovery Section */}
       <TodaysDealsSection
         initialProducts={dealProducts}
         categories={categories as any[]}
       />
 
-      {/* Figma §13 — FeaturedCategories */}
+      {/* 4. FeaturedCategories */}
       <FeaturedCategories
         categories={((categories ?? []) as unknown as Array<{
           id: string;
@@ -50,10 +54,10 @@ export default async function Home() {
         }))}
       />
 
-      {/* Figma §14 — Trending Right Now */}
-      <section className="mx-auto w-full max-w-[1280px] px-5 py-12 md:px-10 md:py-16 xl:px-20">
+      {/* 5. Trending Right Now */}
+      <section className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="mb-8 flex flex-col gap-1">
-          <h2 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
+          <h2 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             Trending Right Now
           </h2>
           <p className="text-base text-muted-foreground">
@@ -64,13 +68,13 @@ export default async function Home() {
         <ProductGrid products={(trending as any).items ?? []} />
       </section>
 
-      {/* Figma §20 — DealsBanner */}
+      {/* 6. DealsBanner */}
       <DealsBanner />
 
-      {/* Figma §21 — Testimonials */}
+      {/* 7. Testimonials */}
       <TestimonialsSection />
 
-      {/* Figma §22 — Newsletter (border-y provides the full-perimeter hairline) */}
+      {/* 8. Newsletter */}
       <NewsletterSection />
     </div>
   );

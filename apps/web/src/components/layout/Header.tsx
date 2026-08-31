@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
+import { Heart, ShieldCheck, Truck, RotateCcw, CreditCard, Tag, Sparkles, HelpCircle, Store } from 'lucide-react';
 import { SearchBar } from '../search/SearchBar';
 import { NotificationDropdown } from './NotificationDropdown';
 import { UserDropdown } from './UserDropdown';
@@ -11,12 +11,6 @@ import { MobileMenu } from './mobile-menu';
 import { CategoryDrawer } from './CategoryDrawer';
 import { Logo } from '@/components/marketing/logo';
 
-/**
- * Figma §8 TopNavBar — 3-zone layout (logo / pill search / actions) on a
- * white sticky bar with hairline bottom border. All interactive children
- * (SearchBar, account menu, notifications, wishlist, cart) keep their
- * existing logic untouched.
- */
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -27,36 +21,75 @@ export function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const benefits = [
+    { icon: Truck, label: 'Free Delivery' },
+    { icon: RotateCcw, label: '7 Days Return' },
+    { icon: ShieldCheck, label: 'Secure Payment' },
+    { icon: CreditCard, label: 'Pay on Delivery' },
+    { icon: Tag, label: 'Best Prices' },
+  ];
+
   return (
     <header
       className={`sticky top-0 z-50 w-full bg-background transition-shadow duration-200 ${
-        scrolled ? 'shadow-[0_1px_0_0_var(--border)]' : ''
+        scrolled ? 'shadow-md border-b' : 'border-b'
       }`}
     >
-      {/* Hairline bottom border — Figma inset pattern */}
-      <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border" />
+      {/* 1. TOP UTILITY BAR */}
+      <div className="bg-muted/60 border-b text-xs text-muted-foreground font-medium py-1.5 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1600px] justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> New
+            </span>
+            <span className="font-semibold text-foreground hidden sm:inline">Spring Collection 2026</span>
+            <span className="text-muted-foreground hidden md:inline">— Explore curated everyday essentials</span>
+          </div>
 
-      <div className="mx-auto flex h-[72px] max-w-[1280px] items-center gap-3 sm:gap-4 px-4 sm:px-6 md:gap-6 lg:px-8 xl:px-20">
-        {/* Zone 1 — logo & category drawer */}
-        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-4 sm:gap-6 ml-auto">
+            <Link href="/account" className="hover:text-primary transition-colors flex items-center gap-1">
+              <Truck className="w-3.5 h-3.5" /> Track Order
+            </Link>
+            <Link href="/products" className="hover:text-primary transition-colors flex items-center gap-1 hidden sm:flex">
+              <HelpCircle className="w-3.5 h-3.5" /> Help & Support
+            </Link>
+            <Link href="/seller/onboard" className="hover:text-primary transition-colors flex items-center gap-1 font-semibold text-primary">
+              <Store className="w-3.5 h-3.5" /> Sell on MyKart
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. MAIN HEADER */}
+      <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 sm:gap-4 px-4 sm:px-6 lg:px-8">
+        {/* Left: Category Drawer & Logo */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <CategoryDrawer />
           <Logo />
         </div>
 
-        {/* Zone 2 — search (center, pill) */}
-        <div className="hidden min-w-0 flex-1 justify-center md:flex">
-          <div className="w-full max-w-[440px]">
+        {/* Center: Search bar */}
+        <div className="hidden min-w-0 flex-1 justify-center md:flex px-4 max-w-2xl mx-auto">
+          <div className="w-full">
             <SearchBar />
           </div>
         </div>
 
-        {/* Zone 3 — actions */}
-        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4 md:gap-5">
+        {/* Right: Primary nav links & Action Icons */}
+        <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4">
           <nav aria-label="Primary" className="hidden items-center gap-5 lg:flex">
-            <Link href="/deals" className="font-display text-sm font-bold text-red-500 hover:text-red-600 transition-colors">Deals</Link>
-            <Link href="/products" className="font-display text-sm font-semibold text-foreground transition-colors hover:text-brand">Products</Link>
-            <Link href="/categories" className="font-display text-sm font-semibold text-foreground transition-colors hover:text-brand">Categories</Link>
-            <Link href="/brands" className="font-display text-sm font-semibold text-foreground transition-colors hover:text-brand">Brands</Link>
+            <Link href="/deals" className="text-sm font-bold text-red-500 hover:text-red-600 transition-colors">
+              Deals
+            </Link>
+            <Link href="/products" className="text-sm font-semibold text-foreground hover:text-primary transition-colors">
+              Products
+            </Link>
+            <Link href="/categories" className="text-sm font-semibold text-foreground hover:text-primary transition-colors">
+              Categories
+            </Link>
+            <Link href="/brands" className="text-sm font-semibold text-foreground hover:text-primary transition-colors">
+              Brands
+            </Link>
           </nav>
 
           <span aria-hidden="true" className="hidden h-5 w-px bg-border lg:block" />
@@ -70,8 +103,23 @@ export function Header() {
       </div>
 
       {/* Mobile search row */}
-      <div className="border-t px-5 py-3 md:hidden">
+      <div className="border-t px-4 py-2.5 md:hidden bg-background">
         <SearchBar />
+      </div>
+
+      {/* 3. BENEFITS BAR */}
+      <div className="hidden md:block bg-card border-t py-2 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1600px] justify-between items-center text-xs font-medium text-muted-foreground">
+          {benefits.map((b, idx) => {
+            const Icon = b.icon;
+            return (
+              <div key={idx} className="flex items-center gap-1.5">
+                <Icon className="w-4 h-4 text-primary shrink-0" />
+                <span>{b.label}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </header>
   );
@@ -82,7 +130,7 @@ function WishlistLink() {
     <Link
       href="/wishlist"
       aria-label="Wishlist"
-      className="hidden rounded-lg p-2 text-foreground transition-colors duration-200 hover:bg-secondary hover:text-brand sm:flex"
+      className="hidden rounded-lg p-2 text-foreground transition-colors duration-200 hover:bg-secondary hover:text-primary sm:flex"
     >
       <Heart className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
     </Link>

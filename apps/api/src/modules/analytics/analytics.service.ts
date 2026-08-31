@@ -310,33 +310,47 @@ export class AnalyticsService {
       orderBy: { createdAt: 'asc' },
     });
 
-    // Process trends in memory
+    // Process trends in memory with pre-filled daily date buckets
     const revenueAndOrderTrend: Record<string, { revenue: number; orders: number }> = {};
+    const customerGrowth: Record<string, number> = {};
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      revenueAndOrderTrend[dateStr] = { revenue: 0, orders: 0 };
+      customerGrowth[dateStr] = 0;
+    }
+
     orders.forEach((o) => {
       const dateStr = o.createdAt.toISOString().split('T')[0];
-      if (!revenueAndOrderTrend[dateStr]) {
-        revenueAndOrderTrend[dateStr] = { revenue: 0, orders: 0 };
+      if (revenueAndOrderTrend[dateStr]) {
+        revenueAndOrderTrend[dateStr].revenue += Number(o.total);
+        revenueAndOrderTrend[dateStr].orders += 1;
       }
-      revenueAndOrderTrend[dateStr].revenue += Number(o.total);
-      revenueAndOrderTrend[dateStr].orders += 1;
     });
 
-    const customerGrowth: Record<string, number> = {};
     customers.forEach((c) => {
       const dateStr = c.createdAt.toISOString().split('T')[0];
-      customerGrowth[dateStr] = (customerGrowth[dateStr] || 0) + 1;
+      if (customerGrowth[dateStr] !== undefined) {
+        customerGrowth[dateStr] += 1;
+      }
     });
 
-    // Convert to lists
-    const revenueAndOrderTrendList = Object.entries(revenueAndOrderTrend).map(([date, data]) => ({
-      date,
-      ...data,
-    }));
+    // Convert to lists sorted by date
+    const revenueAndOrderTrendList = Object.entries(revenueAndOrderTrend)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => ({
+        date,
+        ...data,
+      }));
 
-    const customerGrowthList = Object.entries(customerGrowth).map(([date, count]) => ({
-      date,
-      count,
-    }));
+    const customerGrowthList = Object.entries(customerGrowth)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, count]) => ({
+        date,
+        count,
+      }));
 
     // 3. Top Performers
     const [topProducts, topCategories, topSellers] = await Promise.all([

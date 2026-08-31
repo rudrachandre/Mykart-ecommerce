@@ -71,7 +71,7 @@ const payments = ['VISA', 'MASTERCARD', 'APPLE PAY', 'PAYPAL'];
 export function Footer() {
   return (
     <footer className="bg-secondary">
-      <div className="mx-auto max-w-[1280px] px-5 md:px-10 xl:px-20 pt-16 md:pt-20 pb-10 md:pb-12">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 pb-10 md:pb-12">
         <div className="flex flex-col gap-12 md:flex-row md:justify-between">
           {/* Brand */}
           <div className="flex w-full flex-col gap-6 md:w-[280px]">

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 /** Figma §20 — full-bleed dark (#111) rounded-24 promo banner with coupon highlight. */
 export function DealsBanner() {
   return (
-    <section className="mx-auto max-w-[1280px] px-5 md:px-10 xl:px-20">
+    <section className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}

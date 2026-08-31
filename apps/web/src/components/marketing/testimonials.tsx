@@ -29,7 +29,7 @@ const items: Testimonial[] = [
 /** Figma §21 — centered header + 3-col bordered cards (stars, quote, author). */
 export function TestimonialsSection() {
   return (
-    <section className="mx-auto max-w-[1280px] px-5 md:px-10 xl:px-20 py-14 md:py-20">
+    <section className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-14 md:py-20">
       <div className="flex flex-col items-center gap-10">
         <div className="flex flex-col items-center gap-1 text-center">
           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-[32px]">

@@ -23,7 +23,7 @@ export function NewsletterSection() {
 
   return (
     <section className="border-y bg-background">
-      <div className="mx-auto max-w-[1280px] px-5 md:px-10 xl:px-20 py-16 md:py-24">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="mx-auto flex w-full max-w-[640px] flex-col items-center gap-8 text-center">
           <h2 className="font-display text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
             Join the mykart circular
