@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
@@ -108,18 +108,16 @@ export function CategoryDrawer({ dynamicCategories = [] }: { dynamicCategories?:
   // Handle ESC key at window capture level
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' || e.key === 'Esc') {
         setIsOpen(false);
         setActiveCategory(null);
       }
     };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown, true);
-    }
+    window.addEventListener('keydown', handleKeyDown, true);
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [isOpen]);
+  }, []);
 
   // Lock body scroll
   useEffect(() => {
