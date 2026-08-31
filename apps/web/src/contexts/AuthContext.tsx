@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const fetchUser = async () => {
-    let token = Cookies.get('accessToken');
+    let token: string | null | undefined = Cookies.get('accessToken');
 
     if (!token) {
       token = await refreshAccessToken();
