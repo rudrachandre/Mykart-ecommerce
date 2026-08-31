@@ -1,30 +1,35 @@
-import { cookies } from 'next/headers';
-import { getSellerProducts } from '@/lib/api/sellers';
-import { getLowStockItems } from '@/lib/api/inventory';
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Cookies from 'js-cookie';
+import { getSellerProducts } from '@/lib/api/sellers';
 import { Button } from '@/components/ui/button';
-import { redirect } from 'next/navigation';
+import { InventoryAdjustForm } from '@/components/seller/InventoryAdjustForm';
+import { toast } from 'sonner';
 
-export const metadata = {
-  title: 'Inventory | Seller Dashboard',
-};
+export default function SellerInventoryPage() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const token = Cookies.get('accessToken') || '';
 
-export default async function SellerInventoryPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('accessToken')?.value;
+  const loadInventory = async () => {
+    try {
+      setLoading(true);
+      const data = await getSellerProducts(token);
+      setProducts(data);
+    } catch (error) {
+      toast.error('Failed to load inventory');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!token) {
-    redirect('/login');
-  }
-
-  let products = [];
-  try {
-    products = await getSellerProducts(token);
-  } catch (error) {
-    redirect('/seller/onboard');
-  }
-
-  const lowStock = await getLowStockItems(token, { threshold: 10 }).catch(() => ({ items: [] }));
+  useEffect(() => {
+    if (token) {
+      loadInventory();
+    }
+  }, [token]);
 
   const inventoryRows: any[] = [];
   for (const product of products) {
@@ -49,6 +54,14 @@ export default async function SellerInventoryPage() {
         isOutOfStock,
       });
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-24">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
@@ -81,6 +94,7 @@ export default async function SellerInventoryPage() {
                 <th className="px-6 py-4 font-medium">Reserved</th>
                 <th className="px-6 py-4 font-medium">Available</th>
                 <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium text-right">Adjustment</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -110,6 +124,17 @@ export default async function SellerInventoryPage() {
                         In Stock
                       </span>
                     )}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="inline-block text-left">
+                      <InventoryAdjustForm
+                        variantId={row.variantId}
+                        sku={row.sku}
+                        currentQuantity={row.quantity}
+                        token={token}
+                        onSuccess={loadInventory}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

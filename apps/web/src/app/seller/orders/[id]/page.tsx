@@ -2,10 +2,8 @@ import { cookies } from 'next/headers';
 import { getSellerOrderDetail } from '@/lib/api/sellers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { OrderStatusClient } from './OrderStatusClient';
-import { approveReturn, rejectReturn } from '@/lib/api/sellers';
-import { toast } from 'sonner';
+import { ReturnActionsClient } from './ReturnActionsClient';
 
 export default async function SellerOrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
@@ -94,28 +92,7 @@ export default async function SellerOrderDetailsPage({ params }: { params: Promi
                         </p>
                       </div>
                       {returnItem.status === 'REQUESTED' && (
-                        <div className="flex gap-2">
-                          <form action={async () => {
-                            try {
-                              await approveReturn(token, order.id, returnItem.id);
-                              toast.success('Return approved');
-                            } catch (err: any) {
-                              toast.error(err.message || 'Failed to approve return');
-                            }
-                          }}>
-                            <Button type="submit" size="sm" className="bg-green-600 hover:bg-green-700">Approve</Button>
-                          </form>
-                          <form action={async () => {
-                            try {
-                              await rejectReturn(token, order.id, returnItem.id);
-                              toast.success('Return rejected');
-                            } catch (err: any) {
-                              toast.error(err.message || 'Failed to reject return');
-                            }
-                          }}>
-                            <Button type="submit" size="sm" variant="destructive">Reject</Button>
-                          </form>
-                        </div>
+                        <ReturnActionsClient orderId={order.id} returnId={returnItem.id} token={token} />
                       )}
                     </div>
                   </div>

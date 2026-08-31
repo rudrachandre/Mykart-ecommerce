@@ -6,6 +6,7 @@ import {
   Body,
   UseGuards,
   Param,
+  Query,
 } from '@nestjs/common';
 import { SellersService } from './sellers.service';
 import { OnboardSellerDto } from './dto/onboard-seller.dto';
@@ -100,5 +101,23 @@ export class SellersController {
     @Param('returnId') returnId: string,
   ) {
     return this.sellersService.rejectReturn(user.userId, orderId, returnId);
+  }
+
+  @Get('reviews')
+  @Roles(Role.SELLER, Role.ADMIN)
+  getSellerReviews(
+    @CurrentUser() user: { userId: string },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const p = page ? parseInt(page, 10) : 1;
+    const l = limit ? parseInt(limit, 10) : 10;
+    return this.sellersService.getSellerReviews(user.userId, p, l);
+  }
+
+  @Get('analytics')
+  @Roles(Role.SELLER, Role.ADMIN)
+  getSellerAnalytics(@CurrentUser() user: { userId: string }) {
+    return this.sellersService.getSellerAnalytics(user.userId);
   }
 }

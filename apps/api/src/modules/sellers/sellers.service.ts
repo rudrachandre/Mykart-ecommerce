@@ -408,4 +408,96 @@ export class SellersService {
 
     return updated;
   }
+
+  async getSellerReviews(userId: string, page = 1, limit = 10) {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new NotFoundException('Seller profile not found');
+    this.assertSellerActive(seller);
+
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where: {
+          product: { sellerId: seller.id },
+        },
+        include: {
+          user: { select: { name: true, avatar: true } },
+          product: { select: { id: true, name: true, slug: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.review.count({
+        where: {
+          product: { sellerId: seller.id },
+        },
+      }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getSellerAnalytics(userId: string) {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new NotFoundException('Seller profile not found');
+    this.assertSellerActive(seller);
+
+    // Top selling products for this seller
+    const topProducts = await this.prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: { sellerId: seller.id },
+      _sum: { quantity: true, price: true },
+      orderBy: { _sum: { quantity: 'desc' } },
+      take: 5,
+    });
+
+    // Fetch product names for those top selling products
+    const topProductsWithDetails = await Promise.all(
+      topProducts.map(async (item) => {
+        const product = await this.prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { name: true, slug: true },
+        });
+        return {
+          productId: item.productId,
+          name: product?.name || 'Unknown',
+          slug: product?.slug || '',
+          quantitySold: item._sum.quantity || 0,
+          revenue: Number(item._sum.price || 0) * (item._sum.quantity || 0),
+        };
+      }),
+    );
+
+    // Order status distribution for this seller
+    const orderStatusStats = await this.prisma.orderItem.groupBy({
+      by: ['orderId'],
+      where: { sellerId: seller.id },
+    });
+
+    const orderIds = orderStatusStats.map((o) => o.orderId);
+    const orders = await this.prisma.order.findMany({
+      where: { id: { in: orderIds } },
+      select: { status: true },
+    });
+
+    const statusDistribution = orders.reduce((acc, order) => {
+      acc[order.status] = (acc[order.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      topProducts: topProductsWithDetails,
+      statusDistribution,
+    };
+  }
 }

@@ -96,4 +96,31 @@ export class CouponsService {
       finalValue: Math.max(0, orderValue - discount),
     };
   }
+
+  async update(id: string, dto: CreateCouponDto) {
+    const coupon = await this.prisma.coupon.findUnique({ where: { id } });
+    if (!coupon) throw new NotFoundException('Coupon not found');
+
+    return this.prisma.coupon.update({
+      where: { id },
+      data: {
+        code: dto.code,
+        type: dto.type,
+        value: dto.value,
+        minimumOrder: dto.minimumOrder,
+        maximumDiscount: dto.maximumDiscount,
+        startDate: dto.startDate ? new Date(dto.startDate) : undefined,
+        expiryDate: dto.expiryDate ? new Date(dto.expiryDate) : undefined,
+        usageLimit: dto.usageLimit,
+        active: dto.active,
+      },
+    });
+  }
+
+  async remove(id: string) {
+    const coupon = await this.prisma.coupon.findUnique({ where: { id } });
+    if (!coupon) throw new NotFoundException('Coupon not found');
+
+    return this.prisma.coupon.delete({ where: { id } });
+  }
 }

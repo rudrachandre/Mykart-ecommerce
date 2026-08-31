@@ -161,3 +161,71 @@ export async function rejectReturn(token: string, orderId: string, returnId: str
   if (!res.ok) throw new Error("Failed to reject return");
   return res.json();
 }
+
+export async function getSellerReviews(token: string, page: number = 1, limit: number = 10) {
+  const res = await fetch(`${BASE_URL}/api/v1/sellers/reviews?page=${page}&limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch seller reviews");
+  return res.json();
+}
+
+export async function getSellerAnalytics(token: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/sellers/analytics`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch seller analytics");
+  return res.json();
+}
+
+export async function getCoupons(token: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/coupons`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch coupons");
+  return res.json();
+}
+
+export async function createCoupon(token: string, data: any) {
+  const res = await fetch(`${BASE_URL}/api/v1/coupons`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || "Failed to create coupon");
+  }
+  return res.json();
+}
+
+export async function updateCoupon(token: string, id: string, data: any) {
+  const res = await fetch(`${BASE_URL}/api/v1/coupons/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || "Failed to update coupon");
+  }
+  return res.json();
+}
+
+export async function deleteCoupon(token: string, id: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/coupons/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to delete coupon");
+  return res.json();
+}
