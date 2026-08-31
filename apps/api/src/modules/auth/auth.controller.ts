@@ -25,13 +25,17 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   private setRefreshTokenCookie(res: Response, refreshToken: string) {
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      domain: process.env.COOKIE_DOMAIN || undefined,
-      sameSite:
-        (process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none') || 'lax',
+      secure: isProd, // must be true when sameSite=none
+      // Cross-domain setup: Vercel frontend (vercel.app) → Render API (onrender.com).
+      // Browsers block SameSite=Lax cookies on cross-site requests, so the
+      // refreshToken would never be sent to /auth/refresh. SameSite=None + Secure
+      // allows cross-site cookie transmission while remaining HttpOnly.
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
     });
   }
 
@@ -86,9 +90,7 @@ export class AuthController {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      domain: process.env.COOKIE_DOMAIN || undefined,
-      sameSite:
-        (process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none') || 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
     });
     return { message: 'Logged out successfully' };
@@ -126,9 +128,7 @@ export class AuthController {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      domain: process.env.COOKIE_DOMAIN || undefined,
-      sameSite:
-        (process.env.COOKIE_SAME_SITE as 'strict' | 'lax' | 'none') || 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
     });
     return { message: 'Logged out from all devices' };

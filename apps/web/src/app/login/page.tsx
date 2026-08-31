@@ -52,9 +52,22 @@ function LoginForm() {
       });
 
       const data = await response.json().catch(() => null);
+
+      if (response.status === 429) {
+        setError("Too many sign-in attempts. Please wait a minute and try again.");
+        return;
+      }
+
+      if (response.status === 401) {
+        setError("Invalid email or password.");
+        return;
+      }
+
       if (!response.ok || !data?.accessToken) {
         setError(
-          data?.message || "Unable to sign in. Check your email and password.",
+          response.status >= 500
+            ? "The sign-in service is temporarily unavailable. Please try again shortly."
+            : (data?.message || "Unable to sign in. Check your email and password."),
         );
         return;
       }

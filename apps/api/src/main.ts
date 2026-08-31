@@ -15,6 +15,13 @@ async function bootstrap() {
     rawBody: true,
   });
 
+  // Trust the first reverse-proxy hop (Cloudflare → Render).
+  // Without this, Express reads req.ip as Cloudflare's shared egress IP,
+  // which causes all browser users to share one rate-limit bucket.
+  // With trust proxy = 1, Express reads req.ip from X-Forwarded-For[0]
+  // (the real client IP set by Cloudflare) so throttling is per-user.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   // Global prefix for all API routes
   app.setGlobalPrefix('api/v1');
 
