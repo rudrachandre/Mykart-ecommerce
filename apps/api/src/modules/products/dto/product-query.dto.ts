@@ -15,6 +15,10 @@ export enum ProductSortBy {
   PRICE_ASC = 'PRICE_ASC',
   PRICE_DESC = 'PRICE_DESC',
   RATING = 'RATING',
+  POPULARITY = 'POPULARITY',
+  DISCOUNT_DESC = 'DISCOUNT_DESC',
+  BEST_SELLER = 'BEST_SELLER',
+  RELEVANCE = 'RELEVANCE',
 }
 
 export class ProductQueryDto {
@@ -64,4 +68,36 @@ export class ProductQueryDto {
   @IsOptional()
   @Type(() => Boolean)
   onSale?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  minPrice?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxPrice?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  minDiscount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  inStock?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  dealType?: string;
 }

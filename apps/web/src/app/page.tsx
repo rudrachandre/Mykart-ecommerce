@@ -5,6 +5,7 @@ import { FeaturedCategories } from '@/components/marketing/featured-categories';
 import { DealsBanner } from '@/components/marketing/deals-banner';
 import { TestimonialsSection } from '@/components/marketing/testimonials';
 import { NewsletterSection } from '@/components/marketing/newsletter';
+import { TodaysDealsSection } from '@/components/deals/TodaysDealsSection';
 
 export const metadata = {
   title: 'mykart — Curated everyday essentials',
@@ -13,15 +14,26 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const [trending, categories] = await Promise.all([
+  const [deals, trending, categories] = await Promise.all([
+    getProducts({ limit: 8, onSale: true }).catch(() => ({ items: [] })),
     getProducts({ limit: 8, sortBy: 'RATING' }).catch(() => ({ items: [] })),
     getCategories().catch(() => []),
   ]);
+
+  const dealProducts = ((deals as any).items?.length > 0) 
+    ? (deals as any).items 
+    : ((trending as any).items ?? []);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Figma §12 — HeroBanner */}
       <HeroBanner />
+
+      {/* Part 1 — Today's Big Deals Discovery Section */}
+      <TodaysDealsSection
+        initialProducts={dealProducts}
+        categories={categories as any[]}
+      />
 
       {/* Figma §13 — FeaturedCategories */}
       <FeaturedCategories

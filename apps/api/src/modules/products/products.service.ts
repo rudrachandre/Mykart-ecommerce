@@ -165,6 +165,11 @@ export class ProductsService {
       sortBy,
       onSale,
       rating,
+      minPrice,
+      maxPrice,
+      minDiscount,
+      inStock,
+      dealType,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -177,11 +182,37 @@ export class ProductsService {
     }
 
     if (brandSlug) {
-      where.brand = { slug: brandSlug };
+      const brandSlugs = brandSlug.split(',').map((s) => s.trim()).filter(Boolean);
+      if (brandSlugs.length === 1) {
+        where.brand = { slug: brandSlugs[0] };
+      } else if (brandSlugs.length > 1) {
+        where.brand = { slug: { in: brandSlugs } };
+      }
     }
 
-    if (onSale) {
+    if (onSale || minDiscount != null || dealType === 'TODAYS_DEALS' || dealType === 'LIGHTNING') {
       where.salePrice = { not: null };
+    }
+
+    if (dealType === 'TRENDING' || dealType === 'MOST_LOVED') {
+      where.averageRating = { gte: 4.0 };
+    }
+
+    if (inStock) {
+      where.variants = {
+        some: {
+          inventory: {
+            quantity: { gt: 0 },
+          },
+        },
+      };
+    }
+
+    if (minPrice != null || maxPrice != null) {
+      where.basePrice = {
+        ...(minPrice != null ? { gte: minPrice } : {}),
+        ...(maxPrice != null ? { lte: maxPrice } : {}),
+      };
     }
 
     if (search) {
@@ -206,6 +237,15 @@ export class ProductsService {
       case ProductSortBy.RATING:
         orderBy = { averageRating: 'desc' };
         break;
+      case ProductSortBy.POPULARITY:
+      case ProductSortBy.BEST_SELLER:
+        orderBy = { reviewCount: 'desc' };
+        break;
+      case ProductSortBy.DISCOUNT_DESC:
+        // Prioritize on-sale items with lowest salePrice / highest rating
+        orderBy = { salePrice: 'asc' };
+        break;
+      case ProductSortBy.RELEVANCE:
       case ProductSortBy.NEWEST:
       default:
         orderBy = { createdAt: 'desc' };
