@@ -26,7 +26,8 @@ export function ProductReviews({
   const fetchReviews = async () => {
     try {
       const data = await getProductReviews(productId);
-      setReviews(data);
+      const reviewsList = Array.isArray(data) ? data : (data?.items || []);
+      setReviews(reviewsList);
     } catch (e) {
       console.error(e);
     } finally {
@@ -77,13 +78,14 @@ export function ProductReviews({
   }, []);
 
   // Calculate summary
-  const totalReviews = reviews.length;
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
+  const totalReviews = safeReviews.length;
   const averageRating = totalReviews > 0 
-    ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews 
+    ? safeReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews 
     : 0;
 
   const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-  reviews.forEach(r => {
+  safeReviews.forEach(r => {
     if (r.rating >= 1 && r.rating <= 5) {
       ratingCounts[r.rating as keyof typeof ratingCounts]++;
     }
