@@ -25,12 +25,22 @@ import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpdateSellerStatusDto } from './dto/update-seller-status.dto';
 import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 import { RefundProcessDto } from '../orders/dto/refund-process.dto';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Roles(Role.ADMIN)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly analyticsService: AnalyticsService,
+  ) {}
+
+  @Get('dashboard')
+  @RequirePermissions(PERMISSIONS.ANALYTICS_READ)
+  getDashboard() {
+    return this.analyticsService.getDashboardStats();
+  }
 
   @Get('users')
   @RequirePermissions(PERMISSIONS.USER_READ)
