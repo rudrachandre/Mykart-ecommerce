@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image, { ImageProps } from 'next/image';
 
 interface ProductImageProps extends Omit<ImageProps, 'src' | 'onError'> {
@@ -22,6 +22,11 @@ export function ProductImage({
 }: ProductImageProps) {
   const [imgSrc, setImgSrc] = useState<string>(src || DEFAULT_PLACEHOLDER);
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImgSrc(src || DEFAULT_PLACEHOLDER);
+    setHasError(false);
+  }, [src]);
 
   return (
     <Image

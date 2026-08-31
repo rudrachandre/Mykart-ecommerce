@@ -1,8 +1,7 @@
-'use client';
+﻿'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
@@ -12,6 +11,7 @@ import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { addToWishlist } from '@/lib/api/wishlist';
 import { StarRating } from '@/components/marketing/star-rating';
+import { ProductImage } from '@/components/ui/ProductImage';
 
 interface ProductCardProps {
   product: any;
@@ -23,7 +23,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [wished, setWished] = useState(false);
   const [wishLoading, setWishLoading] = useState(false);
 
-  const imageUrl = product.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format&fit=crop';
+  const imageUrl = product.images?.[0]?.url || null;
   const hasDiscount = product.salePrice && product.salePrice < product.basePrice;
 
   const variants: any[] = product.variants || [];
@@ -49,7 +49,6 @@ export function ProductCard({ product }: ProductCardProps) {
       if (err?.message === 'Not authenticated') {
         router.push(`/login?callbackUrl=/products/${product.slug}`);
       }
-      // Other errors are already surfaced by CartContext toasts.
     }
   };
 
@@ -65,7 +64,6 @@ export function ProductCard({ product }: ProductCardProps) {
       setWished(true);
       toast.success('Added to wishlist');
     } catch (err: any) {
-      // The backend rejects duplicates with 409; treat it as already saved.
       if (err?.message?.toLowerCase().includes('already')) {
         setWished(true);
         toast.info('Already in your wishlist');
@@ -84,22 +82,20 @@ export function ProductCard({ product }: ProductCardProps) {
       viewport={{ once: true, margin: "100px" }}
       className="group flex flex-col w-full overflow-hidden rounded-2xl border bg-card transition-colors duration-200 hover:border-foreground/25"
     >
-      {/* Image Container — Figma §10: warm neutral backdrop, 1:1 */}
+      {/* Image Container */}
       <div className="relative aspect-square w-full overflow-hidden bg-secondary p-4">
         <Link href={`/products/${product.slug}`} className="absolute inset-0 z-10">
           <span className="sr-only">View {product.name}</span>
         </Link>
         <div className="relative w-full h-full">
-          <Image
+          <ProductImage
             src={imageUrl}
             alt={product.name}
-            fill
             className="object-contain mix-blend-multiply transition-transform duration-200 ease-out group-hover:scale-105"
-            sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
           />
         </div>
 
-        {/* Badges — Figma §9 product label: brand pill, top-left */}
+        {/* Badges */}
         <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
           {hasDiscount && (
             <span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
@@ -133,7 +129,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </button>
       </div>
 
-      {/* Details — Figma §10 anatomy */}
+      {/* Details */}
       <div className="flex flex-1 flex-col gap-2 p-4">
         {product.brand && (
           <Link
@@ -151,7 +147,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </Link>
 
-        {/* Rating — stroke stars #FFB000 + count */}
+        {/* Rating */}
         <StarRating value={product.averageRating} count={product.reviewCount} />
 
         <div className="mt-auto flex flex-col gap-3 pt-2">
@@ -167,7 +163,7 @@ export function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
 
-          {/* Add to Cart — Figma secondary style: 1px ink border, transparent */}
+          {/* Add to Cart */}
           <button
             onClick={handleAddToCart}
             disabled={isOutOfStock}
@@ -200,4 +196,3 @@ export function ProductCardSkeleton() {
     </div>
   );
 }
-
