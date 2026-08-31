@@ -84,11 +84,34 @@ export class HealthController {
   @Get('run-seed')
   async runSeed() {
     try {
+      const fs = require('fs');
+      const path = require('path');
       const { execSync } = require('child_process');
-      const migrateOutput = execSync('npx prisma migrate deploy', { encoding: 'utf-8' });
+      
+      let schemaPath = '';
+      const candidatePaths = [
+        path.resolve(process.cwd(), 'prisma/schema.prisma'),
+        path.resolve(process.cwd(), '../prisma/schema.prisma'),
+        path.resolve(process.cwd(), '../../prisma/schema.prisma'),
+        '/opt/render/project/src/prisma/schema.prisma'
+      ];
+      
+      for (const p of candidatePaths) {
+        if (fs.existsSync(p)) {
+          schemaPath = p;
+          break;
+        }
+      }
+      
+      if (!schemaPath) {
+        throw new Error('Could not locate schema.prisma file in candidate paths: ' + candidatePaths.join(', '));
+      }
+      
+      const migrateOutput = execSync(`npx prisma migrate deploy --schema "${schemaPath}"`, { encoding: 'utf-8' });
       const seedOutput = execSync('node dist/seed-data.js', { encoding: 'utf-8' });
       return {
         status: 'ok',
+        schemaPath,
         migrations: migrateOutput,
         seed: seedOutput
       };
@@ -102,6 +125,7 @@ export class HealthController {
     }
   }
 }
+
 
 
 
