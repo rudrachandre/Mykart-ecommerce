@@ -85,10 +85,12 @@ export class HealthController {
   async runSeed() {
     try {
       const { execSync } = require('child_process');
-      const output = execSync('node dist/seed-data.js', { encoding: 'utf-8' });
+      const migrateOutput = execSync('npx prisma migrate deploy', { encoding: 'utf-8' });
+      const seedOutput = execSync('node dist/seed-data.js', { encoding: 'utf-8' });
       return {
         status: 'ok',
-        output: output
+        migrations: migrateOutput,
+        seed: seedOutput
       };
     } catch (e) {
       return {
@@ -100,5 +102,6 @@ export class HealthController {
     }
   }
 }
+
 
 
