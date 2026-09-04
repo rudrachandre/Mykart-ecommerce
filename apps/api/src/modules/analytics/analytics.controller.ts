@@ -14,6 +14,21 @@ import { Role } from '@prisma/client';
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
+  @Get('overview')
+  @RequirePermissions(PERMISSIONS.ANALYTICS_READ)
+  async getAnalyticsOverview(
+    @Query('range') range?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    try {
+      return await this.analyticsService.getAnalyticsOverview({ range, startDate, endDate });
+    } catch (err: any) {
+      console.error('[AnalyticsController] error in getAnalyticsOverview:', err);
+      throw err;
+    }
+  }
+
   @Get('dashboard')
   @RequirePermissions(PERMISSIONS.ANALYTICS_READ)
   async getDashboardStats() {

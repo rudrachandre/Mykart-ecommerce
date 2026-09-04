@@ -58,102 +58,64 @@ async function fetchWithAuth(url: string, token?: string, options: RequestInit =
   return res.json();
 }
 
-export async function getDashboardStats(token?: string) {
-  try {
-    const [usersRes, sellersRes, paymentsRes] = await Promise.all([
-      fetchWithAuth(`${BASE_URL}/api/v1/admin/users?take=1`, token).catch(() => ({ total: 1 })),
-      fetchWithAuth(`${BASE_URL}/api/v1/admin/sellers?take=1`, token).catch(() => ({ total: 1 })),
-      fetchWithAuth(`${BASE_URL}/api/v1/admin/payments?take=20`, token).catch(() => ({ payments: [] })),
-    ]);
-
-    const totalUsers = usersRes?.total ?? 1;
-    const totalSellers = sellersRes?.total ?? 1;
-    const payments = paymentsRes?.payments ?? [];
-    const totalRevenue = payments
-      .filter((p: any) => p.status === 'COMPLETED')
-      .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
-
-    return {
-      totalUsers,
-      totalCustomers: Math.max(1, totalUsers - totalSellers),
-      totalSellers,
-      newCustomers: 1,
-      totalOrders: payments.length,
-      ordersToday: payments.length,
-      ordersLast7Days: payments.length,
-      ordersLast30Days: payments.length,
-      orderDistribution: {},
-      totalRevenue,
-      revenueToday: totalRevenue,
-      revenueLast7Days: totalRevenue,
-      revenueLast30Days: totalRevenue,
-      avgOrderValue: payments.length > 0 ? totalRevenue / payments.length : 0,
-      sellerDistribution: {},
-      totalProducts: 40,
-      activeProducts: 40,
-      outOfStockCount: 0,
-      availableStock: 100,
-      reservedStock: 0,
-      lowStockCount: 0,
-      totalInventoryValue: 0,
-      paymentDistribution: {},
-      totalRefunds: 0,
-      totalRefundAmount: 0,
-      totalReturns: 0,
-      approvedReturns: 0,
-      rejectedReturns: 0,
-      totalReplacements: 0,
-      totalReviews: 0,
-      avgRating: 0,
-      reportedReviewsCount: 0,
-      pendingModerationCount: 0,
-      totalCoupons: 0,
-      activeCoupons: 0,
-      couponsUsedCount: 0,
-    };
-  } catch {
-    return {
-      totalUsers: 1,
-      totalCustomers: 1,
-      totalSellers: 1,
-      newCustomers: 1,
-      totalOrders: 0,
-      ordersToday: 0,
-      ordersLast7Days: 0,
-      ordersLast30Days: 0,
-      orderDistribution: {},
-      totalRevenue: 0,
-      revenueToday: 0,
-      revenueLast7Days: 0,
-      revenueLast30Days: 0,
-      avgOrderValue: 0,
-      sellerDistribution: {},
-      totalProducts: 40,
-      activeProducts: 40,
-      outOfStockCount: 0,
-      availableStock: 100,
-      reservedStock: 0,
-      lowStockCount: 0,
-      totalInventoryValue: 0,
-      paymentDistribution: {},
-      totalRefunds: 0,
-      totalRefundAmount: 0,
-      totalReturns: 0,
-      approvedReturns: 0,
-      rejectedReturns: 0,
-      totalReplacements: 0,
-      totalReviews: 0,
-      avgRating: 0,
-      reportedReviewsCount: 0,
-      pendingModerationCount: 0,
-      totalCoupons: 0,
-      activeCoupons: 0,
-      couponsUsedCount: 0,
-    };
-  }
+export async function getAnalyticsOverview(
+  options: { range?: string; startDate?: string; endDate?: string } = {},
+  token?: string,
+) {
+  let url = `${BASE_URL}/api/v1/analytics/overview?range=${options.range || '30days'}`;
+  if (options.startDate) url += `&startDate=${encodeURIComponent(options.startDate)}`;
+  if (options.endDate) url += `&endDate=${encodeURIComponent(options.endDate)}`;
+  return fetchWithAuth(url, token);
 }
 
-export async function getAuditLogs(token?: string, skip: number = 0, take: number = 20, action?: string, userId?: string) {
+export async function getDashboardStats(token?: string) {
+  return fetchWithAuth(`${BASE_URL}/api/v1/analytics/dashboard`, token).catch(() => ({
+    totalUsers: 1,
+    totalCustomers: 1,
+    totalSellers: 1,
+    newCustomers: 1,
+    totalOrders: 0,
+    ordersToday: 0,
+    ordersLast7Days: 0,
+    ordersLast30Days: 0,
+    orderDistribution: {},
+    totalRevenue: 0,
+    revenueToday: 0,
+    revenueLast7Days: 0,
+    revenueLast30Days: 0,
+    avgOrderValue: 0,
+    sellerDistribution: {},
+    totalProducts: 40,
+    activeProducts: 40,
+    outOfStockCount: 0,
+    availableStock: 100,
+    reservedStock: 0,
+    lowStockCount: 0,
+    totalInventoryValue: 0,
+    paymentDistribution: {},
+    totalRefunds: 0,
+    totalRefundAmount: 0,
+    totalReturns: 0,
+    approvedReturns: 0,
+    rejectedReturns: 0,
+    totalReplacements: 0,
+    totalReviews: 0,
+    avgRating: 0,
+    reportedReviewsCount: 0,
+    pendingModerationCount: 0,
+    totalCoupons: 0,
+    activeCoupons: 0,
+    couponsUsedCount: 0,
+  }));
+}
+
+export async function getAuditLogs(
+  token?: string,
+  skip: number = 0,
+  take: number = 20,
+  action?: string,
+  userId?: string,
+) {
   let url = `${BASE_URL}/api/v1/analytics/audit-logs?skip=${skip}&take=${take}`;
   if (action) url += `&action=${encodeURIComponent(action)}`;
   if (userId) url += `&userId=${encodeURIComponent(userId)}`;
