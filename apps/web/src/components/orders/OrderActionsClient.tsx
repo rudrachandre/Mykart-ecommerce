@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { cancelOrder, requestReturn, requestReplacement } from '@/lib/api/orders';
+import { cancelOrder, requestReturn, requestReplacement, getInvoice } from '@/lib/api/orders';
 import { toast } from 'sonner';
 import { Download } from 'lucide-react';
 
@@ -10,10 +10,12 @@ export function OrderActionsClient({
   orderId,
   status,
   paymentStatus,
+  token,
 }: {
   orderId: string;
   status: string;
   paymentStatus?: string;
+  token: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
@@ -28,7 +30,7 @@ export function OrderActionsClient({
   const handleCancel = async () => {
     setLoading(true);
     try {
-      await cancelOrder('', orderId, reason);
+      await cancelOrder(token, orderId, reason);
       toast.success('Order cancelled successfully');
       setShowCancel(false);
       window.location.reload();
@@ -42,7 +44,7 @@ export function OrderActionsClient({
   const handleReturn = async () => {
     setLoading(true);
     try {
-      await requestReturn('', orderId, {
+      await requestReturn(token, orderId, {
         reason,
         items: [],
       });
@@ -59,7 +61,7 @@ export function OrderActionsClient({
   const handleReplacement = async () => {
     setLoading(true);
     try {
-      await requestReplacement('', orderId, {
+      await requestReplacement(token, orderId, {
         reason,
         items: [],
       });
@@ -75,9 +77,7 @@ export function OrderActionsClient({
 
   const handleInvoice = async () => {
     try {
-      const res = await fetch(`/api/v1/orders/${orderId}/invoice`);
-      if (!res.ok) throw new Error('Failed to fetch invoice');
-      const data = await res.json();
+      const data = await getInvoice(token, orderId);
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

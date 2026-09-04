@@ -81,6 +81,7 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
         orderId={order.id}
         status={order.status}
         paymentStatus={order.payments?.[0]?.status}
+        token={token}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
