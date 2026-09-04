@@ -155,7 +155,19 @@ export class SearchService implements OnModuleInit {
 
     const filter: string[] = [];
 
-    if (category) filter.push(`category.slug = "${category}"`);
+    if (category) {
+      const resolvedCat = await this.prisma.category.findUnique({
+        where: { slug: category },
+        include: { children: true },
+      });
+      if (resolvedCat && resolvedCat.children.length > 0) {
+        const catSlugs = [resolvedCat.slug, ...resolvedCat.children.map((c) => c.slug)];
+        const catFilterStr = catSlugs.map((s) => `category.slug = "${s}"`).join(' OR ');
+        filter.push(`(${catFilterStr})`);
+      } else {
+        filter.push(`category.slug = "${category}"`);
+      }
+    }
     if (brand) filter.push(`brand.slug = "${brand}"`);
     if (status) filter.push(`status = "${status}"`);
     if (minPrice !== undefined) filter.push(`basePrice >= ${minPrice}`);
@@ -223,7 +235,16 @@ export class SearchService implements OnModuleInit {
     };
 
     if (category) {
-      where.category = { slug: category };
+      const resolvedCat = await this.prisma.category.findUnique({
+        where: { slug: category },
+        include: { children: true },
+      });
+      if (resolvedCat) {
+        const categoryIds = [resolvedCat.id, ...resolvedCat.children.map((c) => c.id)];
+        where.categoryId = { in: categoryIds };
+      } else {
+        where.category = { slug: category };
+      }
     }
 
     if (brand) {

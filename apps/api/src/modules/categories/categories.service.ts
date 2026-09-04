@@ -66,6 +66,11 @@ export class CategoriesService {
         children: includeChildren
           ? {
               include: {
+                _count: {
+                  select: {
+                    products: true,
+                  },
+                },
                 children: true,
               },
             }
@@ -76,8 +81,25 @@ export class CategoriesService {
       },
     });
 
-    await this.redisService.set(cacheKey, JSON.stringify(categories), 3600); // Cache for 1 hour
-    return categories;
+    // Aggregate subcategory product counts into top-level parent category counts
+    const result = categories.map((cat: any) => {
+      const directCount = cat._count?.products || 0;
+      const childrenCount =
+        cat.children?.reduce(
+          (sum: number, child: any) => sum + (child._count?.products || 0),
+          0,
+        ) || 0;
+
+      return {
+        ...cat,
+        _count: {
+          products: directCount + childrenCount,
+        },
+      };
+    });
+
+    await this.redisService.set(cacheKey, JSON.stringify(result), 3600); // Cache for 1 hour
+    return result;
   }
 
   async findOneBySlug(slug: string) {

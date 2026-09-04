@@ -5,12 +5,12 @@ if (!API_URL && process.env.NODE_ENV === 'production') {
 }
 const BASE_URL = API_URL || 'http://localhost:3001';
 
-/** 8-second timeout for all server-side catalog fetches.
- *  Prevents Vercel SSR from hanging indefinitely on a cold Render instance. */
+/** 25-second timeout for all server-side catalog fetches.
+ *  Prevents Vercel SSR from timing out on cold-starting Render instances. */
 function serverFetchOpts(revalidate: number): RequestInit {
   return {
     next: { revalidate },
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(25000),
   };
 }
 
