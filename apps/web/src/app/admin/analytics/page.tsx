@@ -201,6 +201,7 @@ export default function AdminAnalyticsPage() {
             { id: 'today', label: 'Today' },
             { id: 'yesterday', label: 'Yesterday' },
             { id: '7days', label: '7 Days' },
+            { id: '15days', label: '15 Days' },
             { id: '30days', label: '30 Days' },
             { id: '90days', label: '90 Days' },
             { id: 'thisMonth', label: 'This Month' },
@@ -421,16 +422,16 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
-      {/* Visualizations: Revenue & Orders Trends */}
+      {/* Visualizations: Revenue & Orders Time-Series Trends */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Revenue Trend Visualizer */}
+        {/* Smooth Area/Line Chart: Charged Revenue Trend */}
         <div className="bg-card p-6 rounded-2xl border shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-emerald-600" /> Charged Revenue Trend
               </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Daily total charged order volume (tax & shipping inclusive)</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Daily total charged order volume ({range} window)</p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-full border border-emerald-500/20">
               Total: {formatCurrency(kpis?.netRevenue?.value || 0)}
@@ -445,31 +446,59 @@ export default function AdminAnalyticsPage() {
             </div>
           ) : (
             <div>
-              <div className="flex items-end gap-1 h-64 border-b border-l pb-2 pl-2 pt-4 relative">
-                {trends.map((item, idx) => {
-                  const pct = (item.revenue / maxRevenue) * 100;
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/30 rounded-t transition-colors relative group h-full flex flex-col justify-end"
-                    >
-                      <div
-                        style={{ height: `${item.revenue > 0 ? Math.max(pct, 4) : 0}%` }}
-                        className={`w-full rounded-t transition-all ${
-                          item.revenue > 0 ? 'bg-emerald-600' : 'bg-transparent'
-                        }`}
-                      />
-                      {/* Tooltip */}
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-popover text-popover-foreground text-xs p-2.5 rounded-lg shadow-xl border whitespace-nowrap z-30">
-                        <p className="font-bold text-foreground">{item.date}</p>
-                        <p className="text-emerald-600 font-bold mt-0.5">{formatCurrency(item.revenue)} charged</p>
-                        <p className="text-[10px] text-muted-foreground">{item.orders} orders</p>
+              <div className="h-64 relative w-full pt-4 pb-6">
+                <svg className="w-full h-full overflow-visible" viewBox="0 0 500 200" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Grid Lines */}
+                  {[0, 50, 100, 150, 200].map((yVal, i) => (
+                    <line key={i} x1="0" y1={yVal} x2="500" y2={yVal} stroke="currentColor" strokeOpacity="0.08" strokeDasharray="3 3" />
+                  ))}
+                  {/* Area Path */}
+                  {(() => {
+                    const maxVal = Math.max(...trends.map((t) => t.revenue), 1);
+                    const pts = trends.map((t, i) => {
+                      const x = (i / (trends.length - 1 || 1)) * 500;
+                      const y = 190 - (t.revenue / maxVal) * 170;
+                      return `${x},${y}`;
+                    });
+                    const pathD = `M 0,200 L ${pts.join(' L ')} L 500,200 Z`;
+                    const lineD = `M ${pts.join(' L ')}`;
+                    return (
+                      <>
+                        <path d={pathD} fill="url(#revenueGrad)" />
+                        <path d={lineD} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </>
+                    );
+                  })()}
+                </svg>
+                {/* Interactive Points */}
+                <div className="absolute inset-x-0 top-4 bottom-6 flex justify-between">
+                  {trends.map((item, idx) => {
+                    const maxVal = Math.max(...trends.map((t) => t.revenue), 1);
+                    const pct = (item.revenue / maxVal) * 100;
+                    return (
+                      <div key={idx} className="flex-1 relative group flex items-center justify-center">
+                        <div
+                          className="absolute w-3 h-3 rounded-full bg-emerald-600 border-2 border-background shadow group-hover:scale-150 transition-transform"
+                          style={{ bottom: `${item.revenue > 0 ? Math.max(pct, 2) : 0}%` }}
+                        />
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-popover text-popover-foreground text-xs p-2.5 rounded-lg shadow-xl border whitespace-nowrap z-30 pointer-events-none">
+                          <p className="font-bold text-foreground">{item.date}</p>
+                          <p className="text-emerald-600 font-bold mt-0.5">{formatCurrency(item.revenue)} charged</p>
+                          <p className="text-[10px] text-muted-foreground">{item.orders} orders</p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex justify-between text-[11px] text-muted-foreground font-medium mt-3">
+              <div className="flex justify-between text-[11px] text-muted-foreground font-medium mt-2">
                 <span>{trends[0]?.date}</span>
                 <span>{trends[Math.floor(trends.length / 2)]?.date}</span>
                 <span>{trends[trends.length - 1]?.date}</span>
@@ -478,7 +507,7 @@ export default function AdminAnalyticsPage() {
           )}
         </div>
 
-        {/* Orders Count & Status Trend */}
+        {/* Daily Order Activity Trend Chart */}
         <div className="bg-card p-6 rounded-2xl border shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -500,34 +529,61 @@ export default function AdminAnalyticsPage() {
             </div>
           ) : (
             <div>
-              <div className="flex items-end gap-1 h-64 border-b border-l pb-2 pl-2 pt-4 relative">
-                {trends.map((item, idx) => {
-                  const totalCount = item.orders + item.cancelledOrders;
-                  const pct = (totalCount / Math.max(...trends.map((t) => t.orders + t.cancelledOrders), 1)) * 100;
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-1 bg-blue-500/10 hover:bg-blue-500/30 rounded-t transition-colors relative group h-full flex flex-col justify-end"
-                    >
-                      <div
-                        style={{ height: `${totalCount > 0 ? Math.max(pct, 4) : 0}%` }}
-                        className={`w-full rounded-t transition-all ${
-                          item.orders > 0 ? 'bg-blue-600' : item.cancelledOrders > 0 ? 'bg-rose-500' : 'bg-transparent'
-                        }`}
-                      />
-                      {/* Tooltip */}
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-popover text-popover-foreground text-xs p-2.5 rounded-lg shadow-xl border whitespace-nowrap z-30">
-                        <p className="font-bold text-foreground">{item.date}</p>
-                        <p className="text-blue-600 font-bold mt-0.5">{item.orders} Qualifying</p>
-                        {item.cancelledOrders > 0 && (
-                          <p className="text-rose-600 font-bold">{item.cancelledOrders} Cancelled</p>
-                        )}
+              <div className="h-64 relative w-full pt-4 pb-6">
+                <svg className="w-full h-full overflow-visible" viewBox="0 0 500 200" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Grid Lines */}
+                  {[0, 50, 100, 150, 200].map((yVal, i) => (
+                    <line key={i} x1="0" y1={yVal} x2="500" y2={yVal} stroke="currentColor" strokeOpacity="0.08" strokeDasharray="3 3" />
+                  ))}
+                  {/* Area Path */}
+                  {(() => {
+                    const maxVal = Math.max(...trends.map((t) => t.orders + t.cancelledOrders), 1);
+                    const pts = trends.map((t, i) => {
+                      const x = (i / (trends.length - 1 || 1)) * 500;
+                      const y = 190 - (t.orders / maxVal) * 170;
+                      return `${x},${y}`;
+                    });
+                    const pathD = `M 0,200 L ${pts.join(' L ')} L 500,200 Z`;
+                    const lineD = `M ${pts.join(' L ')}`;
+                    return (
+                      <>
+                        <path d={pathD} fill="url(#orderGrad)" />
+                        <path d={lineD} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </>
+                    );
+                  })()}
+                </svg>
+                {/* Interactive Points */}
+                <div className="absolute inset-x-0 top-4 bottom-6 flex justify-between">
+                  {trends.map((item, idx) => {
+                    const maxVal = Math.max(...trends.map((t) => t.orders + t.cancelledOrders), 1);
+                    const pct = (item.orders / maxVal) * 100;
+                    return (
+                      <div key={idx} className="flex-1 relative group flex items-center justify-center">
+                        <div
+                          className="absolute w-3 h-3 rounded-full bg-blue-600 border-2 border-background shadow group-hover:scale-150 transition-transform"
+                          style={{ bottom: `${item.orders > 0 ? Math.max(pct, 2) : 0}%` }}
+                        />
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-popover text-popover-foreground text-xs p-2.5 rounded-lg shadow-xl border whitespace-nowrap z-30 pointer-events-none">
+                          <p className="font-bold text-foreground">{item.date}</p>
+                          <p className="text-blue-600 font-bold mt-0.5">{item.orders} Qualifying Orders</p>
+                          {item.cancelledOrders > 0 && (
+                            <p className="text-rose-600 font-bold">{item.cancelledOrders} Cancelled</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex justify-between text-[11px] text-muted-foreground font-medium mt-3">
+              <div className="flex justify-between text-[11px] text-muted-foreground font-medium mt-2">
                 <span>{trends[0]?.date}</span>
                 <span>{trends[Math.floor(trends.length / 2)]?.date}</span>
                 <span>{trends[trends.length - 1]?.date}</span>

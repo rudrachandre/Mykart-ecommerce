@@ -960,6 +960,101 @@ async function main() {
     });
   }
 
+  // 8.1 Seed 30-Day Historical Trend Orders for Demo & Analytics
+  console.log('Seeding 30-day historical trend orders...');
+  const now = new Date();
+  const historicalSeedSpecs = [
+    { daysAgo: 28, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
+    { daysAgo: 27, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
+    { daysAgo: 25, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 2 },
+    { daysAgo: 24, qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 3 },
+    { daysAgo: 22, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 4 },
+    { daysAgo: 21, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 5 },
+    { daysAgo: 19, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 6 },
+    { daysAgo: 18, qty: 1, status: OrderStatus.PENDING,   payStatus: PaymentStatus.PENDING,   prodIdx: 7 },
+    { daysAgo: 16, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 8 },
+    { daysAgo: 15, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 9 },
+    { daysAgo: 14, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 10 },
+    { daysAgo: 12, qty: 1, status: OrderStatus.SHIPPED,   payStatus: PaymentStatus.COMPLETED, prodIdx: 11 },
+    { daysAgo: 11, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 12 },
+    { daysAgo: 9,  qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 13 },
+    { daysAgo: 8,  qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 14 },
+    { daysAgo: 7,  qty: 1, status: OrderStatus.SHIPPED,   payStatus: PaymentStatus.COMPLETED, prodIdx: 15 },
+    { daysAgo: 6,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 16 },
+    { daysAgo: 5,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 17 },
+    { daysAgo: 4,  qty: 1, status: OrderStatus.PENDING,   payStatus: PaymentStatus.PENDING,   prodIdx: 18 },
+    { daysAgo: 3,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 19 },
+    { daysAgo: 2,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
+    { daysAgo: 1,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
+  ];
+
+  for (let idx = 0; idx < historicalSeedSpecs.length; idx++) {
+    const spec = historicalSeedSpecs[idx];
+    const orderId = `hist-demo-order-${idx + 1}`;
+    const existing = await prisma.order.findUnique({ where: { id: orderId } });
+    if (existing) continue;
+
+    const prodSample = createdProducts[spec.prodIdx % createdProducts.length];
+    const fullProd = await prisma.product.findUnique({
+      where: { id: prodSample.id },
+      include: { variants: true },
+    });
+    if (!fullProd || fullProd.variants.length === 0) continue;
+    const variant = fullProd.variants[0];
+
+    const itemPrice = Number(variant.price || fullProd.basePrice);
+    const qty = spec.qty;
+    const itemTotal = itemPrice * qty;
+    const tax = Number((itemTotal * 0.18).toFixed(2));
+    const shipping = 50;
+    const total = itemTotal + tax + shipping;
+
+    const orderDate = new Date(now.valueOf() - spec.daysAgo * 86400 * 1000);
+
+    await prisma.order.create({
+      data: {
+        id: orderId,
+        userId: idx % 2 === 0 ? customerUser.id : (supportUser ? supportUser.id : customerUser.id),
+        status: spec.status,
+        subtotal: itemTotal,
+        discount: 0,
+        tax,
+        shippingFee: shipping,
+        total,
+        createdAt: orderDate,
+        shippingAddress: {
+          name: 'Demo Customer',
+          street: '45 MG Road',
+          city: 'Bangalore',
+          state: 'Karnataka',
+          postalCode: '560001',
+          country: 'India',
+          phone: '9876543210',
+        } as any,
+        items: {
+          create: [
+            {
+              productId: fullProd.id,
+              variantId: variant.id,
+              sellerId: fullProd.sellerId || seller.id,
+              quantity: qty,
+              price: itemPrice,
+            },
+          ],
+        },
+        payments: {
+          create: [
+            {
+              provider: spec.payStatus === PaymentStatus.PENDING ? 'COD' : 'RAZORPAY',
+              amount: total,
+              status: spec.payStatus,
+            },
+          ],
+        },
+      },
+    });
+  }
+
   // 9. Verified-purchase Reviews
   console.log('Seeding reviews...');
   const deliveredOrder = await prisma.order.findUnique({

@@ -190,4 +190,10 @@ export class AdminController {
   seedCatalog() {
     return this.adminService.seedCatalog();
   }
+
+  @Post('seed-history')
+  @RequirePermissions(PERMISSIONS.PRODUCT_MODERATE)
+  seedHistory() {
+    return this.adminService.seedHistory();
+  }
 }

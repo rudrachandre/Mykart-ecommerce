@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
-import { Prisma, Role, ProductStatus } from '@prisma/client';
+import { Prisma, Role, ProductStatus, OrderStatus, PaymentStatus } from '@prisma/client';
 import { RefundProcessDto } from '../orders/dto/refund-process.dto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -2233,6 +2233,122 @@ export class AdminService implements OnModuleInit {
         createdProducts: createdCount,
         updatedProducts: updatedCount,
       },
+    };
+  }
+
+  async seedHistory() {
+    console.log('[seedHistory] Seeding 30-day historical trend orders...');
+    const customerUser = await this.prisma.user.findFirst({ where: { role: 'CUSTOMER' } });
+    const supportUser = await this.prisma.user.findFirst({ where: { role: 'SUPPORT' } });
+    const seller = await this.prisma.seller.findFirst();
+
+    if (!customerUser || !seller) {
+      return { status: 'ERROR', message: 'Customer or Seller not found in DB.' };
+    }
+
+    const products = await this.prisma.product.findMany({
+      take: 20,
+      include: { variants: true },
+    });
+
+    if (products.length === 0) {
+      return { status: 'ERROR', message: 'No products found in DB.' };
+    }
+
+    const now = new Date();
+    const historicalSeedSpecs = [
+      { daysAgo: 28, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
+      { daysAgo: 27, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
+      { daysAgo: 25, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 2 },
+      { daysAgo: 24, qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 3 },
+      { daysAgo: 22, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 4 },
+      { daysAgo: 21, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 5 },
+      { daysAgo: 19, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 6 },
+      { daysAgo: 18, qty: 1, status: OrderStatus.PENDING,   payStatus: PaymentStatus.PENDING,   prodIdx: 7 },
+      { daysAgo: 16, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 8 },
+      { daysAgo: 15, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 9 },
+      { daysAgo: 14, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 10 },
+      { daysAgo: 12, qty: 1, status: OrderStatus.SHIPPED,   payStatus: PaymentStatus.COMPLETED, prodIdx: 11 },
+      { daysAgo: 11, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 12 },
+      { daysAgo: 9,  qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 13 },
+      { daysAgo: 8,  qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 14 },
+      { daysAgo: 7,  qty: 1, status: OrderStatus.SHIPPED,   payStatus: PaymentStatus.COMPLETED, prodIdx: 15 },
+      { daysAgo: 6,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 16 },
+      { daysAgo: 5,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 17 },
+      { daysAgo: 4,  qty: 1, status: OrderStatus.PENDING,   payStatus: PaymentStatus.PENDING,   prodIdx: 18 },
+      { daysAgo: 3,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 19 },
+      { daysAgo: 2,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
+      { daysAgo: 1,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
+    ];
+
+    let seededCount = 0;
+
+    for (let idx = 0; idx < historicalSeedSpecs.length; idx++) {
+      const spec = historicalSeedSpecs[idx];
+      const orderId = `hist-demo-order-${idx + 1}`;
+
+      const existing = await this.prisma.order.findUnique({ where: { id: orderId } });
+      if (existing) continue;
+
+      const prodSample = products[spec.prodIdx % products.length];
+      const variant = prodSample.variants[0];
+      const itemPrice = Number(variant ? variant.price : prodSample.basePrice);
+      const qty = spec.qty;
+      const itemTotal = itemPrice * qty;
+      const tax = Number((itemTotal * 0.18).toFixed(2));
+      const shipping = 50;
+      const total = itemTotal + tax + shipping;
+      const orderDate = new Date(now.valueOf() - spec.daysAgo * 86400 * 1000);
+
+      await this.prisma.order.create({
+        data: {
+          id: orderId,
+          userId: idx % 2 === 0 ? customerUser.id : (supportUser ? supportUser.id : customerUser.id),
+          status: spec.status,
+          subtotal: itemTotal,
+          discount: 0,
+          tax,
+          shippingFee: shipping,
+          total,
+          createdAt: orderDate,
+          shippingAddress: {
+            name: 'Demo Customer',
+            street: '45 MG Road',
+            city: 'Bangalore',
+            state: 'Karnataka',
+            postalCode: '560001',
+            country: 'India',
+            phone: '9876543210',
+          } as any,
+          items: {
+            create: [
+              {
+                productId: prodSample.id,
+                variantId: variant ? variant.id : 'default-variant',
+                sellerId: prodSample.sellerId || seller.id,
+                quantity: qty,
+                price: itemPrice,
+              },
+            ],
+          },
+          payments: {
+            create: [
+              {
+                provider: spec.payStatus === PaymentStatus.PENDING ? 'COD' : 'RAZORPAY',
+                amount: total,
+                status: spec.payStatus,
+              },
+            ],
+          },
+        },
+      });
+
+      seededCount++;
+    }
+
+    return {
+      status: 'SUCCESS',
+      message: `Historical demo order seeding completed successfully. ${seededCount} orders created across 28 days.`,
     };
   }
 }
