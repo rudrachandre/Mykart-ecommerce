@@ -25,6 +25,7 @@ export class AdminService implements OnModuleInit {
         console.log(`[AdminService] Catalog product count (${count}) is under target (80). Running seedCatalog()...`);
         await this.seedCatalog();
       }
+      await this.seedHistory();
     } catch (e) {
       console.warn('[AdminService] Startup catalog seed check skipped/failed:', e.message);
     }
@@ -2296,7 +2297,23 @@ export class AdminService implements OnModuleInit {
       const orderId = spec.id || `hist-demo-order-${idx + 1}`;
 
       const existing = await this.prisma.order.findUnique({ where: { id: orderId } });
-      if (existing) continue;
+      if (existing) {
+        const orderDate = new Date(now.valueOf() - spec.daysAgo * 86400 * 1000);
+        await this.prisma.order.update({
+          where: { id: orderId },
+          data: {
+            createdAt: orderDate,
+            status: spec.status,
+          },
+        });
+        await this.prisma.payment.updateMany({
+          where: { orderId },
+          data: {
+            status: spec.payStatus,
+          },
+        });
+        continue;
+      }
 
       const prodSample = products[spec.prodIdx % products.length];
       const variant = prodSample.variants[0];
