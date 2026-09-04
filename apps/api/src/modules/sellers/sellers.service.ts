@@ -262,6 +262,17 @@ export class SellersService {
       return this.ordersService.cancelPendingOrder(orderId);
     }
 
+    if (
+      nextStatus === OrderStatus.DELIVERED ||
+      nextStatus === OrderStatus.PROCESSING ||
+      nextStatus === OrderStatus.SHIPPED
+    ) {
+      await this.prisma.payment.updateMany({
+        where: { orderId, provider: 'COD', status: 'PENDING' },
+        data: { status: 'COMPLETED' },
+      });
+    }
+
     return this.prisma.order.update({
       where: { id: orderId },
       data: { status: nextStatus },
