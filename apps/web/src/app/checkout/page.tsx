@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { getCart } from '@/lib/api/cart';
+import { getAddresses } from '@/lib/api/users';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { CheckoutClient } from '@/components/checkout/CheckoutClient';
@@ -26,10 +27,17 @@ export default async function CheckoutPage() {
   }
 
   let cart;
+  let savedAddresses: any[] = [];
   try {
-    cart = await getCart(token);
+    const [cartData, addressData] = await Promise.all([
+      getCart(token),
+      getAddresses(token).catch(() => []),
+    ]);
+    cart = cartData;
+    savedAddresses = Array.isArray(addressData) ? addressData : [];
   } catch (error) {
     cart = { items: [] };
+    savedAddresses = [];
   }
 
   const items = cart.items || [];
@@ -50,7 +58,7 @@ export default async function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-      <CheckoutClient token={token} items={items} subtotal={subtotal} />
+      <CheckoutClient token={token} items={items} subtotal={subtotal} savedAddresses={savedAddresses} />
     </div>
   );
 }

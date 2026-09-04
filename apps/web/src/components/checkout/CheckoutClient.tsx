@@ -27,10 +27,12 @@ export function CheckoutClient({
   token,
   items,
   subtotal,
+  savedAddresses = [],
 }: {
   token: string;
   items: any[];
   subtotal: number;
+  savedAddresses?: any[];
 }) {
   const router = useRouter();
   const { refreshCart } = useCart();
@@ -41,16 +43,51 @@ export function CheckoutClient({
   const [couponLoading, setCouponLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState("");
 
+  const defaultAddr = savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
+  const [selectedAddressId, setSelectedAddressId] = useState<string>(
+    defaultAddr ? defaultAddr.id : "new"
+  );
+
   const [address, setAddress] = useState({
-    fullName: "",
-    phone: "",
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "India",
+    fullName: defaultAddr ? defaultAddr.fullName : "",
+    phone: defaultAddr ? defaultAddr.phone : "",
+    addressLine1: defaultAddr ? defaultAddr.addressLine1 : "",
+    addressLine2: defaultAddr ? defaultAddr.addressLine2 || "" : "",
+    city: defaultAddr ? defaultAddr.city : "",
+    state: defaultAddr ? defaultAddr.state : "",
+    postalCode: defaultAddr ? defaultAddr.postalCode : "",
+    country: defaultAddr ? defaultAddr.country || "India" : "India",
   });
+
+  const handleSelectAddress = (id: string) => {
+    setSelectedAddressId(id);
+    if (id === "new") {
+      setAddress({
+        fullName: "",
+        phone: "",
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        state: "",
+        postalCode: "",
+        country: "India",
+      });
+    } else {
+      const found = savedAddresses.find((a) => a.id === id);
+      if (found) {
+        setAddress({
+          fullName: found.fullName,
+          phone: found.phone,
+          addressLine1: found.addressLine1,
+          addressLine2: found.addressLine2 || "",
+          city: found.city,
+          state: found.state,
+          postalCode: found.postalCode,
+          country: found.country || "India",
+        });
+      }
+    }
+  };
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
@@ -178,6 +215,71 @@ export function CheckoutClient({
             <h2 className="text-xl font-medium mb-8 uppercase tracking-widest text-foreground">
               Shipping Address
             </h2>
+            {savedAddresses.length > 0 && (
+              <div className="mb-8 space-y-3">
+                <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70 block mb-2">
+                  Select Saved Address
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {savedAddresses.map((sa) => (
+                    <label
+                      key={sa.id}
+                      onClick={() => handleSelectAddress(sa.id)}
+                      className={`p-4 border cursor-pointer transition-all flex flex-col justify-between ${
+                        selectedAddressId === sa.id
+                          ? "border-foreground bg-accent/30 font-medium"
+                          : "border-border/60 hover:border-border"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="selectedAddress"
+                            checked={selectedAddressId === sa.id}
+                            onChange={() => handleSelectAddress(sa.id)}
+                            className="accent-foreground"
+                          />
+                          <span className="font-semibold text-sm">{sa.fullName}</span>
+                        </div>
+                        {sa.isDefault && (
+                          <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                            Default
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                        <p>{sa.addressLine1}</p>
+                        {sa.addressLine2 && <p>{sa.addressLine2}</p>}
+                        <p>{sa.city}, {sa.state} {sa.postalCode}</p>
+                        <p className="pt-1 font-medium text-foreground/70">{sa.phone}</p>
+                      </div>
+                    </label>
+                  ))}
+                  <label
+                    onClick={() => handleSelectAddress("new")}
+                    className={`p-4 border cursor-pointer transition-all flex items-center justify-center min-h-[100px] border-dashed ${
+                      selectedAddressId === "new"
+                        ? "border-foreground bg-accent/30 font-medium"
+                        : "border-border/60 hover:border-border"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="selectedAddress"
+                        checked={selectedAddressId === "new"}
+                        onChange={() => handleSelectAddress("new")}
+                        className="accent-foreground"
+                      />
+                      <span className="text-xs uppercase tracking-widest font-bold text-foreground">
+                        + Add New Address
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
