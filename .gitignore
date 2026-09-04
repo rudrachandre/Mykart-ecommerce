@@ -45,3 +45,9 @@ coverage/
 # Test artifacts
 test-results/
 playwright-report/
+
+# Local PostgreSQL data
+pgdata/
+pgdata_full/
+pgdata_local/
+pgdata_prisma/
