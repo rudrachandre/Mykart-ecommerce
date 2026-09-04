@@ -88,7 +88,7 @@ async function runVerification() {
   try {
     // 1. Homepage
     console.log('1. Navigating to Homepage...');
-    await desktopPage.goto(PRODUCTION_URL, { waitUntil: 'networkidle', timeout: 30000 });
+    await desktopPage.goto(PRODUCTION_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await desktopPage.waitForTimeout(2000);
 
     // 2. Check Today's Big Deals section
@@ -98,7 +98,7 @@ async function runVerification() {
 
     // 3. Navigate to /deals
     console.log('3. Navigating to /deals...');
-    await desktopPage.goto(`${PRODUCTION_URL}/deals`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/deals`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
     const dealsCards = await desktopPage.locator('a[href^="/products/"]').count();
     console.log('Deals page product cards count:', dealsCards);
@@ -106,14 +106,14 @@ async function runVerification() {
 
     // 4. Navigate to /products
     console.log('4. Navigating to /products...');
-    await desktopPage.goto(`${PRODUCTION_URL}/products`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2500);
     const productCards = await desktopPage.locator('a[href^="/products/"]').count();
     console.log('Products page product cards count:', productCards);
 
     // 5. Test Dell Brand Filter
     console.log('5. Testing Brand Filter: Dell...');
-    await desktopPage.goto(`${PRODUCTION_URL}/products?brandSlug=dell`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products?brandSlug=dell`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
     
     const dellCardHeadings = await desktopPage.locator('main a.font-display').allTextContents();
@@ -133,12 +133,12 @@ async function runVerification() {
 
     // 6. Test Rating Filter
     console.log('6. Testing Rating Filter (4 Stars & Up)...');
-    await desktopPage.goto(`${PRODUCTION_URL}/products?rating=4`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products?rating=4`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
 
     // 7. Test Price Range Filter
     console.log('7. Testing Price Range Filter (₹10,000 to ₹1,00,000)...');
-    await desktopPage.goto(`${PRODUCTION_URL}/products?minPrice=10000&maxPrice=100000`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products?minPrice=10000&maxPrice=100000`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
     const priceCardsCount = await desktopPage.locator('main a[href^="/products/"]').count();
     console.log('Price 10k-100k product count:', priceCardsCount);
@@ -149,7 +149,7 @@ async function runVerification() {
 
     // 8. Test Discount Range Filter
     console.log('8. Testing Discount Range Filter (10% to 50%)...');
-    await desktopPage.goto(`${PRODUCTION_URL}/products?minDiscount=10&maxDiscount=50`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products?minDiscount=10&maxDiscount=50`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
     const discountCardsCount = await desktopPage.locator('main a[href^="/products/"]').count();
     console.log('Discount 10-50% product count:', discountCardsCount);
@@ -157,15 +157,15 @@ async function runVerification() {
 
     // 9. Test Sorting
     console.log('9. Testing Sorting (PRICE_ASC, PRICE_DESC, RATING, POPULARITY)...');
-    await desktopPage.goto(`${PRODUCTION_URL}/products?sortBy=PRICE_ASC`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products?sortBy=PRICE_ASC`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
-    await desktopPage.goto(`${PRODUCTION_URL}/products?sortBy=PRICE_DESC`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products?sortBy=PRICE_DESC`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
     stats.sortingPassed = true;
 
     // 10. Test Mobile Accessories Category
     console.log('10. Testing Mobile Accessories Category...');
-    await desktopPage.goto(`${PRODUCTION_URL}/products?categorySlug=mobile-accessories`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products?categorySlug=mobile-accessories`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForSelector('main a[href^="/products/"]', { timeout: 10000 }).catch(() => null);
     await desktopPage.waitForTimeout(2500);
     const mobileAccCount = await desktopPage.locator('main a[href^="/products/"]').count();
@@ -174,7 +174,7 @@ async function runVerification() {
 
     // 11. Test Category Drawer & ESC
     console.log('11. Testing Category Drawer & ESC key...');
-    await desktopPage.goto(`${PRODUCTION_URL}/products`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(1500);
     const categoryBtn = desktopPage.locator('button[aria-label="Open category menu"]').first();
     if (await categoryBtn.isVisible()) {
@@ -195,7 +195,7 @@ async function runVerification() {
 
     // 12. Test Search
     console.log('12. Testing Header Search for "laptop"...');
-    await desktopPage.goto(`${PRODUCTION_URL}/search?q=laptop`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/search?q=laptop`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
     const searchCardsCount = await desktopPage.locator('a[href^="/products/"]').count();
     console.log('Search "laptop" results count:', searchCardsCount);
@@ -209,7 +209,7 @@ async function runVerification() {
         reviewApiError = true;
       }
     });
-    await desktopPage.goto(`${PRODUCTION_URL}/products/dell-xps-13-plus`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/products/dell-xps-13-plus`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(2000);
     const productTitleVisible = await desktopPage.locator('h1:has-text("Dell XPS 13 Plus")').isVisible();
     console.log('Product detail title visible:', productTitleVisible);
@@ -219,12 +219,12 @@ async function runVerification() {
     // 14. Test Customer Authentication (10 attempts)
     // 14. Test Customer Authentication
     console.log('14. Testing Customer Login...');
-    await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/login`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(500);
     await desktopPage.fill('input[type="email"]', 'customer@mykart.test');
     await desktopPage.fill('input[type="password"]', 'MyKart@123');
     await Promise.all([
-      desktopPage.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(() => null),
+      desktopPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => null),
       desktopPage.click('button[type="submit"]'),
     ]);
     await desktopPage.waitForTimeout(1000);
@@ -235,12 +235,12 @@ async function runVerification() {
 
     // 15. Test Admin Auth & Admin Pages (/admin & /admin/analytics)
     console.log('15. Testing Admin Login & Dashboard access...');
-    await desktopPage.goto(`${PRODUCTION_URL}/login?callbackUrl=/admin`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/login?callbackUrl=/admin`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(500);
     await desktopPage.fill('input[type="email"]', 'admin@mykart.test');
     await desktopPage.fill('input[type="password"]', 'MyKart@123');
     await Promise.all([
-      desktopPage.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(() => null),
+      desktopPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => null),
       desktopPage.click('button[type="submit"]'),
     ]);
     await desktopPage.waitForTimeout(1500);
@@ -254,7 +254,7 @@ async function runVerification() {
       console.log('Admin Dashboard Heading visible:', adminHeadingVisible);
 
       console.log('17. Verifying /admin/analytics Trends page...');
-      await desktopPage.goto(`${PRODUCTION_URL}/admin/analytics`, { waitUntil: 'networkidle' });
+      await desktopPage.goto(`${PRODUCTION_URL}/admin/analytics`, { waitUntil: 'domcontentloaded' });
       await desktopPage.waitForTimeout(2500);
       const analyticsHeadingVisible = await desktopPage.locator('h1:has-text("Platform Analytics")').isVisible();
       console.log('Admin Analytics Heading visible:', analyticsHeadingVisible);
@@ -262,11 +262,11 @@ async function runVerification() {
 
     // 18. Wishlist & Cart Pages
     console.log('18. Testing Wishlist & Cart Pages...');
-    await desktopPage.goto(`${PRODUCTION_URL}/cart`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/cart`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(1000);
     stats.cartPassed = true;
 
-    await desktopPage.goto(`${PRODUCTION_URL}/wishlist`, { waitUntil: 'networkidle' });
+    await desktopPage.goto(`${PRODUCTION_URL}/wishlist`, { waitUntil: 'domcontentloaded' });
     await desktopPage.waitForTimeout(1000);
     stats.wishlistPassed = true;
 
@@ -298,7 +298,7 @@ async function runVerification() {
   });
 
   try {
-    await mobile390Page.goto(`${PRODUCTION_URL}/products`, { waitUntil: 'networkidle' });
+    await mobile390Page.goto(`${PRODUCTION_URL}/products`, { waitUntil: 'domcontentloaded' });
     await mobile390Page.waitForTimeout(2000);
 
     const overflow390 = await mobile390Page.evaluate(() => {
@@ -334,7 +334,7 @@ async function runVerification() {
   });
 
   try {
-    await mobile412Page.goto(`${PRODUCTION_URL}/products`, { waitUntil: 'networkidle' });
+    await mobile412Page.goto(`${PRODUCTION_URL}/products`, { waitUntil: 'domcontentloaded' });
     await mobile412Page.waitForTimeout(2000);
 
     const overflow412 = await mobile412Page.evaluate(() => {
