@@ -2285,6 +2285,8 @@ export class AdminService implements OnModuleInit {
       { id: 'hist-demo-order-20', daysAgo: 3,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 19 },
       { id: 'hist-demo-order-21', daysAgo: 2,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
       { id: 'hist-demo-order-22', daysAgo: 1,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
+      { id: 'hist-demo-order-23', daysAgo: 10, qty: 1, status: OrderStatus.DELIVERED,  payStatus: PaymentStatus.COMPLETED, prodIdx: 2 },
+      { id: 'hist-demo-order-24', daysAgo: 13, qty: 2, status: OrderStatus.SHIPPED,    payStatus: PaymentStatus.COMPLETED, prodIdx: 5 },
     ];
 
     let seededCount = 0;
