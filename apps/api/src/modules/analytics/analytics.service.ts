@@ -101,6 +101,7 @@ export class AnalyticsService {
       this.prisma.order.findMany({
         where: { createdAt: { gte: currentStart, lte: currentEnd } },
         include: {
+          payments: true,
           items: {
             include: {
               product: {
@@ -116,6 +117,7 @@ export class AnalyticsService {
       this.prisma.order.findMany({
         where: { createdAt: { gte: prevStart, lte: prevEnd } },
         include: {
+          payments: true,
           items: true,
         },
       }),
@@ -131,22 +133,41 @@ export class AnalyticsService {
     const validCurrentOrders = currentOrders.filter((o) => o.status !== 'CANCELLED');
     const validPrevOrders = prevOrders.filter((o) => o.status !== 'CANCELLED');
 
+    // Filter STRICTLY CHARGED orders (Payment.status === 'COMPLETED')
+    const chargedCurrentOrders = validCurrentOrders.filter(
+      (o) => o.payments && o.payments.some((p) => p.status === 'COMPLETED'),
+    );
+    const chargedPrevOrders = validPrevOrders.filter(
+      (o) => o.payments && o.payments.some((p) => p.status === 'COMPLETED'),
+    );
+
     // Financial Metrics for Current Period
-    const currentTotalCharged = validCurrentOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    // 1. Net Charged Revenue = Sum of Order totals with COMPLETED payments minus Refunds
+    const currentChargedTotal = chargedCurrentOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const currentRefundsAmount = currentRefunds.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const currentNetRevenue = currentChargedTotal - currentRefundsAmount;
+
+    // 2. Gross Booked Revenue = Total value of all non-cancelled orders regardless of payment status
+    const currentGrossBookedRevenue = validCurrentOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+    // 3. Gross Merchandise Sales (GMS) = Sum of item prices x quantity for all non-cancelled order items
     const currentGrossMerchandiseSales = validCurrentOrders.reduce(
       (sum, o) => sum + o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
       0,
     );
-    const currentDiscounts = validCurrentOrders.reduce((sum, o) => sum + Number(o.discount || 0), 0);
-    const currentTax = validCurrentOrders.reduce((sum, o) => sum + Number(o.tax || 0), 0);
-    const currentShipping = validCurrentOrders.reduce((sum, o) => sum + Number(o.shippingFee || 0), 0);
-    const currentRefundsAmount = currentRefunds.reduce((sum, r) => sum + Number(r.amount || 0), 0);
 
-    // Net Revenue = Charged Total - Refunds
-    const currentNetRevenue = currentTotalCharged - currentRefundsAmount;
+    // Tax, Shipping, & Subtotal Reconciliation for Charged Orders
+    const currentTax = chargedCurrentOrders.reduce((sum, o) => sum + Number(o.tax || 0), 0);
+    const currentShipping = chargedCurrentOrders.reduce((sum, o) => sum + Number(o.shippingFee || 0), 0);
+    const currentChargedMerchandiseSubtotal = chargedCurrentOrders.reduce(
+      (sum, o) => sum + o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
+      0,
+    );
+    const currentDiscounts = validCurrentOrders.reduce((sum, o) => sum + Number(o.discount || 0), 0);
 
     // Volume Metrics for Current Period
     const currentOrdersCount = validCurrentOrders.length;
+    const currentChargedOrdersCount = chargedCurrentOrders.length;
     const currentUnitsSold = validCurrentOrders.reduce(
       (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
       0,
@@ -155,23 +176,26 @@ export class AnalyticsService {
       validCurrentOrders.flatMap((o) => o.items.map((i) => i.productId)),
     ).size;
     const currentUniqueCustomers = new Set(validCurrentOrders.map((o) => o.userId)).size;
-    const currentAOV = currentOrdersCount > 0 ? currentTotalCharged / currentOrdersCount : 0;
+    const currentAOV = currentChargedOrdersCount > 0 ? currentNetRevenue / currentChargedOrdersCount : 0;
+    const currentBookedAOV = currentOrdersCount > 0 ? currentGrossBookedRevenue / currentOrdersCount : 0;
 
     // Financial & Volume Metrics for Previous Period
-    const prevTotalCharged = validPrevOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const prevChargedTotal = chargedPrevOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const prevRefundsAmount = prevRefunds.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const prevNetRevenue = prevChargedTotal - prevRefundsAmount;
+    const prevGrossBookedRevenue = validPrevOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
     const prevGrossMerchandiseSales = validPrevOrders.reduce(
       (sum, o) => sum + o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
       0,
     );
-    const prevRefundsAmount = prevRefunds.reduce((sum, r) => sum + Number(r.amount || 0), 0);
-    const prevNetRevenue = prevTotalCharged - prevRefundsAmount;
     const prevOrdersCount = validPrevOrders.length;
+    const prevChargedOrdersCount = chargedPrevOrders.length;
     const prevUnitsSold = validPrevOrders.reduce(
       (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
       0,
     );
     const prevUniqueCustomers = new Set(validPrevOrders.map((o) => o.userId)).size;
-    const prevAOV = prevOrdersCount > 0 ? prevTotalCharged / prevOrdersCount : 0;
+    const prevAOV = prevChargedOrdersCount > 0 ? prevNetRevenue / prevChargedOrdersCount : 0;
 
     const kpis = {
       netRevenue: {
@@ -179,20 +203,24 @@ export class AnalyticsService {
         prevValue: prevNetRevenue,
         ...this.calcPctChange(currentNetRevenue, prevNetRevenue),
       },
+      grossBookedRevenue: {
+        value: currentGrossBookedRevenue,
+        prevValue: prevGrossBookedRevenue,
+        ...this.calcPctChange(currentGrossBookedRevenue, prevGrossBookedRevenue),
+      },
       grossMerchandiseSales: {
         value: currentGrossMerchandiseSales,
         prevValue: prevGrossMerchandiseSales,
         ...this.calcPctChange(currentGrossMerchandiseSales, prevGrossMerchandiseSales),
       },
-      totalChargedRevenue: {
-        value: currentTotalCharged,
-        prevValue: prevTotalCharged,
-        ...this.calcPctChange(currentTotalCharged, prevTotalCharged),
-      },
       orders: {
         value: currentOrdersCount,
         prevValue: prevOrdersCount,
         ...this.calcPctChange(currentOrdersCount, prevOrdersCount),
+      },
+      chargedOrdersCount: {
+        value: currentChargedOrdersCount,
+        prevValue: prevChargedOrdersCount,
       },
       unitsSold: {
         value: currentUnitsSold,
@@ -212,6 +240,9 @@ export class AnalyticsService {
         prevValue: prevAOV,
         ...this.calcPctChange(currentAOV, prevAOV),
       },
+      bookedAOV: {
+        value: currentBookedAOV,
+      },
       discounts: {
         value: currentDiscounts,
       },
@@ -220,6 +251,9 @@ export class AnalyticsService {
       },
       shipping: {
         value: currentShipping,
+      },
+      chargedMerchandiseSubtotal: {
+        value: currentChargedMerchandiseSubtotal,
       },
       refunds: {
         value: currentRefundsAmount,
@@ -233,13 +267,13 @@ export class AnalyticsService {
     // 2. Build Daily Trends Map for Current Period
     const trendMap: Record<
       string,
-      { date: string; revenue: number; merchandiseSales: number; orders: number; cancelledOrders: number }
+      { date: string; revenue: number; bookedRevenue: number; merchandiseSales: number; orders: number; cancelledOrders: number }
     > = {};
 
     const tempDate = new Date(currentStart);
     while (tempDate <= currentEnd) {
       const dateStr = tempDate.toISOString().split('T')[0];
-      trendMap[dateStr] = { date: dateStr, revenue: 0, merchandiseSales: 0, orders: 0, cancelledOrders: 0 };
+      trendMap[dateStr] = { date: dateStr, revenue: 0, bookedRevenue: 0, merchandiseSales: 0, orders: 0, cancelledOrders: 0 };
       tempDate.setDate(tempDate.getDate() + 1);
     }
 
@@ -249,7 +283,11 @@ export class AnalyticsService {
         if (o.status === 'CANCELLED') {
           trendMap[dateStr].cancelledOrders += 1;
         } else {
-          trendMap[dateStr].revenue += Number(o.total || 0);
+          const isCharged = o.payments && o.payments.some((p) => p.status === 'COMPLETED');
+          if (isCharged) {
+            trendMap[dateStr].revenue += Number(o.total || 0);
+          }
+          trendMap[dateStr].bookedRevenue += Number(o.total || 0);
           trendMap[dateStr].merchandiseSales += o.items.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
           trendMap[dateStr].orders += 1;
         }

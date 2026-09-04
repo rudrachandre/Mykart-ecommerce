@@ -40,16 +40,20 @@ interface OverviewData {
   endDate: string;
   kpis: {
     netRevenue: KPIItem;
+    grossBookedRevenue?: KPIItem;
     grossMerchandiseSales: KPIItem;
-    totalChargedRevenue: KPIItem;
+    totalChargedRevenue?: KPIItem;
     orders: KPIItem;
+    chargedOrdersCount?: KPIItem;
     unitsSold: KPIItem;
     uniqueProductsSold: KPIItem;
     uniqueCustomers: KPIItem;
     avgOrderValue: KPIItem;
+    bookedAOV?: KPIItem;
     discounts: KPIItem;
     tax: KPIItem;
     shipping: KPIItem;
+    chargedMerchandiseSubtotal?: KPIItem;
     refunds: KPIItem;
   };
   trends: Array<{ date: string; revenue: number; merchandiseSales: number; orders: number; cancelledOrders: number }>;
@@ -258,7 +262,7 @@ export default function AdminAnalyticsPage() {
 
       {/* 6 Key KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {/* KPI 1: Net Revenue (Total Charged) */}
+        {/* KPI 1: Net Charged Revenue (Completed Payments Only) */}
         <div className="bg-card p-6 rounded-2xl border shadow-sm relative overflow-hidden">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -273,9 +277,11 @@ export default function AdminAnalyticsPage() {
           </div>
           <div className="flex items-center justify-between pt-3 border-t text-xs">
             <span className="text-muted-foreground">
-              Prev: <span className="font-medium text-foreground">{formatCurrency(kpis?.netRevenue?.prevValue || 0)}</span>
+              Booked: <span className="font-semibold text-foreground">{formatCurrency(kpis?.grossBookedRevenue?.value || 0)}</span>
             </span>
-            {renderBadge(kpis?.netRevenue?.change, kpis?.netRevenue?.text)}
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">
+              Paid Only
+            </span>
           </div>
         </div>
 
@@ -315,7 +321,7 @@ export default function AdminAnalyticsPage() {
           </div>
           <div className="flex items-center justify-between pt-3 border-t text-xs">
             <span className="text-muted-foreground">
-              Prev: <span className="font-medium text-foreground">{kpis?.orders?.prevValue || 0} orders</span>
+              Paid Orders: <span className="font-bold text-foreground">{kpis?.chargedOrdersCount?.value || 0} completed</span>
             </span>
             {renderBadge(kpis?.orders?.change, kpis?.orders?.text)}
           </div>
@@ -357,7 +363,7 @@ export default function AdminAnalyticsPage() {
           </div>
           <div className="flex items-center justify-between pt-3 border-t text-xs">
             <span className="text-muted-foreground">
-              Prev: <span className="font-medium text-foreground">{formatCurrency(kpis?.avgOrderValue?.prevValue || 0)}</span>
+              Booked AOV: <span className="font-medium text-foreground">{formatCurrency(kpis?.bookedAOV?.value || 0)}</span>
             </span>
             {renderBadge(kpis?.avgOrderValue?.change, kpis?.avgOrderValue?.text)}
           </div>
@@ -386,22 +392,32 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Financial Reconciliation Summary Bar */}
-      <div className="bg-muted/40 p-4 rounded-xl border grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-        <div>
-          <p className="text-[11px] font-semibold uppercase text-muted-foreground">Merchandise Subtotal</p>
-          <p className="text-base font-bold text-foreground mt-0.5">{formatCurrency(kpis?.grossMerchandiseSales?.value || 0)}</p>
+      <div className="bg-muted/40 p-4 rounded-xl border flex flex-col gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground">Charged Subtotal</p>
+            <p className="text-base font-bold text-foreground mt-0.5">{formatCurrency(kpis?.chargedMerchandiseSubtotal?.value || 0)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground">+ Charged Tax (GST 18%)</p>
+            <p className="text-base font-bold text-foreground mt-0.5">{formatCurrency(kpis?.tax?.value || 0)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground">+ Shipping Fees</p>
+            <p className="text-base font-bold text-foreground mt-0.5">{formatCurrency(kpis?.shipping?.value || 0)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground">= Net Charged Revenue</p>
+            <p className="text-base font-extrabold text-emerald-600 mt-0.5">{formatCurrency(kpis?.netRevenue?.value || 0)}</p>
+          </div>
         </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase text-muted-foreground">+ Total Tax (GST 18%)</p>
-          <p className="text-base font-bold text-foreground mt-0.5">{formatCurrency(kpis?.tax?.value || 0)}</p>
-        </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase text-muted-foreground">+ Shipping Fees</p>
-          <p className="text-base font-bold text-foreground mt-0.5">{formatCurrency(kpis?.shipping?.value || 0)}</p>
-        </div>
-        <div>
-          <p className="text-[11px] font-semibold uppercase text-muted-foreground">= Net Charged Total</p>
-          <p className="text-base font-extrabold text-emerald-600 mt-0.5">{formatCurrency(kpis?.netRevenue?.value || 0)}</p>
+        <div className="border-t pt-2 flex flex-wrap items-center justify-between text-xs text-muted-foreground px-1 gap-2">
+          <span>
+            <strong className="text-foreground">Gross Booked Revenue:</strong> {formatCurrency(kpis?.grossBookedRevenue?.value || 0)} (Total placed order volume)
+          </span>
+          <span>
+            <strong className="text-foreground">Gross Merchandise Sales (GMS):</strong> {formatCurrency(kpis?.grossMerchandiseSales?.value || 0)} (Total merchandise items value)
+          </span>
         </div>
       </div>
 
