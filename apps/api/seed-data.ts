@@ -964,33 +964,39 @@ async function main() {
   console.log('Seeding 30-day historical trend orders...');
   const now = new Date();
   const historicalSeedSpecs = [
-    { daysAgo: 28, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
-    { daysAgo: 27, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
-    { daysAgo: 25, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 2 },
-    { daysAgo: 24, qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 3 },
-    { daysAgo: 22, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 4 },
-    { daysAgo: 21, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 5 },
-    { daysAgo: 19, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 6 },
-    { daysAgo: 18, qty: 1, status: OrderStatus.PENDING,   payStatus: PaymentStatus.PENDING,   prodIdx: 7 },
-    { daysAgo: 16, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 8 },
-    { daysAgo: 15, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 9 },
-    { daysAgo: 14, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 10 },
-    { daysAgo: 12, qty: 1, status: OrderStatus.SHIPPED,   payStatus: PaymentStatus.COMPLETED, prodIdx: 11 },
-    { daysAgo: 11, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 12 },
-    { daysAgo: 9,  qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 13 },
-    { daysAgo: 8,  qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 14 },
-    { daysAgo: 7,  qty: 1, status: OrderStatus.SHIPPED,   payStatus: PaymentStatus.COMPLETED, prodIdx: 15 },
-    { daysAgo: 6,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 16 },
-    { daysAgo: 5,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 17 },
-    { daysAgo: 4,  qty: 1, status: OrderStatus.PENDING,   payStatus: PaymentStatus.PENDING,   prodIdx: 18 },
-    { daysAgo: 3,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 19 },
-    { daysAgo: 2,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
-    { daysAgo: 1,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
+    { id: 'analytics-demo-today-1', daysAgo: 0, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
+    { id: 'analytics-demo-today-2', daysAgo: 0, qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
+    { id: 'analytics-demo-today-3', daysAgo: 0, qty: 1, status: OrderStatus.PENDING, payStatus: PaymentStatus.PENDING, prodIdx: 2 },
+    { id: 'analytics-demo-yesterday-1', daysAgo: 1, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 3 },
+    { id: 'analytics-demo-yesterday-2', daysAgo: 1, qty: 2, status: OrderStatus.SHIPPED, payStatus: PaymentStatus.COMPLETED, prodIdx: 4 },
+    { id: 'analytics-demo-yesterday-3', daysAgo: 1, qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 5 },
+    { id: 'hist-demo-order-1', daysAgo: 28, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
+    { id: 'hist-demo-order-2', daysAgo: 27, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
+    { id: 'hist-demo-order-3', daysAgo: 25, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 2 },
+    { id: 'hist-demo-order-4', daysAgo: 24, qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 3 },
+    { id: 'hist-demo-order-5', daysAgo: 22, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 4 },
+    { id: 'hist-demo-order-6', daysAgo: 21, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 5 },
+    { id: 'hist-demo-order-7', daysAgo: 19, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 6 },
+    { id: 'hist-demo-order-8', daysAgo: 18, qty: 1, status: OrderStatus.PENDING,   payStatus: PaymentStatus.PENDING,   prodIdx: 7 },
+    { id: 'hist-demo-order-9', daysAgo: 16, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 8 },
+    { id: 'hist-demo-order-10', daysAgo: 15, qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 9 },
+    { id: 'hist-demo-order-11', daysAgo: 14, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 10 },
+    { id: 'hist-demo-order-12', daysAgo: 12, qty: 1, status: OrderStatus.SHIPPED,   payStatus: PaymentStatus.COMPLETED, prodIdx: 11 },
+    { id: 'hist-demo-order-13', daysAgo: 11, qty: 1, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 12 },
+    { id: 'hist-demo-order-14', daysAgo: 9,  qty: 2, status: OrderStatus.DELIVERED, payStatus: PaymentStatus.COMPLETED, prodIdx: 13 },
+    { id: 'hist-demo-order-15', daysAgo: 8,  qty: 1, status: OrderStatus.CANCELLED, payStatus: PaymentStatus.FAILED, prodIdx: 14 },
+    { id: 'hist-demo-order-16', daysAgo: 7,  qty: 1, status: OrderStatus.SHIPPED,   payStatus: PaymentStatus.COMPLETED, prodIdx: 15 },
+    { id: 'hist-demo-order-17', daysAgo: 6,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 16 },
+    { id: 'hist-demo-order-18', daysAgo: 5,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 17 },
+    { id: 'hist-demo-order-19', daysAgo: 4,  qty: 1, status: OrderStatus.PENDING,   payStatus: PaymentStatus.PENDING,   prodIdx: 18 },
+    { id: 'hist-demo-order-20', daysAgo: 3,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 19 },
+    { id: 'hist-demo-order-21', daysAgo: 2,  qty: 1, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 0 },
+    { id: 'hist-demo-order-22', daysAgo: 1,  qty: 2, status: OrderStatus.PROCESSING, payStatus: PaymentStatus.COMPLETED, prodIdx: 1 },
   ];
 
   for (let idx = 0; idx < historicalSeedSpecs.length; idx++) {
     const spec = historicalSeedSpecs[idx];
-    const orderId = `hist-demo-order-${idx + 1}`;
+    const orderId = spec.id || `hist-demo-order-${idx + 1}`;
     const existing = await prisma.order.findUnique({ where: { id: orderId } });
     if (existing) continue;
 
