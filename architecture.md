@@ -1,4 +1,4 @@
-# NEXORA --- Premium Full-Stack E-Commerce Marketplace
+# MyKart --- Premium Full-Stack E-Commerce Marketplace
 
 ## 1. Project Vision
 
@@ -176,7 +176,7 @@ actual scaling requirements justify them.
 ## 5. Monorepo Structure
 
 ``` text
-nexora/
+MyKart/
 │
 ├── apps/
 │   ├── web/

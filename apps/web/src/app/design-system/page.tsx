@@ -10,7 +10,7 @@ export default function DesignSystemPage() {
     <div className="container mx-auto max-w-4xl p-8 space-y-16">
       <FadeIn>
         <div className="space-y-4">
-          <h1 className="text-4xl font-semibold tracking-tight">NEXORA Design System</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">MyKart Design System</h1>
           <p className="text-muted-foreground text-lg">
             A premium, clean, and accessible foundation for MyKart.
           </p>
