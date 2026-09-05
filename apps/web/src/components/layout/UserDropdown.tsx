@@ -78,7 +78,7 @@ export function UserDropdown() {
             
             {user.role === 'SELLER' && (
               <Link 
-                href="/seller" 
+                href={user.seller?.id || user.seller?.storeName ? "/seller" : "/seller/onboard"} 
                 className="px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors font-medium border-t mt-1"
                 onClick={() => setIsOpen(false)}
               >

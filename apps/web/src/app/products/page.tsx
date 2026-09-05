@@ -45,8 +45,8 @@ export default async function ProductsPage({
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Desktop Filter Sidebar */}
-          <aside className="hidden lg:block w-64 shrink-0">
+          {/* Desktop Sticky Filter Sidebar */}
+          <aside className="hidden lg:block w-64 shrink-0 sticky top-28 self-start max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 scrollbar-thin">
             <FilterSidebar categories={categoriesData} brands={brandsData} />
           </aside>
 

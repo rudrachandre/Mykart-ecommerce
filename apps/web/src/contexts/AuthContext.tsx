@@ -10,6 +10,7 @@ interface User {
   role: string;
   firstName?: string;
   lastName?: string;
+  seller?: { id: string; storeName: string; status: string } | null | any;
 }
 
 interface AuthContextType {

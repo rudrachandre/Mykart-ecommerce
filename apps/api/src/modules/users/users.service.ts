@@ -31,6 +31,7 @@ export class UsersService {
       where: { id: userId },
       include: {
         addresses: true,
+        seller: { select: { id: true, storeName: true, status: true } },
         _count: {
           select: { orders: true, wishlists: true, carts: true, notifications: { where: { read: false } } }
         }

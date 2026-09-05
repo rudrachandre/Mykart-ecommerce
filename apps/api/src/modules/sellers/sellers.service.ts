@@ -54,7 +54,7 @@ export class SellersService {
    * endpoint. Role-based guards stay untouched; this is the suspension layer.
    */
   private assertSellerActive(seller: { status: string }) {
-    if (seller.status !== 'ACTIVE') {
+    if (seller.status !== 'ACTIVE' && seller.status !== 'APPROVED') {
       throw new ForbiddenException('Seller account is suspended');
     }
   }

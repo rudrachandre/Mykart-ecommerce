@@ -11,7 +11,10 @@ import { MobileMenu } from './mobile-menu';
 import { CategoryDrawer } from './CategoryDrawer';
 import { Logo } from '@/components/marketing/logo';
 
+import { useAuth } from '@/contexts/AuthContext';
+
 export function Header() {
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -20,6 +23,12 @@ export function Header() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const sellerHref = !user
+    ? '/login?callbackUrl=/seller/onboard'
+    : user.role === 'SELLER' && (user.seller?.id || user.seller?.storeName)
+    ? '/seller'
+    : '/seller/onboard';
 
   return (
     <header
@@ -45,7 +54,7 @@ export function Header() {
             <Link href="/products" className="hover:text-primary transition-colors flex items-center gap-1 hidden sm:flex">
               <HelpCircle className="w-3.5 h-3.5" /> Help & Support
             </Link>
-            <Link href="/seller/onboard" className="hover:text-primary transition-colors flex items-center gap-1 font-semibold text-primary">
+            <Link href={sellerHref} className="hover:text-primary transition-colors flex items-center gap-1 font-semibold text-primary">
               <Store className="w-3.5 h-3.5" /> Sell on MyKart
             </Link>
           </div>
