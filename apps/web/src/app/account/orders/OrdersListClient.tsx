@@ -204,32 +204,38 @@ export function OrdersListClient({ initialOrders }: OrdersListClientProps) {
 
                   {/* Items List */}
                   <div className="p-4 md:p-5 space-y-3">
-                    {order.items.map((item: any) => (
-                      <div key={item.id} className="flex gap-4 items-center">
-                        <div className="w-16 h-20 bg-secondary flex-shrink-0 rounded-lg border border-border/40 overflow-hidden relative">
-                          {item.product.images?.[0]?.url ? (
-                            <Image src={item.product.images[0].url} alt={item.product.name} fill className="object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package className="w-5 h-5 text-muted-foreground" />
-                            </div>
-                          )}
+                    {order.items.map((item: any) => {
+                      const imgUrl = item.product?.images?.[0]?.url || (typeof item.product?.images?.[0] === 'string' ? item.product.images[0] : null);
+                      const productName = item.product?.name || 'Product';
+                      const productSlug = item.product?.slug || '#';
+
+                      return (
+                        <div key={item.id} className="flex gap-4 items-center">
+                          <div className="w-16 h-20 bg-secondary flex-shrink-0 rounded-lg border border-border/40 overflow-hidden relative">
+                            {imgUrl ? (
+                              <Image src={imgUrl} alt={productName} fill className="object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="w-5 h-5 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <Link href={productSlug !== '#' ? `/products/${productSlug}` : '#'} className="font-semibold text-sm hover:underline hover:text-primary transition-colors line-clamp-1">
+                              {productName}
+                            </Link>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Qty: {item.quantity} <span className="mx-1.5">•</span>{' '}
+                              <span className="font-semibold text-foreground">
+                                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
+                                  parseFloat(item.price || 0)
+                                )}
+                              </span>
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/products/${item.product.slug}`} className="font-semibold text-sm hover:underline hover:text-primary transition-colors line-clamp-1">
-                            {item.product.name}
-                          </Link>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Qty: {item.quantity} <span className="mx-1.5">•</span>{' '}
-                            <span className="font-semibold text-foreground">
-                              {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
-                                parseFloat(item.price)
-                              )}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </motion.div>
               );

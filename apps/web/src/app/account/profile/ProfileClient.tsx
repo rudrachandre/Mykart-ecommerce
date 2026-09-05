@@ -5,12 +5,14 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function ProfileClient({ initialData, token }: { initialData: any, token: string }) {
   const [name, setName] = useState(initialData.name || '');
   const [avatar, setAvatar] = useState(initialData.avatar || '');
   const [isLoading, setIsLoading] = useState(false);
+  const { refreshUser } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,6 +20,7 @@ export default function ProfileClient({ initialData, token }: { initialData: any
     setIsLoading(true);
     try {
       await updateProfile(token, { name, avatar });
+      await refreshUser();
       toast.success('Profile updated successfully');
       router.refresh();
     } catch (error: any) {

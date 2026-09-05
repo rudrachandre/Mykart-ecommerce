@@ -378,7 +378,7 @@ export class SearchService implements OnModuleInit {
         `Meilisearch autocomplete unavailable, executing database search fallback for "${query}"`,
       );
       try {
-        products = await this.prisma.product.findMany({
+        const rawProducts = await this.prisma.product.findMany({
           where: {
             OR: [
               { name: { contains: query, mode: 'insensitive' } },
@@ -399,6 +399,14 @@ export class SearchService implements OnModuleInit {
             },
           },
         });
+        products = rawProducts.map((p) => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          basePrice: Number(p.basePrice),
+          salePrice: p.salePrice ? Number(p.salePrice) : null,
+          images: p.images.map((img) => img.url),
+        }));
       } catch (dbErr) {
         this.logger.error('Database autocomplete fallback error', dbErr);
         products = [];

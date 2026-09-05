@@ -348,13 +348,18 @@ export function SearchBar() {
                               id={selectedIndex === idx ? `search-option-${idx}` : undefined}
                             >
                               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted border border-border/50">
-                                {product.images && product.images[0] ? (
-                                  <Image src={product.images[0]} alt={product.name} fill className="object-cover" />
-                                ) : (
-                                  <div className="h-full w-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
-                                    <Package className="h-4 w-4" />
-                                  </div>
-                                )}
+                                {(() => {
+                                  const imgUrl = Array.isArray(product.images) && product.images[0]
+                                    ? (typeof product.images[0] === 'string' ? product.images[0] : (product.images[0] as any)?.url)
+                                    : null;
+                                  return imgUrl ? (
+                                    <Image src={imgUrl} alt={product.name} fill className="object-cover" />
+                                  ) : (
+                                    <div className="h-full w-full flex items-center justify-center bg-secondary/50 text-muted-foreground">
+                                      <Package className="h-4 w-4" />
+                                    </div>
+                                  );
+                                })()}
                               </div>
                               <div className="flex flex-col flex-1 overflow-hidden">
                                 <span className="truncate text-sm font-medium text-foreground">{product.name}</span>

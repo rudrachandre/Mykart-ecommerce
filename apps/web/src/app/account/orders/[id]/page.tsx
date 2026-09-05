@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { getOrderById } from '@/lib/api/orders';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { CheckCircle2, Clock, XCircle, Package, ArrowLeft, CreditCard, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 
@@ -26,11 +26,13 @@ export default async function AccountOrderDetailPage({
   const { id } = await params;
   const sp = searchParams ? await searchParams : {};
 
-  if (!token) return null;
+  if (!token) {
+    redirect(`/login?callbackUrl=${encodeURIComponent(`/account/orders/${id}`)}`);
+  }
 
   let order: any;
   try {
-    order = await getOrderById(token, id);
+    order = await getOrderById(token!, id);
   } catch (error) {
     notFound();
   }
@@ -101,7 +103,7 @@ export default async function AccountOrderDetailPage({
         orderId={order.id}
         status={order.status}
         paymentStatus={payment?.status}
-        token={token}
+        token={token!}
         orderItems={order.items || []}
       />
 
