@@ -658,33 +658,33 @@ async function main() {
     { name: 'Bisleri Mineral Water 1L Pack of 12', slug: 'bisleri-1l-pack-12', desc: 'Purified natural mineral water with added minerals, 12 × 1L', price: 200, cat: 'beverages', brand: 'coca-cola', sku: 'BISL-1L-12PK', stock: 80 },
 
     // ── PACKAGED FOODS ───────────────────────────────────────────────────────
-    { name: 'Maggi 2-Minute Masala Noodles 70g × 12', slug: 'maggi-masala-noodles-12pk', desc: 'Iconic instant noodles with signature masala taste. Pack of 12', price: 156, cat: 'packaged-foods', brand: 'dove', sku: 'MAGGI-MSL-12PK', stock: 100 },
-    { name: 'Amul Butter 500g', slug: 'amul-butter-500g', desc: 'Pasteurised cream butter made from cow milk. 500g pack', price: 285, cat: 'packaged-foods', brand: 'dove', sku: 'AMUL-BUTR-500G', stock: 80 },
-    { name: 'MDH Chaat Masala 100g', slug: 'mdh-chaat-masala-100g', desc: 'Authentic North Indian chaat masala with dried mango powder and spices', price: 65, cat: 'packaged-foods', brand: 'dove', sku: 'MDH-CHAAT-100G', stock: 120 },
+    { name: 'Maggi 2-Minute Masala Noodles 70g × 12', slug: 'maggi-masala-noodles-12pk', desc: 'Iconic instant noodles with signature masala taste. Pack of 12', price: 156, cat: 'packaged-foods', brand: 'pepsico', sku: 'MAGGI-MSL-12PK', stock: 100 },
+    { name: 'Amul Butter 500g', slug: 'amul-butter-500g', desc: 'Pasteurised cream butter made from cow milk. 500g pack', price: 285, cat: 'packaged-foods', brand: 'amul', sku: 'AMUL-BUTR-500G', stock: 80 },
+    { name: 'MDH Chaat Masala 100g', slug: 'mdh-chaat-masala-100g', desc: 'Authentic North Indian chaat masala with dried mango powder and spices', price: 65, cat: 'packaged-foods', brand: 'amul', sku: 'MDH-CHAAT-100G', stock: 120 },
 
     // ── HOUSEHOLD ESSENTIALS ────────────────────────────────────────────────
-    { name: 'Surf Excel Matic Liquid 2L', slug: 'surf-excel-matic-liquid-2l', desc: 'Front load washing machine liquid detergent for better stain removal', price: 375, cat: 'household-essentials', brand: 'dove', sku: 'SURF-MATIC-2L', stock: 80 },
-    { name: 'Vim Dishwash Gel Lemon 750ml', slug: 'vim-dishwash-gel-lemon-750ml', desc: 'Tough on grease, gentle on hands dishwash gel with lemon fragrance', price: 119, cat: 'household-essentials', brand: 'dove', sku: 'VIM-GEL-LEM-750ML', stock: 100 },
-    { name: 'Harpic Power Plus Toilet Cleaner 1L', slug: 'harpic-power-plus-1l', desc: 'Thick bleach formula that kills 99.9% germs and removes stains', price: 155, cat: 'household-essentials', brand: 'dove', sku: 'HARP-PP-1L', stock: 90 },
+    { name: 'Surf Excel Matic Liquid 2L', slug: 'surf-excel-matic-liquid-2l', desc: 'Front load washing machine liquid detergent for better stain removal', price: 375, cat: 'household-essentials', brand: 'surf-excel', sku: 'SURF-MATIC-2L', stock: 80 },
+    { name: 'Vim Dishwash Gel Lemon 750ml', slug: 'vim-dishwash-gel-lemon-750ml', desc: 'Tough on grease, gentle on hands dishwash gel with lemon fragrance', price: 119, cat: 'household-essentials', brand: 'surf-excel', sku: 'VIM-GEL-LEM-750ML', stock: 100 },
+    { name: 'Harpic Power Plus Toilet Cleaner 1L', slug: 'harpic-power-plus-1l', desc: 'Thick bleach formula that kills 99.9% germs and removes stains', price: 155, cat: 'household-essentials', brand: 'surf-excel', sku: 'HARP-PP-1L', stock: 90 },
 
     // ── BOOKS — FICTION ───────────────────────────────────────────────────────
-    { name: 'The Alchemist by Paulo Coelho', slug: 'the-alchemist-paulo-coelho', desc: "A mystical story of Santiago's journey to find treasure and wisdom", price: 299, cat: 'fiction', brand: 'samsung', sku: 'BOOK-ALCHEMIST', stock: 60 },
-    { name: 'Ikigai: The Japanese Secret to a Long Life', slug: 'ikigai-book', desc: "Japan's secret to a long and happy life — finding your reason for being", price: 349, cat: 'fiction', brand: 'samsung', sku: 'BOOK-IKIGAI', stock: 50 },
-    { name: 'Rich Dad Poor Dad by Robert Kiyosaki', slug: 'rich-dad-poor-dad-book', desc: 'What the rich teach their kids about money that the poor do not', price: 299, cat: 'fiction', brand: 'samsung', sku: 'BOOK-RDPD', stock: 45 },
+    { name: 'The Alchemist by Paulo Coelho', slug: 'the-alchemist-paulo-coelho', desc: "A mystical story of Santiago's journey to find treasure and wisdom", price: 299, cat: 'fiction', brand: 'penguin', sku: 'BOOK-ALCHEMIST', stock: 60 },
+    { name: 'Ikigai: The Japanese Secret to a Long Life', slug: 'ikigai-book', desc: "Japan's secret to a long and happy life — finding your reason for being", price: 349, cat: 'fiction', brand: 'penguin', sku: 'BOOK-IKIGAI', stock: 50 },
+    { name: 'Rich Dad Poor Dad by Robert Kiyosaki', slug: 'rich-dad-poor-dad-book', desc: 'What the rich teach their kids about money that the poor do not', price: 299, cat: 'fiction', brand: 'penguin', sku: 'BOOK-RDPD', stock: 45 },
 
     // ── BOOKS — ACADEMIC ─────────────────────────────────────────────────────
-    { name: 'NCERT Physics Class 12 Part 1', slug: 'ncert-physics-class12-p1', desc: 'NCERT standard textbook for CBSE Class 12 Physics — Part 1', price: 150, cat: 'academic', brand: 'samsung', sku: 'NCERT-PHY12-P1', stock: 200 },
-    { name: 'RD Sharma Mathematics Class 12', slug: 'rd-sharma-maths-class12', desc: 'Comprehensive problem book for CBSE Class 12 Mathematics', price: 599, cat: 'academic', brand: 'samsung', sku: 'RDS-MATHS-12', stock: 100 },
-    { name: 'Arihant Objective GK 2025', slug: 'arihant-objective-gk-2025', desc: 'Updated General Knowledge for competitive exams — SSC, UPSC, Bank', price: 449, cat: 'academic', brand: 'samsung', sku: 'ARI-OGK-2025', stock: 80 },
+    { name: 'NCERT Physics Class 12 Part 1', slug: 'ncert-physics-class12-p1', desc: 'NCERT standard textbook for CBSE Class 12 Physics — Part 1', price: 150, cat: 'academic', brand: 'penguin', sku: 'NCERT-PHY12-P1', stock: 200 },
+    { name: 'RD Sharma Mathematics Class 12', slug: 'rd-sharma-maths-class12', desc: 'Comprehensive problem book for CBSE Class 12 Mathematics', price: 599, cat: 'academic', brand: 'penguin', sku: 'RDS-MATHS-12', stock: 100 },
+    { name: 'Arihant Objective GK 2025', slug: 'arihant-objective-gk-2025', desc: 'Updated General Knowledge for competitive exams — SSC, UPSC, Bank', price: 449, cat: 'academic', brand: 'penguin', sku: 'ARI-OGK-2025', stock: 80 },
 
     // ── BOOKS — PROGRAMMING ──────────────────────────────────────────────────
-    { name: 'Clean Code by Robert C. Martin', slug: 'clean-code-book', desc: 'A Handbook of Agile Software Craftsmanship. Must-read for developers', price: 699, cat: 'programming', brand: 'samsung', sku: 'BOOK-CLEAN-CODE', stock: 20 },
+    { name: 'Clean Code by Robert C. Martin', slug: 'clean-code-book', desc: 'A Handbook of Agile Software Craftsmanship. Must-read for developers', price: 699, cat: 'programming', brand: 'penguin', sku: 'BOOK-CLEAN-CODE', stock: 20 },
 
     // ── BOOKS — SELF HELP ─────────────────────────────────────────────────────
-    { name: 'Atomic Habits by James Clear', slug: 'atomic-habits-book', desc: 'Tiny changes, remarkable results. Science of habit formation', price: 499, cat: 'self-help', brand: 'samsung', sku: 'BOOK-ATOMIC-HABITS', stock: 50 },
+    { name: 'Atomic Habits by James Clear', slug: 'atomic-habits-book', desc: 'Tiny changes, remarkable results. Science of habit formation', price: 499, cat: 'self-help', brand: 'penguin', sku: 'BOOK-ATOMIC-HABITS', stock: 50 },
 
     // ── BOOKS — BUSINESS ──────────────────────────────────────────────────────
-    { name: 'Start with Why by Simon Sinek', slug: 'start-with-why-book', desc: 'How great leaders inspire everyone to take action', price: 599, cat: 'business', brand: 'samsung', sku: 'BOOK-START-WITH-WHY', stock: 15 },
+    { name: 'Start with Why by Simon Sinek', slug: 'start-with-why-book', desc: 'How great leaders inspire everyone to take action', price: 599, cat: 'business', brand: 'penguin', sku: 'BOOK-START-WITH-WHY', stock: 15 },
 
     // ── MOBILE ACCESSORIES ───────────────────────────────────────────────────
     { name: 'Anker PowerCore 10000 Power Bank', slug: 'anker-powercore-10000', desc: 'Ultra-compact 10000mAh power bank with USB-C and PowerIQ 3.0', price: 1999, cat: 'mobile-accessories', brand: 'anker', sku: 'ANK-PC10000-BLK', stock: 40 },
