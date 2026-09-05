@@ -23,7 +23,7 @@ export function ProductGallery({
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative w-full aspect-square max-h-[380px] sm:max-h-[460px] lg:max-h-[500px] overflow-hidden bg-secondary/50 rounded-xl border border-border/50 flex items-center justify-center p-4"
+        className="relative w-full aspect-square max-h-[340px] sm:max-h-[400px] lg:max-h-[420px] overflow-hidden bg-secondary/50 rounded-xl border border-border/50 flex items-center justify-center p-4"
       >
         <AnimatePresence mode="wait">
           <motion.div

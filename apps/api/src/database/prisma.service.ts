@@ -27,6 +27,26 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
+    try {
+      await this.$executeRawUnsafe(`
+        ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleId" TEXT;
+        CREATE UNIQUE INDEX IF NOT EXISTS "User_googleId_key" ON "User"("googleId");
+        ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+        CREATE UNIQUE INDEX IF NOT EXISTS "User_phone_key" ON "User"("phone");
+        ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phoneVerified" BOOLEAN DEFAULT false;
+        CREATE TABLE IF NOT EXISTS "OtpVerification" (
+          "id" TEXT PRIMARY KEY,
+          "phone" TEXT NOT NULL,
+          "otpHash" TEXT NOT NULL,
+          "attempts" INTEGER NOT NULL DEFAULT 0,
+          "expiresAt" TIMESTAMP(3) NOT NULL,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS "OtpVerification_phone_idx" ON "OtpVerification"("phone");
+      `);
+    } catch (e: any) {
+      console.warn('[PrismaService] Auto-migration warning:', e?.message || e);
+    }
   }
 
   async onModuleDestroy() {

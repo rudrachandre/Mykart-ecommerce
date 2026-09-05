@@ -33,16 +33,39 @@ export class UsersService {
         addresses: true,
         seller: { select: { id: true, storeName: true, status: true } },
         _count: {
-          select: { orders: true, wishlists: true, carts: true, notifications: { where: { read: false } } }
-        }
-      }
+          select: {
+            orders: true,
+            carts: true,
+            notifications: { where: { read: false } },
+          },
+        },
+      },
     });
 
     if (!user) throw new NotFoundException('User not found');
-    
+
+    const wishlistCount = await this.prisma.wishlistItem.count({
+      where: { wishlist: { userId } },
+    });
+
+    let completedFields = 0;
+    const totalFields = 5;
+    if (user.name) completedFields++;
+    if (user.email) completedFields++;
+    if (user.phone) completedFields++;
+    if (user.avatar) completedFields++;
+    if (user.addresses && user.addresses.length > 0) completedFields++;
+    const profileCompletionPercentage = Math.round(
+      (completedFields / totalFields) * 100,
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...result } = user;
-    return result;
+    return {
+      ...result,
+      wishlistCount,
+      profileCompletionPercentage,
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {

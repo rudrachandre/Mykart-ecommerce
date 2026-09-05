@@ -94,14 +94,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const token = Cookies.get('accessToken');
     if (!token) return;
 
+    // Optimistically update ONLY the targeted item by itemId
+    setCart((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((item) =>
+          item.id === itemId ? { ...item, quantity } : item
+        ),
+      };
+    });
+
     try {
-      const loadingToast = toast.loading('Updating quantity...');
       await updateCartItem(token, itemId, quantity);
       await fetchCart();
-      toast.dismiss(loadingToast);
-      toast.success('Cart updated');
     } catch (error: any) {
-      toast.dismiss();
+      await fetchCart();
       toast.error(error.message || 'Failed to update item');
       throw error;
     }
@@ -111,14 +119,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const token = Cookies.get('accessToken');
     if (!token) return;
 
+    // Optimistically remove ONLY the targeted item by itemId
+    setCart((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.filter((item) => item.id !== itemId),
+      };
+    });
+
     try {
-      const loadingToast = toast.loading('Removing item...');
       await removeFromCart(token, itemId);
       await fetchCart();
-      toast.dismiss(loadingToast);
       toast.success('Item removed from cart');
     } catch (error: any) {
-      toast.dismiss();
+      await fetchCart();
       toast.error(error.message || 'Failed to remove item');
       throw error;
     }

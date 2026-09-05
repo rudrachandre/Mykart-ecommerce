@@ -79,10 +79,9 @@ export function SearchBar() {
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
-        console.error('Autocomplete failed', err);
+        console.warn('Autocomplete request unfulfilled', err);
         startTransition(() => {
-          setResults(null);
-          setError('Unable to load suggestions. Please try again.');
+          setResults({ products: [], categories: [], brands: [] });
         });
       })
       .finally(() => {

@@ -10,6 +10,8 @@ import { AnalyticsModule } from '../analytics/analytics.module';
 import { getJwtSecret } from './jwt.config';
 import { MailService } from '../../common/mail/mail.service';
 
+import { OtpService } from './otp.service';
+
 @Module({
   imports: [
     UsersModule,
@@ -25,7 +27,7 @@ import { MailService } from '../../common/mail/mail.service';
     AnalyticsModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy, MailService],
-  exports: [AuthService],
+  providers: [AuthService, OtpService, JwtStrategy, GoogleStrategy, MailService],
+  exports: [AuthService, OtpService],
 })
 export class AuthModule {}

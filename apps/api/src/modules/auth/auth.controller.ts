@@ -19,12 +19,38 @@ import {
   LoginDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  SendOtpDto,
+  VerifyOtpDto,
 } from './dto/auth.dto';
+import { OtpService } from './otp.service';
 import type { Response, Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly otpService: OtpService,
+  ) {}
+
+  @Post('otp/send')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async sendOtp(@Body() dto: SendOtpDto) {
+    return this.otpService.sendOtp(dto.phone);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('otp/verify')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async verifyOtp(
+    @Body() dto: VerifyOtpDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.otpService.verifyOtp(dto.phone, dto.code);
+    const { accessToken, refreshToken } =
+      await this.authService.authenticatePhoneUser(dto.phone);
+    this.setRefreshTokenCookie(res, refreshToken);
+    return { accessToken };
+  }
 
   @Get('google')
   @UseGuards(AuthGuard('google'))

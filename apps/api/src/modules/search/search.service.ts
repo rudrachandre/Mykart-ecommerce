@@ -345,37 +345,76 @@ export class SearchService implements OnModuleInit {
   }
 
   async autocompleteProducts(q: string) {
-    if (!q) return { products: [], categories: [], brands: [] };
+    if (!q || !q.trim()) return { products: [], categories: [], brands: [] };
+
+    const query = q.trim();
+
+    const categoriesPromise = this.prisma.category
+      .findMany({
+        where: { name: { contains: query, mode: 'insensitive' } },
+        take: 3,
+        select: { id: true, name: true, slug: true },
+      })
+      .catch(() => []);
+
+    const brandsPromise = this.prisma.brand
+      .findMany({
+        where: { name: { contains: query, mode: 'insensitive' } },
+        take: 3,
+        select: { id: true, name: true, slug: true },
+      })
+      .catch(() => []);
+
+    let products: any[] = [];
 
     try {
-      const result = await this.client.index('products').search(q, {
+      const result = await this.client.index('products').search(query, {
         limit: 5,
         attributesToRetrieve: ['id', 'name', 'slug', 'basePrice', 'images'],
       });
-
-      const categories = await this.prisma.category.findMany({
-        where: { name: { contains: q, mode: 'insensitive' } },
-        take: 3,
-        select: { id: true, name: true, slug: true },
-      });
-
-      const brands = await this.prisma.brand.findMany({
-        where: { name: { contains: q, mode: 'insensitive' } },
-        take: 3,
-        select: { id: true, name: true, slug: true },
-      });
-
-      return {
-        products: result.hits,
-        categories,
-        brands,
-      };
+      products = result.hits;
     } catch (error) {
-      this.logger.error('Autocomplete failed', error);
-      throw new InternalServerErrorException(
-        'Autocomplete service temporarily unavailable',
+      this.logger.warn(
+        `Meilisearch autocomplete unavailable, executing database search fallback for "${query}"`,
       );
+      try {
+        products = await this.prisma.product.findMany({
+          where: {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { description: { contains: query, mode: 'insensitive' } },
+            ],
+            status: 'ACTIVE',
+          },
+          take: 5,
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            basePrice: true,
+            salePrice: true,
+            images: {
+              take: 1,
+              select: { url: true },
+            },
+          },
+        });
+      } catch (dbErr) {
+        this.logger.error('Database autocomplete fallback error', dbErr);
+        products = [];
+      }
     }
+
+    const [categories, brands] = await Promise.all([
+      categoriesPromise,
+      brandsPromise,
+    ]);
+
+    return {
+      products,
+      categories,
+      brands,
+    };
   }
 
   /**

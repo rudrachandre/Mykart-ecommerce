@@ -59,7 +59,7 @@ export default async function AccountDashboardPage() {
           <div className="w-12 h-12 bg-primary/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Heart className="w-6 h-6 text-primary" />
           </div>
-          <span className="text-3xl font-extrabold">{profile._count?.wishlists || 0}</span>
+          <span className="text-3xl font-extrabold">{profile.wishlistCount ?? profile._count?.wishlists ?? 0}</span>
           <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-2">Wishlist</span>
         </Link>
         <Link href="/account/addresses" className="bg-background border border-border/40 p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors group">
