@@ -110,17 +110,29 @@ export class SellersService {
   async getDashboard(userId: string) {
     const seller = await this.getProfile(userId);
 
-    // Revenue
-    const orderItems = await this.prisma.orderItem.findMany({
-      where: { sellerId: seller.id },
+    // Total & Active Products
+    const [totalProducts, activeProducts] = await Promise.all([
+      this.prisma.product.count({ where: { sellerId: seller.id } }),
+      this.prisma.product.count({
+        where: { sellerId: seller.id, status: 'ACTIVE' },
+      }),
+    ]);
+
+    // Inventory Units & Low Stock Count
+    const inventoryItems = await this.prisma.inventory.findMany({
+      where: { variant: { product: { sellerId: seller.id } } },
+      select: { quantity: true, reserved: true },
     });
-    const revenue = orderItems.reduce(
-      (acc, item) => acc + Number(item.price) * item.quantity,
+    const inventoryUnits = inventoryItems.reduce(
+      (acc, item) => acc + item.quantity,
       0,
     );
+    const lowStockCount = inventoryItems.filter(
+      (item) => item.quantity - item.reserved <= 10,
+    ).length;
 
-    // Recent orders
-    const recentOrders = await this.prisma.orderItem.findMany({
+    // Order Items & Revenue
+    const orderItems = await this.prisma.orderItem.findMany({
       where: { sellerId: seller.id },
       include: {
         order: {
@@ -128,40 +140,110 @@ export class SellersService {
             id: true,
             status: true,
             createdAt: true,
-            user: { select: { name: true } },
+            user: { select: { name: true, email: true } },
           },
         },
-        product: { select: { name: true } },
+        product: { select: { name: true, images: { take: 1 } } },
+        variant: { select: { sku: true, color: true, size: true } },
       },
       orderBy: { order: { createdAt: 'desc' } },
-      take: 5,
     });
 
-    // Recent products
+    const revenue = orderItems.reduce(
+      (acc, item) => acc + Number(item.price) * item.quantity,
+      0,
+    );
+
+    // Distinct Order IDs & Pending Orders
+    const orderMap = new Map<string, { status: string; createdAt: Date }>();
+    orderItems.forEach((item) => {
+      if (item.order) {
+        orderMap.set(item.order.id, {
+          status: item.order.status,
+          createdAt: item.order.createdAt,
+        });
+      }
+    });
+
+    const totalOrders = orderMap.size;
+    let pendingOrders = 0;
+    orderMap.forEach((order) => {
+      if (
+        order.status === OrderStatus.PENDING ||
+        order.status === OrderStatus.PROCESSING
+      ) {
+        pendingOrders++;
+      }
+    });
+
+    // Recent orders (last 5)
+    const recentOrders = orderItems.slice(0, 5);
+
+    // Recent products (last 5)
     const recentProducts = await this.prisma.product.findMany({
       where: { sellerId: seller.id },
-      include: { variants: { include: { inventory: true } } },
+      include: {
+        category: { select: { name: true } },
+        variants: { include: { inventory: true } },
+      },
       orderBy: { createdAt: 'desc' },
       take: 5,
     });
 
-    // Inventory alerts (quantity < 10)
+    // Inventory alerts (quantity <= 10)
     const inventoryAlerts = await this.prisma.productVariant.findMany({
       where: {
         product: { sellerId: seller.id },
-        inventory: { quantity: { lt: 10 } },
+        inventory: { quantity: { lte: 10 } },
       },
       include: { product: { select: { name: true } }, inventory: true },
       take: 10,
     });
 
+    // Top selling products for this seller
+    const topProductsRaw = await this.prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: { sellerId: seller.id },
+      _sum: { quantity: true, price: true },
+      orderBy: { _sum: { quantity: 'desc' } },
+      take: 5,
+    });
+
+    const topProducts = await Promise.all(
+      topProductsRaw.map(async (item) => {
+        const product = await this.prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { name: true, slug: true, images: { take: 1 } },
+        });
+        return {
+          productId: item.productId,
+          name: product?.name || 'Unknown Product',
+          slug: product?.slug || '',
+          imageUrl: product?.images?.[0]?.url || null,
+          unitsSold: item._sum.quantity || 0,
+          revenue: Number(item._sum.price || 0) * (item._sum.quantity || 0),
+        };
+      }),
+    );
+
     return {
       profile: seller,
+      kpis: {
+        totalProducts,
+        activeProducts,
+        inventoryUnits,
+        totalOrders,
+        pendingOrders,
+        lowStockCount,
+        revenue,
+        sales: orderItems.length,
+      },
       revenue,
       sales: orderItems.length,
       recentOrders,
       recentProducts,
       inventoryAlerts,
+      topProducts,
     };
   }
 
