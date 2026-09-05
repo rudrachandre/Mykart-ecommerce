@@ -192,7 +192,7 @@ async function main() {
   // 4. Brands
   console.log('Seeding brands...');
   const brandsList = [
-{ name: 'Apple', slug: 'apple' },
+      { name: 'Apple', slug: 'apple' },
       { name: 'Samsung', slug: 'samsung' },
       { name: 'Sony', slug: 'sony' },
       { name: 'Dell', slug: 'dell' },
@@ -240,7 +240,45 @@ async function main() {
       { name: 'Motorola', slug: 'motorola' },
       { name: 'Ray-Ban', slug: 'rayban' },
       { name: 'MSI', slug: 'msi' },
-      { name: 'Penguin', slug: 'penguin' },
+      { name: 'Penguin Books', slug: 'penguin' },
+      { name: 'NCERT', slug: 'ncert' },
+      { name: 'HarperCollins', slug: 'harpercollins' },
+      { name: 'Random House', slug: 'random-house' },
+      { name: 'Pearson', slug: 'pearson' },
+      { name: 'Warner Books', slug: 'warner-books' },
+      { name: 'Dhanpat Rai Publications', slug: 'dhanpat-rai' },
+      { name: 'Arihant Publications', slug: 'arihant' },
+      { name: 'Too Yumm!', slug: 'too-yumm' },
+      { name: 'Kurkure', slug: 'kurkure' },
+      { name: 'Bingo!', slug: 'bingo' },
+      { name: "Lay's", slug: 'lays' },
+      { name: 'Tropicana', slug: 'tropicana' },
+      { name: 'Maggi', slug: 'maggi' },
+      { name: 'MDH', slug: 'mdh' },
+      { name: 'Amul', slug: 'amul' },
+      { name: 'Surf Excel', slug: 'surf-excel' },
+      { name: 'Vim', slug: 'vim' },
+      { name: 'Harpic', slug: 'harpic' },
+      { name: 'Bisleri', slug: 'bisleri' },
+      { name: 'Red Bull', slug: 'red-bull' },
+      { name: 'Cetaphil', slug: 'cetaphil' },
+      { name: 'Dot & Key', slug: 'dot-key' },
+      { name: 'Biotique', slug: 'biotique' },
+      { name: 'Park Avenue', slug: 'park-avenue' },
+      { name: 'Engage', slug: 'engage' },
+      { name: 'Beardo', slug: 'beardo' },
+      { name: 'Gillette', slug: 'gillette' },
+      { name: 'Cosco', slug: 'cosco' },
+      { name: 'Nivia', slug: 'nivia' },
+      { name: 'Strauss', slug: 'strauss' },
+      { name: 'Boldfit', slug: 'boldfit' },
+      { name: 'Wildcraft', slug: 'wildcraft' },
+      { name: 'Amazon Basics', slug: 'amazon-basics' },
+      { name: 'Borosil', slug: 'borosil' },
+      { name: 'Fastrack', slug: 'fastrack' },
+      { name: 'HyperX', slug: 'hyperx' },
+      { name: 'Belkin', slug: 'belkin' },
+      { name: 'UGREEN', slug: 'ugreen' },
   ];
 
   const brandMap: Record<string, string> = {};
@@ -454,7 +492,7 @@ async function main() {
       description: 'One of the most significant programming books. Focuses on code reliability, modular design, and developer career guidelines.',
       basePrice: 899,
       catSlug: 'programming',
-      brandSlug: 'samsung', // Books use Samsung as placeholder; no dedicated publisher brand
+      brandSlug: 'pearson',
       imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800',
       variants: [{ sku: 'BOOK-PRAG-PROG', color: 'Paperback', size: 'Standard', price: 899, stock: 40 }],
     },
@@ -549,8 +587,8 @@ async function main() {
     { name: 'Fastrack NXT Smartwatch', slug: 'fastrack-nxt-smartwatch', desc: 'Smart hybrid watch with SpO2, heart rate, 5-day battery and call notifications', price: 3499, cat: 'watches', brand: 'titan', sku: 'FT-NXT-BLK', stock: 40 },
 
     // ── ACCESSORIES ──────────────────────────────────────────────────────────
-    { name: 'Ray-Ban Wayfarer Classic Sunglasses', slug: 'rayban-wayfarer-classic', desc: 'Iconic plastic frame with G-15 polarised lenses for UV400 protection', price: 8990, cat: 'accessories', brand: 'samsung', sku: 'RB-WF-BLK-G15', stock: 10 },
-    { name: 'Wildcraft Evo 30L Backpack', slug: 'wildcraft-evo-30l', desc: 'Trekking and adventure 30L backpack with ergonomic torso fit system', price: 1999, cat: 'accessories', brand: 'decathlon', sku: 'WC-EVO30-GRN', stock: 15 },
+    { name: 'Ray-Ban Wayfarer Classic Sunglasses', slug: 'rayban-wayfarer-classic', desc: 'Iconic plastic frame with G-15 polarised lenses for UV400 protection', price: 8990, cat: 'accessories', brand: 'rayban', sku: 'RB-WF-BLK-G15', stock: 10 },
+    { name: 'Wildcraft Evo 30L Backpack', slug: 'wildcraft-evo-30l', desc: 'Trekking and adventure 30L backpack with ergonomic torso fit system', price: 1999, cat: 'accessories', brand: 'wildcraft', sku: 'WC-EVO30-GRN', stock: 15 },
 
     // ── HOME APPLIANCES ──────────────────────────────────────────────────────
     { name: 'LG 1.5 Ton 5 Star Inverter AC', slug: 'lg-1-5-ton-5star-inverter-ac', desc: 'Dual Inverter technology with 4-way swing, auto restart and Wi-Fi control', price: 42990, cat: 'home-appliances', brand: 'lg', sku: 'LG-AC15-5S-WHT', stock: 4 },
@@ -564,7 +602,7 @@ async function main() {
     // ── COOKWARE ─────────────────────────────────────────────────────────────
     { name: 'Hawkins Contura Pressure Cooker 5L', slug: 'hawkins-contura-5l', desc: 'All-in-one pressure cooker with inner lid design, 5L capacity', price: 2599, cat: 'cookware', brand: 'hawkins', sku: 'HAWK-CTR5-SLV', stock: 25 },
     { name: 'Prestige Omega Select Plus Kadai 3L', slug: 'prestige-omega-kadai-3l', desc: 'Non-stick hard anodised kadai with glass lid, induction-compatible', price: 1899, cat: 'cookware', brand: 'prestige', sku: 'PRES-KADAI-3L', stock: 30 },
-    { name: 'Borosil Vision Glass Casserole Set', slug: 'borosil-vision-casserole-set', desc: 'Borosilicate glass 3-piece casserole set, microwave and dishwasher safe', price: 999, cat: 'cookware', brand: 'bosch', sku: 'BORS-VGC-3P', stock: 20 },
+    { name: 'Borosil Vision Glass Casserole Set', slug: 'borosil-vision-casserole-set', desc: 'Borosilicate glass 3-piece casserole set, microwave and dishwasher safe', price: 999, cat: 'cookware', brand: 'borosil', sku: 'BORS-VGC-3P', stock: 20 },
 
     // ── FURNITURE ────────────────────────────────────────────────────────────
     { name: 'IKEA Poäng Armchair', slug: 'ikea-poang-armchair', desc: 'Classic layer-glued bent birch frame lounge chair with comfortable cushion', price: 8999, cat: 'furniture', brand: 'ikea', sku: 'IK-POANG-CHAIR', stock: 14 },
@@ -576,18 +614,18 @@ async function main() {
 
     // ── STORAGE & ORGANISATION ───────────────────────────────────────────────
     { name: 'IKEA SKUBB Storage Box Set of 6', slug: 'ikea-skubb-storage-box-6', desc: 'Wardrobe organisation boxes with label holder, set of 6 in white', price: 799, cat: 'storage-organization', brand: 'ikea', sku: 'IK-SKUBB-6P-WHT', stock: 50 },
-    { name: 'Amazon Basics Vacuum Storage Bags 8pk', slug: 'amazbasics-vacuum-storage-8pk', desc: 'Airtight waterproof vacuum compression bags for clothes and bedding', price: 799, cat: 'storage-organization', brand: 'samsung', sku: 'AMZ-VACBAG-8PK', stock: 80 },
+    { name: 'Amazon Basics Vacuum Storage Bags 8pk', slug: 'amazbasics-vacuum-storage-8pk', desc: 'Airtight waterproof vacuum compression bags for clothes and bedding', price: 799, cat: 'storage-organization', brand: 'amazon-basics', sku: 'AMZ-VACBAG-8PK', stock: 80 },
 
     // ── SKINCARE ─────────────────────────────────────────────────────────────
     { name: 'Minimalist 10% Niacinamide Serum', slug: 'minimalist-10-niacinamide-serum', desc: 'Oil control and pore-minimising serum with 10% niacinamide + zinc', price: 599, cat: 'skincare', brand: 'minimalist', sku: 'MIN-NIA10-30ML', stock: 100 },
-    { name: "Dot & Key Vitamin C + E Serum", slug: 'dot-key-vitamin-c-serum', desc: 'Brightening face serum with 15% Vitamin C and 1% Vitamin E', price: 799, cat: 'skincare', brand: 'minimalist', sku: 'DK-VCE-30ML', stock: 60 },
-    { name: 'Cetaphil Moisturising Lotion 500ml', slug: 'cetaphil-moisturising-lotion-500ml', desc: 'Dermatologist-recommended daily moisturiser for all skin types', price: 649, cat: 'skincare', brand: 'dove', sku: 'CETA-MOI-500ML', stock: 80 },
+    { name: "Dot & Key Vitamin C + E Serum", slug: 'dot-key-vitamin-c-serum', desc: 'Brightening face serum with 15% Vitamin C and 1% Vitamin E', price: 799, cat: 'skincare', brand: 'dot-key', sku: 'DK-VCE-30ML', stock: 60 },
+    { name: 'Cetaphil Moisturising Lotion 500ml', slug: 'cetaphil-moisturising-lotion-500ml', desc: 'Dermatologist-recommended daily moisturiser for all skin types', price: 649, cat: 'skincare', brand: 'cetaphil', sku: 'CETA-MOI-500ML', stock: 80 },
     { name: "Lakme 9 to 5 Primer + Matte Lip Color", slug: 'lakme-9to5-lip-color', desc: 'Long-stay lip color with built-in primer for 16-hour matte finish', price: 399, cat: 'skincare', brand: 'lakme', sku: 'LK-9T5-LIP-RED', stock: 70 },
 
     // ── HAIR CARE ─────────────────────────────────────────────────────────────
     { name: "Dove Intense Repair Shampoo 1L", slug: 'dove-intense-repair-shampoo-1l', desc: 'Repairs damaged hair with Keratin Actives formula, 1-litre economy bottle', price: 399, cat: 'haircare', brand: 'dove', sku: 'DOVE-IRS-1L', stock: 80 },
     { name: "L'Oreal Extraordinary Oil Serum 100ml", slug: 'loreal-extraordinary-oil-serum', desc: '8-precious oil blend serum for silky, shiny and frizz-free hair', price: 649, cat: 'haircare', brand: 'loreal', sku: 'LOR-EOS-100ML', stock: 60 },
-    { name: 'Biotique Bio Kelp Protein Shampoo', slug: 'biotique-bio-kelp-shampoo', desc: 'Ayurvedic anti-hair fall shampoo with sea kelp and protein complex', price: 299, cat: 'haircare', brand: 'dove', sku: 'BIO-KELP-700ML', stock: 90 },
+    { name: 'Biotique Bio Kelp Protein Shampoo', slug: 'biotique-bio-kelp-shampoo', desc: 'Ayurvedic anti-hair fall shampoo with sea kelp and protein complex', price: 299, cat: 'haircare', brand: 'biotique', sku: 'BIO-KELP-700ML', stock: 90 },
 
     // ── MAKEUP ───────────────────────────────────────────────────────────────
     { name: 'Lakme Absolute Skin Natural Foundation', slug: 'lakme-absolute-skin-natural-foundation', desc: 'Skin-natural finish foundation with SPF 8 and 12-hour coverage', price: 849, cat: 'makeup', brand: 'lakme', sku: 'LK-ABS-FNDN-W100', stock: 60 },
@@ -596,17 +634,17 @@ async function main() {
 
     // ── FRAGRANCES ───────────────────────────────────────────────────────────
     { name: 'Fogg Fresh Acqua Body Spray 150ml', slug: 'fogg-fresh-acqua-150ml', desc: 'Refreshing aquatic fragrance body spray for men with no-gas formula', price: 249, cat: 'fragrances', brand: 'fogg', sku: 'FOGG-ACQUA-150ML', stock: 120 },
-    { name: 'Park Avenue Cool Blue Perfume 50ml', slug: 'park-avenue-cool-blue-50ml', desc: 'Long-lasting aqua-fresh scent with citrus and musk top notes', price: 399, cat: 'fragrances', brand: 'fogg', sku: 'PA-COOLBLUE-50ML', stock: 80 },
-    { name: 'Engage W1 Perfume for Women 90ml', slug: 'engage-w1-women-90ml', desc: 'Floral woody fragrance with rose, jasmine and sandalwood notes', price: 499, cat: 'fragrances', brand: 'fogg', sku: 'ENG-W1-90ML', stock: 60 },
+    { name: 'Park Avenue Cool Blue Perfume 50ml', slug: 'park-avenue-cool-blue-50ml', desc: 'Long-lasting aqua-fresh scent with citrus and musk top notes', price: 399, cat: 'fragrances', brand: 'park-avenue', sku: 'PA-COOLBLUE-50ML', stock: 80 },
+    { name: 'Engage W1 Perfume for Women 90ml', slug: 'engage-w1-women-90ml', desc: 'Floral woody fragrance with rose, jasmine and sandalwood notes', price: 499, cat: 'fragrances', brand: 'engage', sku: 'ENG-W1-90ML', stock: 60 },
 
     // ── GROOMING ─────────────────────────────────────────────────────────────
     { name: 'Philips OneBlade QP2730 Trimmer', slug: 'philips-oneblade-trimmer', desc: 'Hybrid electric trimmer and shaver — trim, edge and shave any length', price: 2199, cat: 'grooming', brand: 'philips', sku: 'PH-ONEBLADE-QP27', stock: 50 },
-    { name: 'Beardo Beard & Hair Growth Oil 50ml', slug: 'beardo-beard-growth-oil-50ml', desc: 'Biotin-enriched beard oil with argan and jojoba for thick beard growth', price: 399, cat: 'grooming', brand: 'minimalist', sku: 'BEARD-GRW-50ML', stock: 60 },
-    { name: 'Gillette Fusion ProGlide Razor + 4 Blades', slug: 'gillette-fusion-proglide', desc: '5-blade comfort with Precision Trimmer and micro-comb for closer shave', price: 699, cat: 'grooming', brand: 'dove', sku: 'GILL-FPG-4BL', stock: 40 },
+    { name: 'Beardo Beard & Hair Growth Oil 50ml', slug: 'beardo-beard-growth-oil-50ml', desc: 'Biotin-enriched beard oil with argan and jojoba for thick beard growth', price: 399, cat: 'grooming', brand: 'beardo', sku: 'BEARD-GRW-50ML', stock: 60 },
+    { name: 'Gillette Fusion ProGlide Razor + 4 Blades', slug: 'gillette-fusion-proglide', desc: '5-blade comfort with Precision Trimmer and micro-comb for closer shave', price: 699, cat: 'grooming', brand: 'gillette', sku: 'GILL-FPG-4BL', stock: 40 },
 
     // ── FITNESS EQUIPMENT ────────────────────────────────────────────────────
-    { name: 'Strauss Adjustable Dumbbell Set 10kg', slug: 'strauss-adjustable-dumbbell-10kg', desc: 'PVC-coated adjustable dumbbell pair with weight plates, 10kg set', price: 1299, cat: 'fitness-equipment', brand: 'decathlon', sku: 'STR-DB-10KG', stock: 30 },
-    { name: 'Boldfit Pull Up Bar Wall-Mounted', slug: 'boldfit-pull-up-bar', desc: 'Heavy-duty wall-mounted pull-up and chin-up bar, holds up to 120kg', price: 1799, cat: 'fitness-equipment', brand: 'decathlon', sku: 'BLD-PUBAR-BLK', stock: 20 },
+    { name: 'Strauss Adjustable Dumbbell Set 10kg', slug: 'strauss-adjustable-dumbbell-10kg', desc: 'PVC-coated adjustable dumbbell pair with weight plates, 10kg set', price: 1299, cat: 'fitness-equipment', brand: 'strauss', sku: 'STR-DB-10KG', stock: 30 },
+    { name: 'Boldfit Pull Up Bar Wall-Mounted', slug: 'boldfit-pull-up-bar', desc: 'Heavy-duty wall-mounted pull-up and chin-up bar, holds up to 120kg', price: 1799, cat: 'fitness-equipment', brand: 'boldfit', sku: 'BLD-PUBAR-BLK', stock: 20 },
     { name: 'Decathlon Corength Yoga Mat 8mm', slug: 'decathlon-yoga-mat-8mm', desc: 'Anti-slip 8mm cushioned yoga mat with carry strap and TPE material', price: 999, cat: 'fitness-equipment', brand: 'decathlon', sku: 'DEC-YOGA-8MM-PRP', stock: 50 },
     { name: 'Decathlon Domyos Cross Trainer 520', slug: 'decathlon-cross-trainer-520', desc: 'Compact elliptical cross-trainer with 6 resistance levels and LCD display', price: 18999, cat: 'fitness-equipment', brand: 'decathlon', sku: 'DEC-CT520-GRY', stock: 5 },
 
@@ -623,8 +661,8 @@ async function main() {
     // ── OUTDOOR SPORTS ───────────────────────────────────────────────────────
     { name: 'Yonex Arcsaber 11 Pro Badminton Racket', slug: 'yonex-arcsaber-11-pro', desc: 'ISOMETRIC frame with Arc-Saber technology, shaft stiffness: stiff', price: 12999, cat: 'outdoor-sports', brand: 'yonex', sku: 'YNX-ARC11P-GRY', stock: 8 },
     { name: 'Decathlon Perfly BG 530 Badminton Set', slug: 'decathlon-perfly-bg530-set', desc: '2-racket beginner badminton set with 3 shuttlecocks and carry bag', price: 799, cat: 'outdoor-sports', brand: 'decathlon', sku: 'DEC-PERFLY-530', stock: 25 },
-    { name: 'Cosco Cricket Bat Kashmir Willow', slug: 'cosco-cricket-bat-kashmir', desc: 'Full-size Kashmir willow cricket bat with cane handle, pre-knocked', price: 1499, cat: 'outdoor-sports', brand: 'decathlon', sku: 'COSCO-KW-BAT-FS', stock: 20 },
-    { name: 'Nivia Premier Rubber Football Size 5', slug: 'nivia-premier-rubber-football', desc: 'Official size 5 rubber football for training and match play', price: 699, cat: 'outdoor-sports', brand: 'decathlon', sku: 'NIVIA-FB-SZ5', stock: 30 },
+    { name: 'Cosco Cricket Bat Kashmir Willow', slug: 'cosco-cricket-bat-kashmir', desc: 'Full-size Kashmir willow cricket bat with cane handle, pre-knocked', price: 1499, cat: 'outdoor-sports', brand: 'cosco', sku: 'COSCO-KW-BAT-FS', stock: 20 },
+    { name: 'Nivia Premier Rubber Football Size 5', slug: 'nivia-premier-rubber-football', desc: 'Official size 5 rubber football for training and match play', price: 699, cat: 'outdoor-sports', brand: 'nivia', sku: 'NIVIA-FB-SZ5', stock: 30 },
 
     // ── GAMING CONSOLES ──────────────────────────────────────────────────────
     { name: 'Nintendo Switch OLED Model', slug: 'nintendo-switch-oled', desc: '7-inch OLED screen portable console with Joy-Con controllers and kickstand', price: 31990, cat: 'gaming-consoles', brand: 'nintendo', sku: 'NIN-SWITCH-OLED', stock: 12 },
@@ -643,45 +681,45 @@ async function main() {
     // ── GAMING ACCESSORIES ───────────────────────────────────────────────────
     { name: 'Razer Viper V3 Pro Wireless Mouse', slug: 'razer-viper-v3-pro', desc: 'Symmetrical 8K polling-rate wireless esports mouse, 58g lightweight', price: 14999, cat: 'gaming-accessories', brand: 'razer', sku: 'RZ-VIPER-V3PRO', stock: 10 },
     { name: 'Razer BlackWidow V4 Pro Keyboard', slug: 'razer-blackwidow-v4-pro', desc: 'Mechanical gaming keyboard with Razer Green switches and RGB Chroma', price: 19999, cat: 'gaming-accessories', brand: 'razer', sku: 'RZ-BWV4PRO-BLK', stock: 8 },
-    { name: 'HyperX Cloud Alpha Headset', slug: 'hyperx-cloud-alpha', desc: 'Multi-chamber dual drivers gaming headset with detachable mic', price: 6999, cat: 'gaming-accessories', brand: 'razer', sku: 'HPXCA-RED-BLK', stock: 15 },
+    { name: 'HyperX Cloud Alpha Headset', slug: 'hyperx-cloud-alpha', desc: 'Multi-chamber dual drivers gaming headset with detachable mic', price: 6999, cat: 'gaming-accessories', brand: 'hyperx', sku: 'HPXCA-RED-BLK', stock: 15 },
 
     // ── SNACKS ───────────────────────────────────────────────────────────────
-    { name: "Lays India Magic Masala Chips 52g", slug: 'lays-india-magic-masala', desc: "India's favourite spiced potato chips with magic masala seasoning", price: 20, cat: 'snacks', brand: 'pepsico', sku: 'LAYS-MAGIC-52G', stock: 150 },
-    { name: 'Too Yumm! Multigrain Chips 35g', slug: 'too-yumm-multigrain-chips', desc: 'Baked not fried multigrain chips in tangy tomato flavour', price: 15, cat: 'snacks', brand: 'pepsico', sku: 'TYUM-MULTI-35G', stock: 200 },
-    { name: 'Kurkure Masala Munch 90g', slug: 'kurkure-masala-munch-90g', desc: 'Crunchy corn puffed snack with tangy masala seasoning', price: 20, cat: 'snacks', brand: 'pepsico', sku: 'KURK-MASALA-90G', stock: 200 },
-    { name: 'Bingo Mad Angles Achaari Masti 75g', slug: 'bingo-mad-angles-achaari', desc: 'Triangular corn chips with achaari (pickle) spice flavour', price: 20, cat: 'snacks', brand: 'pepsico', sku: 'BING-MANG-75G', stock: 180 },
+    { name: "Lays India Magic Masala Chips 52g", slug: 'lays-india-magic-masala', desc: "India's favourite spiced potato chips with magic masala seasoning", price: 20, cat: 'snacks', brand: 'lays', sku: 'LAYS-MAGIC-52G', stock: 150 },
+    { name: 'Too Yumm! Multigrain Chips 35g', slug: 'too-yumm-multigrain-chips', desc: 'Baked not fried multigrain chips in tangy tomato flavour', price: 15, cat: 'snacks', brand: 'too-yumm', sku: 'TYUM-MULTI-35G', stock: 200 },
+    { name: 'Kurkure Masala Munch 90g', slug: 'kurkure-masala-munch-90g', desc: 'Crunchy corn puffed snack with tangy masala seasoning', price: 20, cat: 'snacks', brand: 'kurkure', sku: 'KURK-MASALA-90G', stock: 200 },
+    { name: 'Bingo Mad Angles Achaari Masti 75g', slug: 'bingo-mad-angles-achaari', desc: 'Triangular corn chips with achaari (pickle) spice flavour', price: 20, cat: 'snacks', brand: 'bingo', sku: 'BING-MANG-75G', stock: 180 },
 
     // ── BEVERAGES ────────────────────────────────────────────────────────────
     { name: 'Coca-Cola Zero Sugar Can 300ml', slug: 'coke-zero-sugar-can', desc: 'Crisp, refreshing Coca-Cola Zero Sugar with no calories', price: 40, cat: 'beverages', brand: 'coca-cola', sku: 'COKE-ZERO-300ML', stock: 200 },
-    { name: 'Tropicana Orange Juice 1L', slug: 'tropicana-orange-juice-1l', desc: '100% fruit juice with no added sugar and no preservatives', price: 110, cat: 'beverages', brand: 'pepsico', sku: 'TROP-OJ-1L', stock: 100 },
-    { name: 'Red Bull Energy Drink 250ml', slug: 'red-bull-250ml', desc: 'Energy drink with caffeine, taurine and B-vitamins. Can 250ml', price: 125, cat: 'beverages', brand: 'coca-cola', sku: 'REDBULL-250ML', stock: 150 },
-    { name: 'Bisleri Mineral Water 1L Pack of 12', slug: 'bisleri-1l-pack-12', desc: 'Purified natural mineral water with added minerals, 12 × 1L', price: 200, cat: 'beverages', brand: 'coca-cola', sku: 'BISL-1L-12PK', stock: 80 },
+    { name: 'Tropicana Orange Juice 1L', slug: 'tropicana-orange-juice-1l', desc: '100% fruit juice with no added sugar and no preservatives', price: 110, cat: 'beverages', brand: 'tropicana', sku: 'TROP-OJ-1L', stock: 100 },
+    { name: 'Red Bull Energy Drink 250ml', slug: 'red-bull-250ml', desc: 'Energy drink with caffeine, taurine and B-vitamins. Can 250ml', price: 125, cat: 'beverages', brand: 'red-bull', sku: 'REDBULL-250ML', stock: 150 },
+    { name: 'Bisleri Mineral Water 1L Pack of 12', slug: 'bisleri-1l-pack-12', desc: 'Purified natural mineral water with added minerals, 12 × 1L', price: 200, cat: 'beverages', brand: 'bisleri', sku: 'BISL-1L-12PK', stock: 80 },
 
     // ── PACKAGED FOODS ───────────────────────────────────────────────────────
-    { name: 'Maggi 2-Minute Masala Noodles 70g × 12', slug: 'maggi-masala-noodles-12pk', desc: 'Iconic instant noodles with signature masala taste. Pack of 12', price: 156, cat: 'packaged-foods', brand: 'pepsico', sku: 'MAGGI-MSL-12PK', stock: 100 },
+    { name: 'Maggi 2-Minute Masala Noodles 70g × 12', slug: 'maggi-masala-noodles-12pk', desc: 'Iconic instant noodles with signature masala taste. Pack of 12', price: 156, cat: 'packaged-foods', brand: 'maggi', sku: 'MAGGI-MSL-12PK', stock: 100 },
     { name: 'Amul Butter 500g', slug: 'amul-butter-500g', desc: 'Pasteurised cream butter made from cow milk. 500g pack', price: 285, cat: 'packaged-foods', brand: 'amul', sku: 'AMUL-BUTR-500G', stock: 80 },
-    { name: 'MDH Chaat Masala 100g', slug: 'mdh-chaat-masala-100g', desc: 'Authentic North Indian chaat masala with dried mango powder and spices', price: 65, cat: 'packaged-foods', brand: 'amul', sku: 'MDH-CHAAT-100G', stock: 120 },
+    { name: 'MDH Chaat Masala 100g', slug: 'mdh-chaat-masala-100g', desc: 'Authentic North Indian chaat masala with dried mango powder and spices', price: 65, cat: 'packaged-foods', brand: 'mdh', sku: 'MDH-CHAAT-100G', stock: 120 },
 
     // ── HOUSEHOLD ESSENTIALS ────────────────────────────────────────────────
     { name: 'Surf Excel Matic Liquid 2L', slug: 'surf-excel-matic-liquid-2l', desc: 'Front load washing machine liquid detergent for better stain removal', price: 375, cat: 'household-essentials', brand: 'surf-excel', sku: 'SURF-MATIC-2L', stock: 80 },
-    { name: 'Vim Dishwash Gel Lemon 750ml', slug: 'vim-dishwash-gel-lemon-750ml', desc: 'Tough on grease, gentle on hands dishwash gel with lemon fragrance', price: 119, cat: 'household-essentials', brand: 'surf-excel', sku: 'VIM-GEL-LEM-750ML', stock: 100 },
-    { name: 'Harpic Power Plus Toilet Cleaner 1L', slug: 'harpic-power-plus-1l', desc: 'Thick bleach formula that kills 99.9% germs and removes stains', price: 155, cat: 'household-essentials', brand: 'surf-excel', sku: 'HARP-PP-1L', stock: 90 },
+    { name: 'Vim Dishwash Gel Lemon 750ml', slug: 'vim-dishwash-gel-lemon-750ml', desc: 'Tough on grease, gentle on hands dishwash gel with lemon fragrance', price: 119, cat: 'household-essentials', brand: 'vim', sku: 'VIM-GEL-LEM-750ML', stock: 100 },
+    { name: 'Harpic Power Plus Toilet Cleaner 1L', slug: 'harpic-power-plus-1l', desc: 'Thick bleach formula that kills 99.9% germs and removes stains', price: 155, cat: 'household-essentials', brand: 'harpic', sku: 'HARP-PP-1L', stock: 90 },
 
     // ── BOOKS — FICTION ───────────────────────────────────────────────────────
-    { name: 'The Alchemist by Paulo Coelho', slug: 'the-alchemist-paulo-coelho', desc: "A mystical story of Santiago's journey to find treasure and wisdom", price: 299, cat: 'fiction', brand: 'penguin', sku: 'BOOK-ALCHEMIST', stock: 60 },
+    { name: 'The Alchemist by Paulo Coelho', slug: 'the-alchemist-paulo-coelho', desc: "A mystical story of Santiago's journey to find treasure and wisdom", price: 299, cat: 'fiction', brand: 'harpercollins', sku: 'BOOK-ALCHEMIST', stock: 60 },
     { name: 'Ikigai: The Japanese Secret to a Long Life', slug: 'ikigai-book', desc: "Japan's secret to a long and happy life — finding your reason for being", price: 349, cat: 'fiction', brand: 'penguin', sku: 'BOOK-IKIGAI', stock: 50 },
-    { name: 'Rich Dad Poor Dad by Robert Kiyosaki', slug: 'rich-dad-poor-dad-book', desc: 'What the rich teach their kids about money that the poor do not', price: 299, cat: 'fiction', brand: 'penguin', sku: 'BOOK-RDPD', stock: 45 },
+    { name: 'Rich Dad Poor Dad by Robert Kiyosaki', slug: 'rich-dad-poor-dad-book', desc: 'What the rich teach their kids about money that the poor do not', price: 299, cat: 'fiction', brand: 'warner-books', sku: 'BOOK-RDPD', stock: 45 },
 
     // ── BOOKS — ACADEMIC ─────────────────────────────────────────────────────
-    { name: 'NCERT Physics Class 12 Part 1', slug: 'ncert-physics-class12-p1', desc: 'NCERT standard textbook for CBSE Class 12 Physics — Part 1', price: 150, cat: 'academic', brand: 'penguin', sku: 'NCERT-PHY12-P1', stock: 200 },
-    { name: 'RD Sharma Mathematics Class 12', slug: 'rd-sharma-maths-class12', desc: 'Comprehensive problem book for CBSE Class 12 Mathematics', price: 599, cat: 'academic', brand: 'penguin', sku: 'RDS-MATHS-12', stock: 100 },
-    { name: 'Arihant Objective GK 2025', slug: 'arihant-objective-gk-2025', desc: 'Updated General Knowledge for competitive exams — SSC, UPSC, Bank', price: 449, cat: 'academic', brand: 'penguin', sku: 'ARI-OGK-2025', stock: 80 },
+    { name: 'NCERT Physics Class 12 Part 1', slug: 'ncert-physics-class12-p1', desc: 'NCERT standard textbook for CBSE Class 12 Physics — Part 1', price: 150, cat: 'academic', brand: 'ncert', sku: 'NCERT-PHY12-P1', stock: 200 },
+    { name: 'RD Sharma Mathematics Class 12', slug: 'rd-sharma-maths-class12', desc: 'Comprehensive problem book for CBSE Class 12 Mathematics', price: 599, cat: 'academic', brand: 'dhanpat-rai', sku: 'RDS-MATHS-12', stock: 100 },
+    { name: 'Arihant Objective GK 2025', slug: 'arihant-objective-gk-2025', desc: 'Updated General Knowledge for competitive exams — SSC, UPSC, Bank', price: 449, cat: 'academic', brand: 'arihant', sku: 'ARI-OGK-2025', stock: 80 },
 
     // ── BOOKS — PROGRAMMING ──────────────────────────────────────────────────
-    { name: 'Clean Code by Robert C. Martin', slug: 'clean-code-book', desc: 'A Handbook of Agile Software Craftsmanship. Must-read for developers', price: 699, cat: 'programming', brand: 'penguin', sku: 'BOOK-CLEAN-CODE', stock: 20 },
+    { name: 'Clean Code by Robert C. Martin', slug: 'clean-code-book', desc: 'A Handbook of Agile Software Craftsmanship. Must-read for developers', price: 699, cat: 'programming', brand: 'pearson', sku: 'BOOK-CLEAN-CODE', stock: 20 },
 
     // ── BOOKS — SELF HELP ─────────────────────────────────────────────────────
-    { name: 'Atomic Habits by James Clear', slug: 'atomic-habits-book', desc: 'Tiny changes, remarkable results. Science of habit formation', price: 499, cat: 'self-help', brand: 'penguin', sku: 'BOOK-ATOMIC-HABITS', stock: 50 },
+    { name: 'Atomic Habits by James Clear', slug: 'atomic-habits-book', desc: 'Tiny changes, remarkable results. Science of habit formation', price: 499, cat: 'self-help', brand: 'random-house', sku: 'BOOK-ATOMIC-HABITS', stock: 50 },
 
     // ── BOOKS — BUSINESS ──────────────────────────────────────────────────────
     { name: 'Start with Why by Simon Sinek', slug: 'start-with-why-book', desc: 'How great leaders inspire everyone to take action', price: 599, cat: 'business', brand: 'penguin', sku: 'BOOK-START-WITH-WHY', stock: 15 },
@@ -691,8 +729,8 @@ async function main() {
     { name: 'Spigen Tough Armor Case iPhone 15', slug: 'spigen-tough-armor-iphone15', desc: 'Military-grade MIL-STD-810G protection with kickstand for iPhone 15', price: 1299, cat: 'mobile-accessories', brand: 'spigen', sku: 'SPIG-TA-IP15-BLK', stock: 30 },
     { name: 'boAt Type-C Braided Cable 1.5m', slug: 'boat-type-c-braided-cable-1-5m', desc: '60W fast-charging nylon braided USB-C cable, 1.5m length', price: 399, cat: 'mobile-accessories', brand: 'boat', sku: 'BOAT-TCC-150-BLK', stock: 100 },
     { name: 'Samsung 25W USB-C Adapter', slug: 'samsung-25w-usbc-adapter', desc: 'Original Samsung 25W Super Fast Charging USB-C wall adapter', price: 999, cat: 'mobile-accessories', brand: 'samsung', sku: 'SAM-25WADA-WHT', stock: 60 },
-    { name: 'Belkin 3-in-1 Wireless Charger', slug: 'belkin-3in1-wireless-charger', desc: 'Simultaneously charge iPhone, Apple Watch and AirPods wirelessly', price: 7999, cat: 'mobile-accessories', brand: 'anker', sku: 'BLK-3IN1-WCH-WHT', stock: 10 },
-    { name: 'UGREEN USB-C Hub 7-in-1', slug: 'ugreen-usbc-hub-7in1', desc: '7-in-1 hub: 4K HDMI, 100W PD, USB-A 3.0 ×2, SD/TF card reader', price: 3499, cat: 'mobile-accessories', brand: 'anker', sku: 'UGRN-HUB7IN1-GRY', stock: 20 },
+    { name: 'Belkin 3-in-1 Wireless Charger', slug: 'belkin-3in1-wireless-charger', desc: 'Simultaneously charge iPhone, Apple Watch and AirPods wirelessly', price: 7999, cat: 'mobile-accessories', brand: 'belkin', sku: 'BLK-3IN1-WCH-WHT', stock: 10 },
+    { name: 'UGREEN USB-C Hub 7-in-1', slug: 'ugreen-usbc-hub-7in1', desc: '7-in-1 hub: 4K HDMI, 100W PD, USB-A 3.0 ×2, SD/TF card reader', price: 3499, cat: 'mobile-accessories', brand: 'ugreen', sku: 'UGRN-HUB7IN1-GRY', stock: 20 },
   ];
 
   // Map other fakes to match categories/brands safely
