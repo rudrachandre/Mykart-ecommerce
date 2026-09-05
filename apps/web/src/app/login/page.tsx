@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, Suspense, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Cookies from "js-cookie";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -29,15 +29,24 @@ function getSafeCallbackUrl(callbackUrl: string | null) {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { refreshUser } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
   const callbackUrl = useMemo(
     () => getSafeCallbackUrl(searchParams.get("callbackUrl")),
     [searchParams],
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const initialError = searchParams.get("error") === "google_auth_failed"
+    ? "Google sign-in failed. Please try again or use your email and password."
+    : "";
+  const [error, setError] = useState(initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(callbackUrl);
+    }
+  }, [user, loading, callbackUrl, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

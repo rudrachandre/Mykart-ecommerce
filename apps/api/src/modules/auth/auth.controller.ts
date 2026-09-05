@@ -55,8 +55,21 @@ export class AuthController {
     return res.redirect(`${frontendUrl}/login/callback`);
   }
 
+  private extractCookieFromHeader(
+    cookieHeader: string | undefined,
+    name: string,
+  ): string | undefined {
+    if (!cookieHeader) return undefined;
+    const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : undefined;
+  }
+
   private setRefreshTokenCookie(res: Response, refreshToken: string) {
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd =
+      process.env.NODE_ENV === 'production' ||
+      process.env.RENDER === 'true' ||
+      !!process.env.FRONTEND_URL;
+
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: isProd, // must be true when sameSite=none
@@ -100,7 +113,10 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refreshToken = req.cookies['refreshToken'];
+    const refreshToken =
+      req.cookies?.['refreshToken'] ||
+      this.extractCookieFromHeader(req.headers.cookie, 'refreshToken');
+
     if (!refreshToken) {
       throw new UnauthorizedException('No refresh token provided');
     }
@@ -113,16 +129,23 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = req.cookies['refreshToken'];
+    const refreshToken =
+      req.cookies?.['refreshToken'] ||
+      this.extractCookieFromHeader(req.headers.cookie, 'refreshToken');
 
     if (refreshToken) {
       await this.authService.logout(refreshToken);
     }
 
+    const isProd =
+      process.env.NODE_ENV === 'production' ||
+      process.env.RENDER === 'true' ||
+      !!process.env.FRONTEND_URL;
+
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       path: '/',
     });
     return { message: 'Logged out successfully' };

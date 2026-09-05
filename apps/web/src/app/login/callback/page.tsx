@@ -13,47 +13,68 @@ export default function GoogleCallbackPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function exchangeOAuthSession() {
-      try {
-        // Secure token exchange:
-        // The backend callback set the HttpOnly refreshToken cookie and redirected here.
-        // We now call POST /api/v1/auth/refresh to fetch a fresh accessToken.
-        const res = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
+      let attempts = 0;
+      const maxAttempts = 3;
+      let lastError: Error | null = null;
 
-        if (!res.ok) {
-          throw new Error("OAuth session exchange failed");
+      while (attempts < maxAttempts) {
+        try {
+          attempts++;
+          const res = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (!res.ok) {
+            throw new Error(`OAuth session exchange HTTP ${res.status}`);
+          }
+
+          const data = await res.json();
+          if (!data?.accessToken) {
+            throw new Error("No access token returned from session exchange");
+          }
+
+          // Save access token securely in cookie
+          Cookies.set("accessToken", data.accessToken, {
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+          });
+
+          // Hydrate AuthContext state
+          await refreshUser();
+
+          if (isMounted) {
+            // Full page reload redirect to ensure clean context transition
+            window.location.href = "/";
+          }
+          return;
+        } catch (err: any) {
+          lastError = err;
+          console.warn(`[GoogleCallback] Attempt ${attempts} failed:`, err?.message || err);
+          if (attempts < maxAttempts) {
+            await new Promise((res) => setTimeout(res, 600));
+          }
         }
+      }
 
-        const data = await res.json();
-        if (!data.accessToken) {
-          throw new Error("No access token returned");
-        }
-
-        // Save access token securely in cookie
-        Cookies.set("accessToken", data.accessToken, {
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-        });
-
-        // Hydrate AuthContext state
-        await refreshUser();
-
-        // Redirect to homepage or user account
-        window.location.href = "/";
-      } catch (err: any) {
-        console.error("[GoogleCallback] Authentication error:", err);
-        setError("Google authentication failed. Please try again.");
+      if (isMounted) {
+        console.error("[GoogleCallback] All authentication exchange attempts failed:", lastError);
+        setError("Google authentication failed. Redirecting to login...");
         setTimeout(() => {
           router.push("/login?error=google_auth_failed");
-        }, 2000);
+        }, 1500);
       }
     }
 
     exchangeOAuthSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, [refreshUser, router]);
 
   return (
