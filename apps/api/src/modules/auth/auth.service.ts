@@ -48,7 +48,7 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.usersService.findByEmail(dto.email);
-    if (!user) {
+    if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -62,6 +62,57 @@ export class AuthService {
     });
 
     return this.generateAuthResponse(user.id, user.role);
+  }
+
+  async validateGoogleUser(googleProfile: {
+    googleId: string;
+    email: string;
+    name: string;
+    avatar?: string;
+  }) {
+    // 1. Search by googleId first
+    let user = await this.prisma.user.findUnique({
+      where: { googleId: googleProfile.googleId },
+    });
+
+    // 2. If not found by googleId, search by email
+    if (!user) {
+      user = await this.usersService.findByEmail(googleProfile.email);
+
+      if (user) {
+        // Link existing user account: attach googleId, update avatar if missing, mark emailVerified
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleId: googleProfile.googleId,
+            emailVerified: true,
+            avatar: user.avatar || googleProfile.avatar,
+          },
+        });
+      } else {
+        // Create new user (Role: CUSTOMER, passwordHash: null)
+        user = await this.prisma.user.create({
+          data: {
+            name: googleProfile.name,
+            email: googleProfile.email,
+            googleId: googleProfile.googleId,
+            avatar: googleProfile.avatar,
+            emailVerified: true,
+            role: Role.CUSTOMER,
+          },
+        });
+      }
+    }
+
+    await this.analyticsService.logAction(
+      user.id,
+      'USER_LOGIN_GOOGLE',
+      undefined,
+      { email: user.email },
+    );
+
+    const tokens = await this.generateAuthResponse(user.id, user.role);
+    return { user, tokens };
   }
 
   async logout(refreshToken: string) {

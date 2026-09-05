@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   Res,
@@ -9,6 +10,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
@@ -23,6 +25,35 @@ import type { Response, Request } from 'express';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // AuthGuard('google') redirects browser to Google OAuth consent screen
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthCallback(
+    @Req() req: Request & { user?: { user: any; tokens: { accessToken: string; refreshToken: string } } },
+    @Res() res: Response,
+  ) {
+    const frontendUrl =
+      process.env.FRONTEND_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'https://mykart-ecommerce-web.vercel.app'
+        : 'http://localhost:3000');
+
+    if (!req.user || !req.user.tokens) {
+      return res.redirect(`${frontendUrl}/login?error=google_auth_failed`);
+    }
+
+    // Secure server-side OAuth callback flow:
+    // Set refreshToken as HttpOnly Secure cookie, then redirect to frontend callback route.
+    // ZERO tokens in the URL! Frontend callback invokes POST /api/v1/auth/refresh to receive accessToken.
+    this.setRefreshTokenCookie(res, req.user.tokens.refreshToken);
+    return res.redirect(`${frontendUrl}/login/callback`);
+  }
 
   private setRefreshTokenCookie(res: Response, refreshToken: string) {
     const isProd = process.env.NODE_ENV === 'production';

@@ -37,7 +37,7 @@ async function main() {
     let dirty = false;
     const data: { passwordHash?: string; role?: "ADMIN" } = {};
 
-    const ok = await bcrypt.compare(password, adminUser.passwordHash);
+    const ok = adminUser.passwordHash ? await bcrypt.compare(password, adminUser.passwordHash) : false;
     if (!ok) {
       console.log("Stored hash does not verify — resetting admin password (bcrypt, cost 12).");
       data.passwordHash = await bcrypt.hash(password, 12);

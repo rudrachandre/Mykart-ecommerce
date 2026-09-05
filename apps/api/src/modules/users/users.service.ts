@@ -61,6 +61,9 @@ export class UsersService {
   async changePassword(userId: string, dto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+    if (!user.passwordHash) {
+      throw new BadRequestException('Password change is not supported for Google OAuth accounts');
+    }
 
     const isValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!isValid) throw new BadRequestException('Invalid current password');
