@@ -95,6 +95,7 @@ export class AuthService {
           data: {
             name: googleProfile.name,
             email: googleProfile.email,
+            passwordHash: null,
             googleId: googleProfile.googleId,
             avatar: googleProfile.avatar,
             emailVerified: true,

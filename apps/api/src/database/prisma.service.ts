@@ -31,6 +31,7 @@ export class PrismaService
       await this.$executeRawUnsafe(`
         ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleId" TEXT;
         CREATE UNIQUE INDEX IF NOT EXISTS "User_googleId_key" ON "User"("googleId");
+        ALTER TABLE "User" ALTER COLUMN "passwordHash" DROP NOT NULL;
       `);
     } catch (e: any) {
       console.warn('[PrismaService] Auto-migration warning:', e?.message || e);

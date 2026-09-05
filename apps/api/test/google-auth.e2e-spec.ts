@@ -55,6 +55,7 @@ describe('AuthService - Google OAuth', () => {
       data: {
         name: 'Google User',
         email: 'new@google.com',
+        passwordHash: null,
         googleId: 'g-123',
         avatar: 'https://example.com/photo.jpg',
         emailVerified: true,
