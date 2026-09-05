@@ -9,15 +9,11 @@ import Script from "next/script";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
 import { calculateShippingFee } from "@/lib/shipping";
+import { Check, CreditCard, MapPin, ShieldCheck, Tag, Truck } from "lucide-react";
 
-/**
- * Methods surfaced in checkout. All online methods fulfil through the existing
- * Razorpay architecture; availability of specific instruments (UPI, netbanking,
- * wallets) ultimately depends on the configured Razorpay merchant account.
- */
 const PAYMENT_METHODS = {
   COD: "Cash on Delivery",
-  UPI: "UPI",
+  UPI: "UPI (Google Pay / PhonePe / PayTM)",
   CARD: "Credit / Debit Card",
   NETBANKING: "Net Banking",
   WALLET: "Wallets",
@@ -122,6 +118,7 @@ export function CheckoutClient({
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (checkoutLoading) return;
     setCheckoutLoading(true);
 
     try {
@@ -132,8 +129,6 @@ export function CheckoutClient({
 
       const result = await checkout(token, payload);
 
-      // COD orders carry no gateway identifiers: the order is placed now and
-      // settled physically at delivery, so Razorpay Checkout is never opened.
       if (!result.razorpayOrderId) {
         await refreshCart();
         toast.success("Order placed! Pay on delivery.");
@@ -142,7 +137,7 @@ export function CheckoutClient({
       }
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "dummy_key",
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mykart_mock_123",
         amount: result.amount,
         currency: result.currency,
         name: "MyKart",
@@ -194,11 +189,15 @@ export function CheckoutClient({
   };
 
   const total = Math.max(0, subtotal - discountAmount);
-  // Display-only mirror of the server-authoritative shipping rule. The amount
-  // actually charged is computed by the backend in OrdersService.checkout().
   const deliveryFee = calculateShippingFee(subtotal);
   const tax = Math.round((total) * 0.18 * 100) / 100;
   const finalTotal = total + deliveryFee + tax;
+
+  const formattedFinalTotal = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(finalTotal);
 
   return (
     <>
@@ -206,18 +205,51 @@ export function CheckoutClient({
         src="https://checkout.razorpay.com/v1/checkout.js"
         strategy="lazyOnload"
       />
+
+      {/* Progress Stepper Header */}
+      <div className="mb-8 border-b border-border/40 pb-6">
+        <div className="flex items-center justify-center max-w-xl mx-auto text-xs sm:text-sm font-medium">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold">
+              <Check className="w-3.5 h-3.5" />
+            </span>
+            <span>Cart</span>
+          </div>
+          <div className="w-12 sm:w-16 h-0.5 bg-primary mx-3" />
+          <div className="flex items-center gap-2 text-foreground font-bold">
+            <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">
+              2
+            </span>
+            <span>Address & Payment</span>
+          </div>
+          <div className="w-12 sm:w-16 h-0.5 bg-border mx-3" />
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-bold">
+              3
+            </span>
+            <span>Confirmation</span>
+          </div>
+        </div>
+      </div>
+
       <form
         onSubmit={handleCheckout}
-        className="flex flex-col lg:flex-row gap-12 lg:gap-20"
+        className="flex flex-col lg:flex-row gap-8 lg:gap-12 pb-24 lg:pb-8 items-start"
       >
-        <div className="flex-1 space-y-12">
-          <section className="bg-background">
-            <h2 className="text-xl font-medium mb-8 uppercase tracking-widest text-foreground">
-              Shipping Address
-            </h2>
+        {/* LEFT COLUMN: Address, Shipping Method, Payment Method, Coupon */}
+        <div className="w-full lg:flex-1 space-y-8">
+          {/* 1. Delivery Address */}
+          <section className="bg-card border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2.5 mb-6">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">
+                1. Delivery Address
+              </h2>
+            </div>
+
             {savedAddresses.length > 0 && (
-              <div className="mb-8 space-y-3">
-                <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70 block mb-2">
+              <div className="mb-6 space-y-3">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
                   Select Saved Address
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -225,9 +257,9 @@ export function CheckoutClient({
                     <label
                       key={sa.id}
                       onClick={() => handleSelectAddress(sa.id)}
-                      className={`p-4 border cursor-pointer transition-all flex flex-col justify-between ${
+                      className={`p-4 border rounded-xl cursor-pointer transition-all flex flex-col justify-between ${
                         selectedAddressId === sa.id
-                          ? "border-foreground bg-accent/30 font-medium"
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
                           : "border-border/60 hover:border-border"
                       }`}
                     >
@@ -238,12 +270,12 @@ export function CheckoutClient({
                             name="selectedAddress"
                             checked={selectedAddressId === sa.id}
                             onChange={() => handleSelectAddress(sa.id)}
-                            className="accent-foreground"
+                            className="accent-primary"
                           />
-                          <span className="font-semibold text-sm">{sa.fullName}</span>
+                          <span className="font-bold text-sm">{sa.fullName}</span>
                         </div>
                         {sa.isDefault && (
-                          <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                          <span className="text-[10px] uppercase font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded">
                             Default
                           </span>
                         )}
@@ -252,15 +284,15 @@ export function CheckoutClient({
                         <p>{sa.addressLine1}</p>
                         {sa.addressLine2 && <p>{sa.addressLine2}</p>}
                         <p>{sa.city}, {sa.state} {sa.postalCode}</p>
-                        <p className="pt-1 font-medium text-foreground/70">{sa.phone}</p>
+                        <p className="pt-1 font-semibold text-foreground/80">{sa.phone}</p>
                       </div>
                     </label>
                   ))}
                   <label
                     onClick={() => handleSelectAddress("new")}
-                    className={`p-4 border cursor-pointer transition-all flex items-center justify-center min-h-[100px] border-dashed ${
+                    className={`p-4 border rounded-xl cursor-pointer transition-all flex items-center justify-center min-h-[100px] border-dashed ${
                       selectedAddressId === "new"
-                        ? "border-foreground bg-accent/30 font-medium"
+                        ? "border-primary bg-primary/5 font-bold"
                         : "border-border/60 hover:border-border"
                     }`}
                   >
@@ -270,9 +302,9 @@ export function CheckoutClient({
                         name="selectedAddress"
                         checked={selectedAddressId === "new"}
                         onChange={() => handleSelectAddress("new")}
-                        className="accent-foreground"
+                        className="accent-primary"
                       />
-                      <span className="text-xs uppercase tracking-widest font-bold text-foreground">
+                      <span className="text-xs uppercase tracking-wider font-bold text-foreground">
                         + Add New Address
                       </span>
                     </div>
@@ -280,11 +312,12 @@ export function CheckoutClient({
                 </div>
               </div>
             )}
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70">
-                    Full Name
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    Full Name *
                   </label>
                   <input
                     required
@@ -293,12 +326,12 @@ export function CheckoutClient({
                     onChange={(e) =>
                       setAddress({ ...address, fullName: e.target.value })
                     }
-                    className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
+                    className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70">
-                    Phone
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    Phone Number *
                   </label>
                   <input
                     required
@@ -307,13 +340,13 @@ export function CheckoutClient({
                     onChange={(e) =>
                       setAddress({ ...address, phone: e.target.value })
                     }
-                    className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
+                    className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70">
-                  Address Line 1
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Address Line 1 *
                 </label>
                 <input
                   required
@@ -322,11 +355,11 @@ export function CheckoutClient({
                   onChange={(e) =>
                     setAddress({ ...address, addressLine1: e.target.value })
                   }
-                  className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
+                  className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">
                   Address Line 2 (Optional)
                 </label>
                 <input
@@ -335,13 +368,13 @@ export function CheckoutClient({
                   onChange={(e) =>
                     setAddress({ ...address, addressLine2: e.target.value })
                   }
-                  className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
+                  className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70">
-                    City
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    City *
                   </label>
                   <input
                     required
@@ -350,12 +383,12 @@ export function CheckoutClient({
                     onChange={(e) =>
                       setAddress({ ...address, city: e.target.value })
                     }
-                    className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
+                    className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70">
-                    State
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    State *
                   </label>
                   <input
                     required
@@ -364,14 +397,12 @@ export function CheckoutClient({
                     onChange={(e) =>
                       setAddress({ ...address, state: e.target.value })
                     }
-                    className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
+                    className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70">
-                    Postal Code
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    Postal Code *
                   </label>
                   <input
                     required
@@ -380,43 +411,135 @@ export function CheckoutClient({
                     onChange={(e) =>
                       setAddress({ ...address, postalCode: e.target.value })
                     }
-                    className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-widest text-foreground/70">
-                    Country
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    value={address.country}
-                    onChange={(e) =>
-                      setAddress({ ...address, country: e.target.value })
-                    }
-                    className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
+                    className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                 </div>
               </div>
             </div>
           </section>
+
+          {/* 2. Delivery Method */}
+          <section className="bg-card border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2.5 mb-4">
+              <Truck className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">
+                2. Delivery Method
+              </h2>
+            </div>
+            <div className="border border-primary/30 bg-primary/5 rounded-xl p-4 flex items-center justify-between">
+              <div>
+                <p className="font-bold text-sm text-foreground">Standard Express Delivery</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Delivered in 2–4 business days with live tracking.</p>
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded">
+                {deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}
+              </span>
+            </div>
+          </section>
+
+          {/* 3. Payment Method */}
+          <section className="bg-card border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2.5 mb-6">
+              <CreditCard className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">
+                3. Payment Method
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(
+                Object.keys(PAYMENT_METHODS) as Array<
+                  keyof typeof PAYMENT_METHODS
+                >
+              ).map((method) => (
+                <label
+                  key={method}
+                  className={`p-4 border rounded-xl cursor-pointer transition-all flex items-center gap-3 ${
+                    paymentMethod === method
+                      ? "border-primary bg-primary/5 ring-1 ring-primary font-semibold"
+                      : "border-border/60 hover:border-border"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={method}
+                    checked={paymentMethod === method}
+                    onChange={() => setPaymentMethod(method)}
+                    className="accent-primary h-4 w-4"
+                  />
+                  <span className="text-sm font-medium text-foreground">
+                    {PAYMENT_METHODS[method]}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </section>
+
+          {/* 4. Coupon Code */}
+          <section className="bg-card border rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2.5 mb-4">
+              <Tag className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">
+                4. Coupon / Promo Code
+              </h2>
+            </div>
+            {appliedCoupon ? (
+              <div className="flex justify-between items-center bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
+                <span className="text-sm text-emerald-800 font-bold uppercase tracking-wider">
+                  Coupon Applied: {appliedCoupon}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRemoveCoupon}
+                  className="text-xs uppercase font-bold text-destructive hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="Enter coupon code (e.g. MYKART10)"
+                  className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                />
+                <Button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={couponLoading || !couponCode}
+                  className="rounded-lg h-10 px-6 font-bold text-xs"
+                >
+                  Apply
+                </Button>
+              </div>
+            )}
+            {couponError && (
+              <p className="text-destructive font-medium text-xs mt-2">
+                {couponError}
+              </p>
+            )}
+          </section>
         </div>
 
-        <div className="w-full lg:w-[400px]">
-          <div className="p-8 bg-secondary sticky top-32 rounded-xl">
-            <h2 className="text-lg font-bold mb-8 uppercase tracking-widest">
+        {/* RIGHT COLUMN: Sticky Order Summary */}
+        <div className="w-full lg:w-[380px] shrink-0">
+          <div className="p-6 sm:p-8 bg-card border rounded-2xl sticky top-28 shadow-sm space-y-6">
+            <h2 className="text-base sm:text-lg font-bold uppercase tracking-wider text-foreground pb-3 border-b border-border/40">
               Order Summary
             </h2>
-            <div className="space-y-4 mb-8">
+            
+            <div className="space-y-3 max-h-48 overflow-y-auto pr-1 hide-scrollbar">
               {items.map((item: any) => (
                 <div
                   key={item.id}
-                  className="flex justify-between text-sm items-center"
+                  className="flex justify-between text-xs sm:text-sm items-center"
                 >
-                  <span className="text-foreground/70 truncate mr-4 font-light">
-                    {item.quantity} x {item.product.name}
+                  <span className="text-muted-foreground truncate mr-3 font-normal">
+                    {item.quantity} × {item.product.name}
                   </span>
-                  <span className="font-medium">
+                  <span className="font-semibold text-foreground whitespace-nowrap">
                     {new Intl.NumberFormat("en-IN", {
                       style: "currency",
                       currency: "INR",
@@ -427,53 +550,10 @@ export function CheckoutClient({
               ))}
             </div>
 
-            <div className="py-6 border-y border-border/40 mb-6">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground/70 mb-4">
-                Discount Code
-              </h3>
-              {appliedCoupon ? (
-                <div className="flex justify-between items-center bg-background/50 p-3 rounded-none border border-border">
-                  <span className="text-sm text-foreground font-medium uppercase tracking-widest">
-                    {appliedCoupon}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleRemoveCoupon}
-                    className="text-[10px] uppercase font-bold text-destructive hover:underline tracking-widest"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder="Enter code"
-                    className="flex h-10 w-full rounded-none border-b-2 border-t-0 border-l-0 border-r-0 border-border bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:border-foreground transition-all"
-                  />
-                  <Button
-                    type="button"
-                    onClick={handleApplyCoupon}
-                    disabled={couponLoading || !couponCode}
-                    className="rounded-none h-10 px-6 uppercase tracking-widest text-[10px] font-bold bg-foreground text-background"
-                  >
-                    Apply
-                  </Button>
-                </div>
-              )}
-              {couponError && (
-                <p className="text-destructive font-medium text-xs mt-2">
-                  {couponError}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-4 text-sm font-medium text-foreground/70">
+            <div className="space-y-3 text-sm font-medium text-muted-foreground pt-3 border-t border-border/40">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span className="text-foreground">
+                <span className="text-foreground font-semibold">
                   {new Intl.NumberFormat("en-IN", {
                     style: "currency",
                     currency: "INR",
@@ -482,7 +562,7 @@ export function CheckoutClient({
                 </span>
               </div>
               {discountAmount > 0 && (
-                <div className="flex justify-between text-green-600">
+                <div className="flex justify-between text-emerald-600 font-semibold">
                   <span>Discount</span>
                   <span>
                     -
@@ -498,21 +578,15 @@ export function CheckoutClient({
                 <span>Shipping</span>
                 <span
                   className={
-                    deliveryFee === 0 ? "text-green-600" : "text-foreground"
+                    deliveryFee === 0 ? "text-emerald-600 font-bold" : "text-foreground font-semibold"
                   }
                 >
-                  {deliveryFee === 0
-                    ? "FREE"
-                    : new Intl.NumberFormat("en-IN", {
-                        style: "currency",
-                        currency: "INR",
-                        maximumFractionDigits: 0,
-                      }).format(deliveryFee)}
+                  {deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>Tax (18%)</span>
-                <span className="text-foreground">
+                <span>GST Tax (18%)</span>
+                <span className="text-foreground font-semibold">
                   {new Intl.NumberFormat("en-IN", {
                     style: "currency",
                     currency: "INR",
@@ -520,55 +594,21 @@ export function CheckoutClient({
                   }).format(tax)}
                 </span>
               </div>
-              <div className="flex justify-between items-end pt-6 border-t border-border/40 mt-6">
-                <span className="text-sm uppercase tracking-widest font-bold text-foreground">
-                  Total
-                </span>
-                <span className="text-3xl font-bold text-foreground">
-                  {new Intl.NumberFormat("en-IN", {
-                    style: "currency",
-                    currency: "INR",
-                    maximumFractionDigits: 0,
-                  }).format(finalTotal)}
-                </span>
-              </div>
             </div>
-            <div className="mt-10">
-              <h3 className="text-xl font-medium mb-6 uppercase tracking-widest text-foreground">
-                Payment Method
-              </h3>
-              <div className="space-y-3">
-                {(
-                  Object.keys(PAYMENT_METHODS) as Array<
-                    keyof typeof PAYMENT_METHODS
-                  >
-                ).map((method) => (
-                  <label
-                    key={method}
-                    className="flex items-center gap-3 cursor-pointer select-none"
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value={method}
-                      checked={paymentMethod === method}
-                      onChange={() => setPaymentMethod(method)}
-                      className="h-4 w-4 accent-black"
-                    />
-                    <span className="text-sm font-medium text-foreground">
-                      {PAYMENT_METHODS[method]}
-                    </span>
-                  </label>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground mt-3">
-                Online methods are processed securely through Razorpay Checkout.
-              </p>
+
+            <div className="border-t border-border pt-4 flex justify-between items-end">
+              <span className="text-sm uppercase tracking-wider font-bold text-foreground">
+                Total
+              </span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-foreground">
+                {formattedFinalTotal}
+              </span>
             </div>
+
             <Button
               type="submit"
-              className="w-full h-14 rounded-none bg-foreground text-background hover:bg-foreground/90 uppercase tracking-widest text-xs font-bold transition-all mt-8"
               disabled={checkoutLoading}
+              className="w-full h-12 sm:h-14 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold tracking-wider text-sm transition-all shadow-md hidden lg:flex items-center justify-center"
             >
               {checkoutLoading
                 ? "Processing..."
@@ -576,7 +616,31 @@ export function CheckoutClient({
                   ? "Place Order"
                   : "Place Order & Pay"}
             </Button>
+
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>100% Encrypted & Safe Checkout</span>
+            </div>
           </div>
+        </div>
+
+        {/* MOBILE STICKY BOTTOM CTA */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border shadow-lg lg:hidden z-50 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Total Payable</p>
+            <p className="text-lg font-extrabold text-foreground">{formattedFinalTotal}</p>
+          </div>
+          <Button
+            type="submit"
+            disabled={checkoutLoading}
+            className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-md"
+          >
+            {checkoutLoading
+              ? "Processing..."
+              : paymentMethod === "COD"
+                ? `Place Order • ${formattedFinalTotal}`
+                : `Pay ${formattedFinalTotal}`}
+          </Button>
         </div>
       </form>
     </>

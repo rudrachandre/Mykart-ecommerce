@@ -13,11 +13,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.client = new Redis(url, {
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
-      retryStrategy(times) {
-        if (times > 3) {
-          return null; // Stop retrying
-        }
-        return 1000;
+      retryStrategy() {
+        return null; // Stop retrying immediately if Redis is unavailable locally
       }
     });
 

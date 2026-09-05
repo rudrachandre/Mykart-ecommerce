@@ -40,6 +40,9 @@ import { CacheModule } from '@nestjs/cache-manager';
     BullModule.forRoot({
       connection: {
         url: process.env.REDIS_URL || 'redis://localhost:6379',
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+        retryStrategy: () => null,
       },
     }),
     CacheModule.register({
