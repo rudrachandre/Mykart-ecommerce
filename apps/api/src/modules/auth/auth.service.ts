@@ -70,6 +70,9 @@ export class AuthService {
     name: string;
     avatar?: string;
   }) {
+    const normalizedEmail = googleProfile.email.toLowerCase().trim();
+    const displayName = (googleProfile.name || normalizedEmail.split('@')[0] || 'User').trim();
+
     // 1. Search by googleId first
     let user = await this.prisma.user.findUnique({
       where: { googleId: googleProfile.googleId },
@@ -77,7 +80,7 @@ export class AuthService {
 
     // 2. If not found by googleId, search by email
     if (!user) {
-      user = await this.usersService.findByEmail(googleProfile.email);
+      user = await this.usersService.findByEmail(normalizedEmail);
 
       if (user) {
         // Link existing user account: attach googleId, update avatar if missing, mark emailVerified
@@ -93,11 +96,11 @@ export class AuthService {
         // Create new user (Role: CUSTOMER, passwordHash: null)
         user = await this.prisma.user.create({
           data: {
-            name: googleProfile.name,
-            email: googleProfile.email,
+            name: displayName,
+            email: normalizedEmail,
             passwordHash: null,
             googleId: googleProfile.googleId,
-            avatar: googleProfile.avatar,
+            avatar: googleProfile.avatar || null,
             emailVerified: true,
             role: Role.CUSTOMER,
           },

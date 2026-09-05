@@ -27,14 +27,21 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
-    try {
-      await this.$executeRawUnsafe(`
-        ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleId" TEXT;
-        CREATE UNIQUE INDEX IF NOT EXISTS "User_googleId_key" ON "User"("googleId");
-        ALTER TABLE "User" ALTER COLUMN "passwordHash" DROP NOT NULL;
-      `);
-    } catch (e: any) {
-      console.warn('[PrismaService] Auto-migration warning:', e?.message || e);
+    const ddlStatements = [
+      'ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleId" TEXT;',
+      'CREATE UNIQUE INDEX IF NOT EXISTS "User_googleId_key" ON "User"("googleId");',
+      'ALTER TABLE "User" ALTER COLUMN "passwordHash" DROP NOT NULL;',
+    ];
+
+    for (const statement of ddlStatements) {
+      try {
+        await this.$executeRawUnsafe(statement);
+      } catch (e: any) {
+        console.warn(
+          `[PrismaService] Auto-migration DDL warning for [${statement}]:`,
+          e?.message || e,
+        );
+      }
     }
   }
 

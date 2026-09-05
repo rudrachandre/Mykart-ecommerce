@@ -6,12 +6,16 @@ import { AuthService } from '../auth.service';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly authService: AuthService) {
+    const clientID = process.env.GOOGLE_CLIENT_ID || 'DISABLED_MISSING_GOOGLE_CLIENT_ID';
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET || 'DISABLED_MISSING_GOOGLE_CLIENT_SECRET';
+    const callbackURL =
+      process.env.GOOGLE_CALLBACK_URL ||
+      'https://mykart-ecommerce.onrender.com/api/v1/auth/google/callback';
+
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID || 'mock_client_id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'mock_client_secret',
-      callbackURL:
-        process.env.GOOGLE_CALLBACK_URL ||
-        'https://mykart-ecommerce.onrender.com/api/v1/auth/google/callback',
+      clientID,
+      clientSecret,
+      callbackURL,
       scope: ['email', 'profile'],
     });
   }
