@@ -13,6 +13,16 @@ export async function getProductReviews(productId: string) {
   return res.json();
 }
 
+export async function getMyReviews(token: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/reviews/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to fetch user reviews');
+  const data = await res.json();
+  return data.items || [];
+}
+
 export async function submitReview(token: string, data: any) {
   const res = await fetch(`${BASE_URL}/api/v1/reviews`, {
     method: 'POST',
@@ -23,5 +33,14 @@ export async function submitReview(token: string, data: any) {
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error('Failed to submit review');
+  return res.json();
+}
+
+export async function deleteReview(token: string, id: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/reviews/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to delete review');
   return res.json();
 }

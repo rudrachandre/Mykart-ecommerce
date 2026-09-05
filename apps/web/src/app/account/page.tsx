@@ -48,14 +48,14 @@ export default async function AccountDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <Link href="/orders" className="bg-background border border-border/40 p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors group">
+        <Link href="/account/orders" className="bg-background border border-border/40 p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors group">
           <div className="w-12 h-12 bg-primary/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Package className="w-6 h-6 text-primary" />
           </div>
           <span className="text-3xl font-extrabold">{profile._count?.orders || 0}</span>
           <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-2">Orders</span>
         </Link>
-        <Link href="/wishlist" className="bg-background border border-border/40 p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors group">
+        <Link href="/account/wishlist" className="bg-background border border-border/40 p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors group">
           <div className="w-12 h-12 bg-primary/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Heart className="w-6 h-6 text-primary" />
           </div>

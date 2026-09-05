@@ -1,4 +1,4 @@
-﻿import {
+import {
   Controller,
   Get,
   Post,
@@ -20,6 +20,12 @@ import { PERMISSIONS } from '../../common/permissions/permissions';
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getUserReviews(@CurrentUser() user: { userId: string }) {
+    return this.reviewsService.getUserReviews(user.userId);
+  }
 
   @Get('product/:productId')
   async getProductReviews(

@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -56,6 +56,24 @@ export class ReviewsService {
     await this.recalculateRating(productId);
 
     return review;
+  }
+
+  async getUserReviews(userId: string) {
+    const items = await this.prisma.review.findMany({
+      where: { userId },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            images: { select: { url: true }, take: 1 },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { items };
   }
 
   async getProductReviews(productIdOrSlug: string, page = 1, limit = 10) {
