@@ -49,8 +49,6 @@ model User {
   role          Role     @default(CUSTOMER)
   avatar        String?
   emailVerified Boolean  @default(false)
-  phone         String?  @unique
-  phoneVerified Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -251,17 +249,6 @@ model WishlistItem {
   product    Product  @relation(fields: [productId], references: [id])
 
   @@index([wishlistId])
-}
-
-model OtpVerification {
-  id        String   @id @default(uuid())
-  phone     String
-  otpHash   String
-  attempts  Int      @default(0)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([phone])
 }
 
 model Order {

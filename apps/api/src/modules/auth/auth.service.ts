@@ -302,30 +302,4 @@ export class AuthService {
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
-
-  async authenticatePhoneUser(phone: string) {
-    let user = await this.prisma.user.findUnique({
-      where: { phone },
-    });
-
-    if (!user) {
-      const defaultName = `User ${phone.slice(-4)}`;
-      user = await this.prisma.user.create({
-        data: {
-          phone,
-          phoneVerified: true,
-          name: defaultName,
-          email: `${phone.replace(/[^\d]/g, '')}@phone.mykart.test`,
-          role: 'CUSTOMER',
-        },
-      });
-    } else if (!user.phoneVerified) {
-      user = await this.prisma.user.update({
-        where: { id: user.id },
-        data: { phoneVerified: true },
-      });
-    }
-
-    return this.generateAuthResponse(user.id, user.role);
-  }
 }

@@ -49,10 +49,9 @@ export class UsersService {
     });
 
     let completedFields = 0;
-    const totalFields = 5;
+    const totalFields = 4;
     if (user.name) completedFields++;
     if (user.email) completedFields++;
-    if (user.phone) completedFields++;
     if (user.avatar) completedFields++;
     if (user.addresses && user.addresses.length > 0) completedFields++;
     const profileCompletionPercentage = Math.round(

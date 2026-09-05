@@ -39,19 +39,3 @@ export class ResetPasswordDto {
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   newPassword: string;
 }
-
-export class SendOtpDto {
-  @IsString()
-  @IsNotEmpty()
-  phone: string;
-}
-
-export class VerifyOtpDto {
-  @IsString()
-  @IsNotEmpty()
-  phone: string;
-
-  @IsString()
-  @MinLength(6)
-  code: string;
-}
