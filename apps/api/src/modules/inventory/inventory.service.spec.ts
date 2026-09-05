@@ -7,6 +7,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('InventoryService', () => {
   let service: InventoryService;
@@ -20,6 +21,12 @@ describe('InventoryService', () => {
         {
           provide: PrismaService,
           useValue: prisma,
+        },
+        {
+          provide: NotificationsService,
+          useValue: {
+            createNotification: jest.fn().mockResolvedValue({}),
+          },
         },
       ],
     }).compile();
@@ -266,6 +273,18 @@ describe('InventoryService', () => {
 
   describe('bulkUpdateStock', () => {
     it('should update multiple variants in a transaction', async () => {
+      prisma.productVariant.findUnique.mockImplementation(({ where }: any) =>
+        Promise.resolve({
+          id: where.id,
+          productId: where.id === 'var-1' ? 'prod-1' : 'prod-2',
+          product: { id: where.id === 'var-1' ? 'prod-1' : 'prod-2', sellerId: 'seller-1' },
+          inventory: {
+            id: where.id === 'var-1' ? 'inv-1' : 'inv-2',
+            quantity: where.id === 'var-1' ? 50 : 30,
+            reserved: where.id === 'var-1' ? 5 : 2,
+          },
+        }),
+      );
       prisma.productVariant.findMany.mockResolvedValue([
         {
           id: 'var-1',

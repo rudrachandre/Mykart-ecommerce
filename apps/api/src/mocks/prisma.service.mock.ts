@@ -17,6 +17,10 @@ export const mockPrismaService = (): any => {
     seller: {
       findUnique: jest.fn(),
     },
+    inventoryTransaction: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+    },
     $transaction: jest.fn((callback: any) => callback(mock)),
   };
   return mock;
