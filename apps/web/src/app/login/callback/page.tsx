@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,63 +9,96 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const isNavigatingRef = useRef(false);
 
+  // Reaction 1: If AuthContext already has an authenticated user, redirect immediately!
+  useEffect(() => {
+    if (user && !isNavigatingRef.current) {
+      isNavigatingRef.current = true;
+      window.location.href = "/";
+    }
+  }, [user]);
+
+  // Reaction 2: Orchestrate session exchange gracefully without false error states
   useEffect(() => {
     let isMounted = true;
 
     async function exchangeOAuthSession() {
+      // If user is already authenticated in AuthContext, do not execute exchange
+      if (user || isNavigatingRef.current) {
+        return;
+      }
+
       let attempts = 0;
       const maxAttempts = 3;
-      let lastError: Error | null = null;
 
-      while (attempts < maxAttempts) {
+      while (attempts < maxAttempts && isMounted && !isNavigatingRef.current) {
         try {
           attempts++;
+
+          // Attempt 1+: Call refreshUser() from AuthContext so token requests are deduplicated
+          await refreshUser();
+
+          // Check if token or user is now available
+          const hasToken = !!Cookies.get("accessToken");
+          if (hasToken || user) {
+            if (!isNavigatingRef.current) {
+              isNavigatingRef.current = true;
+              window.location.href = "/";
+            }
+            return;
+          }
+
+          // Fallback: If refreshUser() didn't set token yet, try explicit POST /api/v1/auth/refresh
           const res = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           });
 
-          if (!res.ok) {
-            throw new Error(`OAuth session exchange HTTP ${res.status}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.accessToken) {
+              Cookies.set("accessToken", data.accessToken, {
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+              });
+              await refreshUser();
+              if (!isNavigatingRef.current) {
+                isNavigatingRef.current = true;
+                window.location.href = "/";
+              }
+              return;
+            }
           }
+        } catch (err) {
+          console.warn(`[GoogleCallback] Session exchange attempt ${attempts} warning:`, err);
+        }
 
-          const data = await res.json();
-          if (!data?.accessToken) {
-            throw new Error("No access token returned from session exchange");
-          }
-
-          // Save access token securely in cookie
-          Cookies.set("accessToken", data.accessToken, {
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
-          });
-
-          // Hydrate AuthContext state
-          await refreshUser();
-
-          if (isMounted) {
-            // Full page reload redirect to ensure clean context transition
-            window.location.href = "/";
-          }
-          return;
-        } catch (err: any) {
-          lastError = err;
-          console.warn(`[GoogleCallback] Attempt ${attempts} failed:`, err?.message || err);
-          if (attempts < maxAttempts) {
-            await new Promise((res) => setTimeout(res, 600));
-          }
+        // If attempt didn't succeed, wait before retrying without displaying an error state
+        if (attempts < maxAttempts && isMounted && !isNavigatingRef.current) {
+          await new Promise((res) => setTimeout(res, 600));
         }
       }
 
-      if (isMounted) {
-        console.error("[GoogleCallback] All authentication exchange attempts failed:", lastError);
+      // Final check: check if token was set asynchronously during retries
+      const finalToken = Cookies.get("accessToken");
+      if (finalToken && !isNavigatingRef.current) {
+        isNavigatingRef.current = true;
+        window.location.href = "/";
+        return;
+      }
+
+      // Only if ALL retries have definitively failed and no token/user exists
+      if (isMounted && !isNavigatingRef.current && !user && !finalToken) {
+        console.error("[GoogleCallback] All session exchange attempts failed.");
         setError("Google authentication failed. Redirecting to login...");
         setTimeout(() => {
-          router.push("/login?error=google_auth_failed");
+          if (isMounted) {
+            router.push("/login?error=google_auth_failed");
+          }
         }, 1500);
       }
     }
@@ -75,7 +108,7 @@ export default function GoogleCallbackPage() {
     return () => {
       isMounted = false;
     };
-  }, [refreshUser, router]);
+  }, [refreshUser, router, user]);
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-secondary px-4">
@@ -85,7 +118,7 @@ export default function GoogleCallbackPage() {
           Completing Google Sign-In
         </h2>
         <p className="text-xs text-muted-foreground">
-          {error || "Securing session and redirecting..."}
+          {error || "Securing your session..."}
         </p>
       </div>
     </div>
