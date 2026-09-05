@@ -20,14 +20,11 @@ export class AdminService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      const count = await this.prisma.product.count();
-      if (count < 80) {
-        console.log(`[AdminService] Catalog product count (${count}) is under target (80). Running seedCatalog()...`);
-        await this.seedCatalog();
-      }
+      console.log('[AdminService] Running seedCatalog() on startup...');
+      await this.seedCatalog();
       await this.seedHistory();
-    } catch (e) {
-      console.warn('[AdminService] Startup catalog seed check skipped/failed:', e.message);
+    } catch (e: any) {
+      console.warn('[AdminService] Startup catalog seed check skipped/failed:', e?.message || e);
     }
   }
 
@@ -2034,6 +2031,7 @@ export class AdminService implements OnModuleInit {
     "rating": 4.9,
     "count": 6700,
     "cat": "packaged-foods",
+    "brand": "amul",
     "img": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=800",
     "sku": "AMUL-BUTR-500G",
     "stock": 80
@@ -2047,6 +2045,7 @@ export class AdminService implements OnModuleInit {
     "rating": 4.6,
     "count": 2400,
     "cat": "household-essentials",
+    "brand": "surf-excel",
     "img": "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=800",
     "sku": "SURF-MATIC-2L",
     "stock": 80
@@ -2060,8 +2059,7 @@ export class AdminService implements OnModuleInit {
     "rating": 4.6,
     "count": 3012,
     "cat": "programming",
-    "brand": "penguin",
-    "img": "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=800",
+    "img": "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=800",
     "sku": "BOOK-CLEAN-CODE",
     "stock": 20
   },
@@ -2074,8 +2072,7 @@ export class AdminService implements OnModuleInit {
     "rating": 4.8,
     "count": 6723,
     "cat": "self-help",
-    "brand": "penguin",
-    "img": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800",
+    "img": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=800",
     "sku": "BOOK-ATOMIC-HABITS",
     "stock": 50
   },
@@ -2088,7 +2085,6 @@ export class AdminService implements OnModuleInit {
     "rating": 4.5,
     "count": 1876,
     "cat": "business",
-    "brand": "penguin",
     "img": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=800",
     "sku": "BOOK-START-WITH-WHY",
     "stock": 15
@@ -2102,8 +2098,7 @@ export class AdminService implements OnModuleInit {
     "rating": 4.7,
     "count": 4100,
     "cat": "fiction",
-    "brand": "penguin",
-    "img": "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800",
+    "img": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800",
     "sku": "BOOK-ALCHEMIST",
     "stock": 60
   },
@@ -2116,8 +2111,7 @@ export class AdminService implements OnModuleInit {
     "rating": 4.5,
     "count": 1200,
     "cat": "academic",
-    "brand": "penguin",
-    "img": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800",
+    "img": "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=800",
     "sku": "NCERT-PHY12",
     "stock": 200
   },
@@ -2130,7 +2124,6 @@ export class AdminService implements OnModuleInit {
     "rating": 4.8,
     "count": 1500,
     "cat": "programming",
-    "brand": "penguin",
     "img": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800",
     "sku": "BOOK-REFACTORING",
     "stock": 15

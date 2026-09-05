@@ -23,6 +23,7 @@ export class SearchController {
   }
 
   @Get('autocomplete')
+  @Get('suggestions')
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   async autocomplete(
     @Query(new ValidationPipe({ transform: true })) dto: AutocompleteQueryDto,
