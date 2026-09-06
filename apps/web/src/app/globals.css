@@ -109,6 +109,16 @@
   ::placeholder {
     color: var(--muted-foreground);
   }
+  /* Suppress default browser spinner buttons on number inputs globally while preserving full functionality */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+  }
 }
 
 @layer utilities {
@@ -116,3 +126,16 @@
     font-family: var(--font-display), sans-serif;
   }
 }
+
+/* Global root rule for number input spinner arrows across all browsers */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+

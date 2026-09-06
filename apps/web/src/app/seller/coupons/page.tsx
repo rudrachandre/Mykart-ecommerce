@@ -16,12 +16,12 @@ export default function SellerCouponsPage() {
   const [formData, setFormData] = useState({
     code: '',
     type: 'PERCENTAGE',
-    value: 0,
-    minimumOrder: 0,
-    maximumDiscount: 0,
+    value: '' as string | number,
+    minimumOrder: '' as string | number,
+    maximumDiscount: '' as string | number,
     startDate: '',
     expiryDate: '',
-    usageLimit: 0,
+    usageLimit: '' as string | number,
     active: true,
   });
 
@@ -52,7 +52,7 @@ export default function SellerCouponsPage() {
       ...prev,
       [name]:
         type === 'number'
-          ? parseFloat(value) || 0
+          ? value
           : name === 'active'
           ? (e.target as HTMLInputElement).checked
           : value,
@@ -64,12 +64,12 @@ export default function SellerCouponsPage() {
     setFormData({
       code: coupon.code,
       type: coupon.type,
-      value: parseFloat(coupon.value) || 0,
-      minimumOrder: coupon.minimumOrder ? parseFloat(coupon.minimumOrder) : 0,
-      maximumDiscount: coupon.maximumDiscount ? parseFloat(coupon.maximumDiscount) : 0,
-      startDate: new Date(coupon.startDate).toISOString().split('T')[0],
-      expiryDate: new Date(coupon.expiryDate).toISOString().split('T')[0],
-      usageLimit: coupon.usageLimit || 0,
+      value: coupon.value != null ? parseFloat(coupon.value) : '',
+      minimumOrder: coupon.minimumOrder ? parseFloat(coupon.minimumOrder) : '',
+      maximumDiscount: coupon.maximumDiscount ? parseFloat(coupon.maximumDiscount) : '',
+      startDate: coupon.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : '',
+      expiryDate: coupon.expiryDate ? new Date(coupon.expiryDate).toISOString().split('T')[0] : '',
+      usageLimit: coupon.usageLimit || '',
       active: coupon.active,
     });
     setShowForm(true);
@@ -89,12 +89,16 @@ export default function SellerCouponsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const minOrderNum = Number(formData.minimumOrder);
+      const maxDiscountNum = Number(formData.maximumDiscount);
+      const usageLimitNum = Number(formData.usageLimit);
+
       const payload: any = {
         ...formData,
-        value: Number(formData.value),
-        minimumOrder: formData.minimumOrder > 0 ? Number(formData.minimumOrder) : null,
-        maximumDiscount: formData.maximumDiscount > 0 ? Number(formData.maximumDiscount) : null,
-        usageLimit: formData.usageLimit > 0 ? Number(formData.usageLimit) : null,
+        value: Number(formData.value || 0),
+        minimumOrder: formData.minimumOrder && !isNaN(minOrderNum) && minOrderNum > 0 ? minOrderNum : null,
+        maximumDiscount: formData.maximumDiscount && !isNaN(maxDiscountNum) && maxDiscountNum > 0 ? maxDiscountNum : null,
+        usageLimit: formData.usageLimit && !isNaN(usageLimitNum) && usageLimitNum > 0 ? usageLimitNum : null,
       };
 
       if (editingId) {
@@ -110,12 +114,12 @@ export default function SellerCouponsPage() {
       setFormData({
         code: '',
         type: 'PERCENTAGE',
-        value: 0,
-        minimumOrder: 0,
-        maximumDiscount: 0,
+        value: '',
+        minimumOrder: '',
+        maximumDiscount: '',
         startDate: '',
         expiryDate: '',
-        usageLimit: 0,
+        usageLimit: '',
         active: true,
       });
       loadCoupons();

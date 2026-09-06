@@ -16,23 +16,51 @@ export default function AdminCouponsPage() {
   const [formData, setFormData] = useState({
     code: '',
     type: 'PERCENTAGE',
-    value: 0,
-    minimumOrder: 0,
-    maximumDiscount: 0,
+    value: '' as string | number,
+    minimumOrder: '' as string | number,
+    maximumDiscount: '' as string | number,
     startDate: '',
     expiryDate: '',
-    usageLimit: 0,
+    usageLimit: '' as string | number,
     active: true,
   });
 
   const [showForm, setShowForm] = useState(false);
-  const token = Cookies.get('accessToken') || '';
+  const [filterTab, setFilterTab] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+
+  const getAuthToken = () => {
+    return Cookies.get('accessToken') || (typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '');
+  };
+
+  const isCouponActiveNow = (coupon: any) => {
+    if (!coupon.active) return false;
+    const now = new Date();
+    const isDateValid = (!coupon.startDate || new Date(coupon.startDate) <= now) && (!coupon.expiryDate || new Date(coupon.expiryDate) >= now);
+    const isUsageValid = coupon.usageLimit === null || coupon.usageLimit === undefined || (coupon.usedCount || 0) < coupon.usageLimit;
+    return isDateValid && isUsageValid;
+  };
+
+  const getCouponStatus = (coupon: any) => {
+    if (!coupon.active) return { label: 'Inactive', color: 'text-red-700 bg-red-100 dark:bg-red-950/40 border-red-200' };
+    const now = new Date();
+    if (coupon.startDate && new Date(coupon.startDate) > now) {
+      return { label: 'Scheduled', color: 'text-amber-700 bg-amber-100 dark:bg-amber-950/40 border-amber-200' };
+    }
+    if (coupon.expiryDate && new Date(coupon.expiryDate) < now) {
+      return { label: 'Expired', color: 'text-zinc-600 bg-zinc-100 dark:bg-zinc-800 border-zinc-200' };
+    }
+    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+      return { label: 'Limit Reached', color: 'text-orange-700 bg-orange-100 dark:bg-orange-950/40 border-orange-200' };
+    }
+    return { label: 'Active', color: 'text-emerald-700 bg-emerald-100 dark:bg-emerald-950/40 border-emerald-200' };
+  };
 
   const loadCoupons = async () => {
+    const token = getAuthToken();
     try {
       setLoading(true);
       const data = await getCoupons(token);
-      setCoupons(data);
+      setCoupons(data || []);
     } catch (error: any) {
       toast.error('Failed to load coupons');
     } finally {
@@ -41,10 +69,8 @@ export default function AdminCouponsPage() {
   };
 
   useEffect(() => {
-    if (token) {
-      loadCoupons();
-    }
-  }, [token]);
+    loadCoupons();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
@@ -52,7 +78,7 @@ export default function AdminCouponsPage() {
       ...prev,
       [name]:
         type === 'number'
-          ? parseFloat(value) || 0
+          ? value
           : name === 'active'
           ? (e.target as HTMLInputElement).checked
           : value,
@@ -64,12 +90,12 @@ export default function AdminCouponsPage() {
     setFormData({
       code: coupon.code,
       type: coupon.type,
-      value: parseFloat(coupon.value) || 0,
-      minimumOrder: coupon.minimumOrder ? parseFloat(coupon.minimumOrder) : 0,
-      maximumDiscount: coupon.maximumDiscount ? parseFloat(coupon.maximumDiscount) : 0,
-      startDate: new Date(coupon.startDate).toISOString().split('T')[0],
-      expiryDate: new Date(coupon.expiryDate).toISOString().split('T')[0],
-      usageLimit: coupon.usageLimit || 0,
+      value: coupon.value != null ? parseFloat(coupon.value) : '',
+      minimumOrder: coupon.minimumOrder ? parseFloat(coupon.minimumOrder) : '',
+      maximumDiscount: coupon.maximumDiscount ? parseFloat(coupon.maximumDiscount) : '',
+      startDate: coupon.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : '',
+      expiryDate: coupon.expiryDate ? new Date(coupon.expiryDate).toISOString().split('T')[0] : '',
+      usageLimit: coupon.usageLimit || '',
       active: coupon.active,
     });
     setShowForm(true);
@@ -77,6 +103,7 @@ export default function AdminCouponsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this coupon?')) return;
+    const token = getAuthToken();
     try {
       await deleteCoupon(token, id);
       toast.success('Coupon deleted');
@@ -88,13 +115,18 @@ export default function AdminCouponsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const token = getAuthToken();
     try {
+      const minOrderNum = Number(formData.minimumOrder);
+      const maxDiscountNum = Number(formData.maximumDiscount);
+      const usageLimitNum = Number(formData.usageLimit);
+
       const payload: any = {
         ...formData,
-        value: Number(formData.value),
-        minimumOrder: formData.minimumOrder > 0 ? Number(formData.minimumOrder) : null,
-        maximumDiscount: formData.maximumDiscount > 0 ? Number(formData.maximumDiscount) : null,
-        usageLimit: formData.usageLimit > 0 ? Number(formData.usageLimit) : null,
+        value: Number(formData.value || 0),
+        minimumOrder: formData.minimumOrder && !isNaN(minOrderNum) && minOrderNum > 0 ? minOrderNum : null,
+        maximumDiscount: formData.maximumDiscount && !isNaN(maxDiscountNum) && maxDiscountNum > 0 ? maxDiscountNum : null,
+        usageLimit: formData.usageLimit && !isNaN(usageLimitNum) && usageLimitNum > 0 ? usageLimitNum : null,
       };
 
       if (editingId) {
@@ -110,12 +142,12 @@ export default function AdminCouponsPage() {
       setFormData({
         code: '',
         type: 'PERCENTAGE',
-        value: 0,
-        minimumOrder: 0,
-        maximumDiscount: 0,
+        value: '',
+        minimumOrder: '',
+        maximumDiscount: '',
         startDate: '',
         expiryDate: '',
-        usageLimit: 0,
+        usageLimit: '',
         active: true,
       });
       loadCoupons();
@@ -123,6 +155,12 @@ export default function AdminCouponsPage() {
       toast.error(error.message || 'Failed to save coupon');
     }
   };
+
+  const displayedCoupons = coupons.filter((c) => {
+    if (filterTab === 'ACTIVE') return isCouponActiveNow(c);
+    if (filterTab === 'INACTIVE') return !isCouponActiveNow(c);
+    return true;
+  });
 
   if (loading) {
     return (
@@ -283,10 +321,40 @@ export default function AdminCouponsPage() {
         </form>
       )}
 
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant={filterTab === 'ALL' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterTab('ALL')}
+          >
+            All ({coupons.length})
+          </Button>
+          <Button
+            variant={filterTab === 'ACTIVE' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterTab('ACTIVE')}
+          >
+            Active Now ({coupons.filter(isCouponActiveNow).length})
+          </Button>
+          <Button
+            variant={filterTab === 'INACTIVE' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterTab('INACTIVE')}
+          >
+            Inactive / Expired ({coupons.filter((c) => !isCouponActiveNow(c)).length})
+          </Button>
+        </div>
+      </div>
+
       {coupons.length === 0 ? (
         <div className="text-center py-16 border rounded-lg bg-muted/20">
           <Gift className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
           <p className="text-lg text-muted-foreground">No coupons have been created yet.</p>
+        </div>
+      ) : displayedCoupons.length === 0 ? (
+        <div className="text-center py-16 border rounded-lg bg-muted/20">
+          <p className="text-lg text-muted-foreground">No coupons match the selected tab filter.</p>
         </div>
       ) : (
         <div className="border rounded-lg bg-card overflow-hidden">
@@ -303,7 +371,7 @@ export default function AdminCouponsPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {coupons.map((coupon) => (
+              {displayedCoupons.map((coupon) => (
                 <tr key={coupon.id} className="hover:bg-muted/50">
                   <td className="px-6 py-4 font-mono font-bold">{coupon.code}</td>
                   <td className="px-6 py-4">
@@ -329,15 +397,15 @@ export default function AdminCouponsPage() {
                     <p>End: {new Date(coupon.expiryDate).toLocaleDateString()}</p>
                   </td>
                   <td className="px-6 py-4">
-                    {coupon.active ? (
-                      <span className="flex items-center gap-1 text-xs font-bold text-green-600">
-                        <Check className="w-3 h-3" /> Active
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs font-bold text-red-500">
-                        <X className="w-3 h-3" /> Inactive
-                      </span>
-                    )}
+                    {(() => {
+                      const st = getCouponStatus(coupon);
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${st.color}`}>
+                          {st.label === 'Active' ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                          {st.label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">

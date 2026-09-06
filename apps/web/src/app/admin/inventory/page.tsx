@@ -14,10 +14,10 @@ export default function AdminInventoryPage() {
   const [inventory, setInventory] = useState<any[]>([]);
   const [sellers, setSellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [threshold, setThreshold] = useState(10);
+  const [threshold, setThreshold] = useState<number | string>(10);
   const [sellerFilter, setSellerFilter] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editQuantity, setEditQuantity] = useState<number>(0);
+  const [editQuantity, setEditQuantity] = useState<number | string>('');
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function AdminInventoryPage() {
         const [sellersData, inventoryData] = await Promise.all([
           getSellers(token, 0, 100),
           getLowStockItems(token, {
-            threshold,
+            threshold: Number(threshold) || 10,
             sellerId: sellerFilter || undefined,
           }),
         ]);
@@ -50,8 +50,9 @@ export default function AdminInventoryPage() {
   }, [router, threshold, sellerFilter]);
 
   const handleUpdateQuantity = async (variantId: string) => {
-    if (editQuantity < 0) {
-      toast.error('Quantity cannot be negative');
+    const qty = Number(editQuantity);
+    if (editQuantity === '' || isNaN(qty) || qty < 0) {
+      toast.error('Quantity cannot be negative or empty');
       return;
     }
 
@@ -61,14 +62,14 @@ export default function AdminInventoryPage() {
       if (!token) return;
 
       await bulkUpdateInventory(token, [
-        { variantId, quantity: editQuantity },
+        { variantId, quantity: qty },
       ]);
 
       toast.success('Inventory updated');
       setEditingId(null);
 
       const inventoryData = await getLowStockItems(token, {
-        threshold,
+        threshold: Number(threshold) || 10,
         sellerId: sellerFilter || undefined,
       });
       setInventory(inventoryData.items || []);
@@ -88,7 +89,7 @@ export default function AdminInventoryPage() {
             type="number"
             placeholder="Threshold"
             value={threshold}
-            onChange={(e) => setThreshold(parseInt(e.target.value) || 0)}
+            onChange={(e) => setThreshold(e.target.value)}
             className="border p-2 rounded w-24 bg-background"
             min={0}
           />
@@ -144,7 +145,7 @@ export default function AdminInventoryPage() {
                         <input
                           type="number"
                           value={editQuantity}
-                          onChange={(e) => setEditQuantity(parseInt(e.target.value) || 0)}
+                          onChange={(e) => setEditQuantity(e.target.value)}
                           className="border p-1 rounded w-20 bg-background"
                           min={0}
                         />

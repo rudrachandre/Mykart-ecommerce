@@ -20,23 +20,24 @@ export function InventoryAdjustForm({
   token,
   onSuccess,
 }: InventoryAdjustFormProps) {
-  const [adjustment, setAdjustment] = useState<number>(0);
+  const [adjustment, setAdjustment] = useState<number | string>('');
   const [reason, setReason] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adjustment === 0) {
+    const adjNum = Number(adjustment);
+    if (!adjustment || isNaN(adjNum) || adjNum === 0) {
       toast.error('Adjustment quantity must be non-zero');
       return;
     }
 
     try {
       setLoading(true);
-      await adjustInventoryStock(token, variantId, adjustment, reason);
+      await adjustInventoryStock(token, variantId, adjNum, reason);
       toast.success('Stock adjusted successfully');
-      setAdjustment(0);
+      setAdjustment('');
       setReason('');
       setShow(false);
       onSuccess();
@@ -72,7 +73,7 @@ export function InventoryAdjustForm({
           <input
             type="number"
             value={adjustment}
-            onChange={(e) => setAdjustment(parseInt(e.target.value) || 0)}
+            onChange={(e) => setAdjustment(e.target.value)}
             className="w-full p-1 border rounded bg-background text-sm"
             required
           />

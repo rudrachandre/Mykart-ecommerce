@@ -26,18 +26,18 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
     name: initialData?.name || '',
     slug: initialData?.slug || '',
     description: initialData?.description || '',
-    basePrice: initialData?.basePrice || 0,
+    basePrice: initialData?.basePrice != null ? initialData.basePrice : '',
     categoryId: initialData?.categoryId || categories[0]?.id || '',
     brandId: initialData?.brandId || '',
     status: initialData?.status || 'DRAFT',
     variants: initialData?.variants
       ? initialData.variants.map((v: any) => ({
           ...v,
-          price: v.price != null ? Number(v.price) : 0,
-          inventory: { quantity: Number(v.inventory?.quantity ?? 0) },
+          price: v.price != null ? v.price : '',
+          inventory: { quantity: v.inventory?.quantity != null ? v.inventory.quantity : '' },
         }))
       : [
-      { sku: '', price: 0, inventory: { quantity: 0 } }
+      { sku: '', price: '', inventory: { quantity: '' } }
     ],
     images: initialData?.images || []
   });
@@ -46,16 +46,16 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
     const { name, value } = e.target;
     setFormData(prev => ({ 
       ...prev, 
-      [name]: name === 'basePrice' ? parseFloat(value) || 0 : value 
+      [name]: value
     }));
   };
 
   const handleVariantChange = (index: number, field: string, value: any) => {
     const newVariants = [...formData.variants];
     if (field === 'quantity') {
-      newVariants[index].inventory.quantity = parseInt(value) || 0;
+      newVariants[index].inventory.quantity = value;
     } else if (field === 'price') {
-      newVariants[index][field] = parseFloat(value) || 0;
+      newVariants[index][field] = value;
     } else {
       newVariants[index][field] = value;
     }
@@ -65,7 +65,7 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
   const addVariant = () => {
     setFormData(prev => ({
       ...prev,
-      variants: [...prev.variants, { sku: '', price: 0, inventory: { quantity: 0 } }]
+      variants: [...prev.variants, { sku: '', price: '', inventory: { quantity: '' } }]
     }));
   };
 
@@ -267,7 +267,7 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
                 <label className="text-xs font-medium">Quantity</label>
                 <input 
                   type="number" 
-                  value={variant.inventory?.quantity || 0} 
+                  value={variant.inventory?.quantity != null ? variant.inventory.quantity : ''} 
                   onChange={(e) => handleVariantChange(index, 'quantity', e.target.value)} 
                   className="w-full p-2 border rounded-md bg-background text-sm" 
                   required 
