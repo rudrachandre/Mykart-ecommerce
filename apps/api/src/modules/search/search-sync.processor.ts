@@ -3,6 +3,7 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Meilisearch } from 'meilisearch';
+import { getMeilisearchConfig } from './search.service';
 
 @Processor('search-sync-queue')
 export class SearchSyncProcessor extends WorkerHost {
@@ -11,16 +12,14 @@ export class SearchSyncProcessor extends WorkerHost {
 
   constructor(private readonly prisma: PrismaService) {
     super();
-    const host =
-      process.env.MEILISEARCH_HOST ||
-      (process.env.NODE_ENV !== 'production'
-        ? 'http://localhost:7700'
-        : undefined);
-    const apiKey = process.env.MEILISEARCH_API_KEY;
+    const config = getMeilisearchConfig();
 
-    if (host && apiKey) {
+    if (config) {
       try {
-        this.client = new Meilisearch({ host, apiKey });
+        this.client = new Meilisearch({
+          host: config.host,
+          apiKey: config.apiKey,
+        });
       } catch (error) {
         this.logger.error(
           'Failed to instantiate Meilisearch client in SearchSyncProcessor',

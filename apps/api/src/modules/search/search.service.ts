@@ -22,6 +22,30 @@ export interface PopularSearch {
   count: number;
 }
 
+export function getMeilisearchConfig(): { host: string; apiKey: string } | null {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const rawHost = process.env.MEILISEARCH_HOST?.trim();
+  const apiKey = process.env.MEILISEARCH_API_KEY?.trim();
+
+  if (!apiKey) {
+    return null;
+  }
+
+  let host = rawHost;
+  if (!host && !isProduction) {
+    host = 'http://localhost:7700';
+  }
+
+  if (
+    !host ||
+    (isProduction && (host.includes('localhost') || host.includes('127.0.0.1')))
+  ) {
+    return null;
+  }
+
+  return { host, apiKey };
+}
+
 @Injectable()
 export class SearchService implements OnModuleInit {
   private readonly logger = new Logger(SearchService.name);
@@ -32,18 +56,13 @@ export class SearchService implements OnModuleInit {
     private prisma: PrismaService,
     private readonly redisService: RedisService,
   ) {
-    const host =
-      process.env.MEILISEARCH_HOST ||
-      (process.env.NODE_ENV !== 'production'
-        ? 'http://localhost:7700'
-        : undefined);
-    const apiKey = process.env.MEILISEARCH_API_KEY;
+    const config = getMeilisearchConfig();
 
-    if (host && apiKey) {
+    if (config) {
       try {
         this.client = new Meilisearch({
-          host,
-          apiKey,
+          host: config.host,
+          apiKey: config.apiKey,
         });
       } catch (error) {
         this.logger.error(
