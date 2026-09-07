@@ -265,15 +265,25 @@ export default function AdminDashboardPage() {
           const Icon = kpi.icon;
           const CardContent = (
             <div className="bg-card border rounded-lg p-6 shadow-sm flex flex-col justify-between h-full hover:border-primary/40 transition-colors">
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-start mb-4 gap-2">
                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{kpi.title}</p>
-                <div className={`p-2 bg-muted/50 rounded ${kpi.color}`}>
+                <div className={`p-2 bg-muted/50 rounded flex-shrink-0 ${kpi.color}`}>
                   <Icon className="w-5 h-5" />
                 </div>
               </div>
-              <div>
-                <p className="text-3xl font-bold mb-2">{kpi.value}</p>
-                <p className="text-xs text-muted-foreground">{kpi.desc}</p>
+              <div className="min-w-0">
+                <p
+                  className={`font-bold tracking-tight mb-2 min-w-0 break-words tabular-nums ${
+                    String(kpi.value).length > 15
+                      ? 'text-lg sm:text-xl lg:text-lg xl:text-xl'
+                      : String(kpi.value).length > 12
+                      ? 'text-xl sm:text-2xl lg:text-xl xl:text-2xl'
+                      : 'text-2xl sm:text-3xl'
+                  }`}
+                >
+                  {kpi.value}
+                </p>
+                <p className="text-xs text-muted-foreground break-words min-w-0">{kpi.desc}</p>
               </div>
             </div>
           );

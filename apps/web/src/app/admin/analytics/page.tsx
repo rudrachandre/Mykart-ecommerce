@@ -265,22 +265,22 @@ export default function AdminAnalyticsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* KPI 1: Net Charged Revenue (Completed Payments Only) */}
         <div className="bg-card p-6 rounded-2xl border shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <div>
+          <div className="flex justify-between items-start mb-4 gap-2">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Net Charged Revenue</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
+              <h2 className="text-xl sm:text-2xl lg:text-xl xl:text-2xl font-extrabold tracking-tight text-foreground mt-1 min-w-0 break-words tabular-nums">
                 {formatCurrency(kpis?.netRevenue?.value || 0)}
               </h2>
             </div>
-            <div className="p-3 bg-emerald-500/10 text-emerald-600 rounded-xl">
+            <div className="p-3 bg-emerald-500/10 text-emerald-600 rounded-xl flex-shrink-0">
               <DollarSign className="w-6 h-6" />
             </div>
           </div>
           <div className="flex items-center justify-between pt-3 border-t text-xs">
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground truncate">
               Booked: <span className="font-semibold text-foreground">{formatCurrency(kpis?.grossBookedRevenue?.value || 0)}</span>
             </span>
-            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded flex-shrink-0">
               Paid Only
             </span>
           </div>
@@ -288,20 +288,20 @@ export default function AdminAnalyticsPage() {
 
         {/* KPI 2: Gross Merchandise Sales (Item Subtotals) */}
         <div className="bg-card p-6 rounded-2xl border shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <div>
+          <div className="flex justify-between items-start mb-4 gap-2">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Gross Merchandise Sales</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
+              <h2 className="text-xl sm:text-2xl lg:text-xl xl:text-2xl font-extrabold tracking-tight text-foreground mt-1 min-w-0 break-words tabular-nums">
                 {formatCurrency(kpis?.grossMerchandiseSales?.value || 0)}
               </h2>
             </div>
-            <div className="p-3 bg-cyan-500/10 text-cyan-600 rounded-xl">
+            <div className="p-3 bg-cyan-500/10 text-cyan-600 rounded-xl flex-shrink-0">
               <Receipt className="w-6 h-6" />
             </div>
           </div>
           <div className="flex items-center justify-between pt-3 border-t text-xs">
-            <span className="text-muted-foreground">Item Subtotals Sum</span>
-            <span className="text-[11px] font-bold text-cyan-600 bg-cyan-500/10 px-2 py-0.5 rounded">
+            <span className="text-muted-foreground truncate">Item Subtotals Sum</span>
+            <span className="text-[11px] font-bold text-cyan-600 bg-cyan-500/10 px-2 py-0.5 rounded flex-shrink-0">
               Product Rev Base
             </span>
           </div>
@@ -309,19 +309,19 @@ export default function AdminAnalyticsPage() {
 
         {/* KPI 3: Qualifying Orders */}
         <div className="bg-card p-6 rounded-2xl border shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <div>
+          <div className="flex justify-between items-start mb-4 gap-2">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Qualifying Orders</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mt-1 min-w-0 break-words tabular-nums">
                 {kpis?.orders?.value || 0}
               </h2>
             </div>
-            <div className="p-3 bg-blue-500/10 text-blue-600 rounded-xl">
+            <div className="p-3 bg-blue-500/10 text-blue-600 rounded-xl flex-shrink-0">
               <ShoppingCart className="w-6 h-6" />
             </div>
           </div>
           <div className="flex items-center justify-between pt-3 border-t text-xs">
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground truncate">
               Paid Orders: <span className="font-bold text-foreground">{kpis?.chargedOrdersCount?.value || 0} completed</span>
             </span>
             {renderBadge(kpis?.orders?.change, kpis?.orders?.text)}
@@ -330,19 +330,19 @@ export default function AdminAnalyticsPage() {
 
         {/* KPI 4: Total Units Sold & Unique Products */}
         <div className="bg-card p-6 rounded-2xl border shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <div>
+          <div className="flex justify-between items-start mb-4 gap-2">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Units Sold</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mt-1 min-w-0 break-words tabular-nums">
                 {kpis?.unitsSold?.value || 0} <span className="text-sm font-normal text-muted-foreground">units</span>
               </h2>
             </div>
-            <div className="p-3 bg-amber-500/10 text-amber-600 rounded-xl">
+            <div className="p-3 bg-amber-500/10 text-amber-600 rounded-xl flex-shrink-0">
               <ShoppingBag className="w-6 h-6" />
             </div>
           </div>
           <div className="flex items-center justify-between pt-3 border-t text-xs">
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground truncate">
               Unique Products: <span className="font-bold text-foreground">{kpis?.uniqueProductsSold?.value || 0} distinct</span>
             </span>
             {renderBadge(kpis?.unitsSold?.change, kpis?.unitsSold?.text)}
@@ -351,19 +351,19 @@ export default function AdminAnalyticsPage() {
 
         {/* KPI 5: Average Order Value (AOV) */}
         <div className="bg-card p-6 rounded-2xl border shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <div>
+          <div className="flex justify-between items-start mb-4 gap-2">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Avg Order Value (AOV)</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
+              <h2 className="text-xl sm:text-2xl lg:text-xl xl:text-2xl font-extrabold tracking-tight text-foreground mt-1 min-w-0 break-words tabular-nums">
                 {formatCurrency(kpis?.avgOrderValue?.value || 0)}
               </h2>
             </div>
-            <div className="p-3 bg-indigo-500/10 text-indigo-600 rounded-xl">
+            <div className="p-3 bg-indigo-500/10 text-indigo-600 rounded-xl flex-shrink-0">
               <CreditCard className="w-6 h-6" />
             </div>
           </div>
           <div className="flex items-center justify-between pt-3 border-t text-xs">
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground truncate">
               Booked AOV: <span className="font-medium text-foreground">{formatCurrency(kpis?.bookedAOV?.value || 0)}</span>
             </span>
             {renderBadge(kpis?.avgOrderValue?.change, kpis?.avgOrderValue?.text)}
