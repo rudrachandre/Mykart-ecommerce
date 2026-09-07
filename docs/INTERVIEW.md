@@ -7,16 +7,17 @@ This document provides technical interview Q&A breakdowns, architecture explanat
 ## 🎯 1. Elevator Pitches
 
 ### A. 30-Second Explanation
-> "MyKart is a full-stack multi-vendor e-commerce marketplace built with Next.js 16 App Router, NestJS 10, PostgreSQL, Prisma, Redis, and Meilisearch. It features dedicated portals for Customers, Sellers, and Admins across 110 catalog products. I engineered it as a clean Modular Monolith to guarantee single-database ACID transactions during checkout while maintaining enterprise security with dual JWT refresh-token rotation, RBAC, and IDOR protection."
+> "MyKart is a full-stack multi-vendor e-commerce marketplace built with Next.js 16 App Router, NestJS 10, PostgreSQL, Prisma, Redis, and Meilisearch. It features dedicated portals for Customers, Sellers, and Admins across an initial baseline catalog of 110 products. I engineered it as a clean Modular Monolith to guarantee single-database ACID transactions during checkout while maintaining enterprise security with dual JWT refresh-token rotation, RBAC, and IDOR protection."
 
 ### B. 1-Minute Explanation
-> "MyKart is an enterprise-grade multi-vendor e-commerce application designed for high performance, transactional reliability, and security. On the frontend, Next.js 16 App Router provides server-rendered product discovery and client-state synchronization. On the backend, NestJS 10 enforces a domain-bounded Modular Monolith architecture. Key technical features include sub-10ms fuzzy search via Meilisearch, Redis TTL reservation locks to prevent stock overbooking, dual-token JWT authentication using short-lived access tokens and 7-day HttpOnly refresh cookies with reuse detection, server-side IDOR ownership validation, and full Playwright E2E browser automation across desktop and mobile viewports."
+> "MyKart is an enterprise-grade multi-vendor e-commerce application designed for high performance, transactional reliability, and security. On the frontend, Next.js 16 App Router provides server-rendered product discovery and client-state synchronization. On the backend, NestJS 10 enforces a domain-bounded Modular Monolith architecture. Key technical features include sub-10ms fuzzy search via Meilisearch with a graceful PostgreSQL search fallback, Redis TTL reservation locks to prevent stock overbooking, dual-token JWT authentication using short-lived access tokens and 7-day HttpOnly refresh cookies with reuse detection, server-side IDOR ownership validation, and full Playwright E2E browser automation across desktop and mobile viewports."
 
 ### C. 3-Minute Architecture Deep Dive
 > "MyKart follows a multi-tier Modular Monolith design. 
 > At the presentation layer, Next.js 16 App Router leverages React 19 Server Components for high-speed page rendering, while React Context manages transient cart and session states. 
 > The application layer is a NestJS 10 REST API organized into isolated domain modules—Auth, Users, Products, Cart, Orders, Inventory, Seller, Admin, Analytics, Coupons, Reviews, Wishlist, and Notifications.
-> For data storage, PostgreSQL hosted on Neon serves as the primary relational source of truth managed via Prisma ORM 7. Redis handles in-memory token revocation, rate limiting, and 15-minute inventory reservation locks during checkout. Meilisearch provides typo-tolerant full-text search indexed from database change triggers.
+> For data storage, PostgreSQL hosted on Neon serves as the primary relational source of truth managed via Prisma ORM 7. Redis handles in-memory token revocation, rate limiting, and 15-minute inventory reservation locks during checkout. Meilisearch provides typo-tolerant full-text search with an automatic PostgreSQL search fallback when unconfigured.
+> Application startup completes in under 2 seconds by executing lightweight admin initialization (`ensureAdminUser()`), while heavy catalog and analytics seeding run on-demand via protected admin endpoints (`POST /api/v1/admin/seed-catalog`, `POST /api/v1/admin/seed-history`).
 > I intentionally chose a Modular Monolith over microservices because e-commerce checkouts demand single-database ACID transactional atomicity (`$transaction` in Prisma) across cart clearing, stock reservation, and order line-item generation. This eliminates inter-service network latency, serialization costs, and distributed saga complexity while keeping clear module boundaries for future microservice migration if scale requires it."
 
 ---
@@ -39,7 +40,7 @@ Prisma provides end-to-end type safety from schema definition to TypeScript quer
 Redis provides sub-millisecond in-memory caching for token revocation checks, rate limiting counters via `@nestjs/throttler`, and temporary stock reservation locks (`INVENTORY_RESERVATION_TTL_MS = 900000`) during checkout flows.
 
 ### Why Meilisearch?
-Meilisearch provides sub-10ms typo-tolerant full-text search out of the box with minimal memory footprint compared to Elasticsearch, supporting dynamic facets for category, brand, rating, price, and discount filters.
+Meilisearch provides sub-10ms typo-tolerant full-text search out of the box with minimal memory footprint compared to Elasticsearch, supporting dynamic facets for category, brand, rating, price, and discount filters, with a built-in PostgreSQL database fallback for unconfigured environments.
 
 ### Why Modular Monolith?
 E-commerce checkout is inherently transactional. Combining Cart, Inventory, and Orders in a single NestJS process with a single PostgreSQL database allows atomic `$transaction` execution, guaranteeing zero stock overselling without eventual consistency bugs.

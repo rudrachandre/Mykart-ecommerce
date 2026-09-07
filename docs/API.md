@@ -26,15 +26,16 @@ Refresh tokens are handled via HttpOnly, Secure cookies named `refreshToken`.
 
 ## 📋 3. REST API Endpoint Directory
 
-### Public Endpoints
+### Public & System Endpoints
 | HTTP Method | Route | Description | Auth Required |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/v1/health` | Health check endpoint returning API status | No |
+| `GET` / `HEAD` | `/` | Root API status ping returning `{"name":"MyKart API","status":"ok"}` | No |
+| `GET` | `/api/v1/health` | Authoritative health endpoint reporting DB (PostgreSQL) and Redis status | No |
 | `GET` | `/api/v1/products` | Query product catalog (supports search, category, brand, price filters) | No |
 | `GET` | `/api/v1/products/:slug` | Retrieve single product detail payload by slug | No |
 | `GET` | `/api/v1/categories` | Retrieve hierarchical category tree | No |
 | `GET` | `/api/v1/brands` | List authentic brand entities | No |
-| `GET` | `/api/v1/search` | Execute typo-tolerant fuzzy search via Meilisearch | No |
+| `GET` | `/api/v1/search` | Execute typo-tolerant fuzzy search via Meilisearch (with PostgreSQL fallback) | No |
 
 ### Auth Module (`/api/v1/auth`)
 | HTTP Method | Route | Description | Role / Requirements |
@@ -81,6 +82,8 @@ Refresh tokens are handled via HttpOnly, Secure cookies named `refreshToken`.
 | `PUT` | `/api/v1/admin/users/:id/role` | Update user role assignment (`CUSTOMER`, `SELLER`, `ADMIN`) | `ADMIN` |
 | `GET` | `/api/v1/admin/sellers` | List seller onboarding applications | `ADMIN` |
 | `PUT` | `/api/v1/admin/sellers/:id/verify` | Approve seller verification request | `ADMIN` |
+| `POST` | `/api/v1/admin/seed-catalog` | Trigger on-demand baseline catalog seeding | `ADMIN` |
+| `POST` | `/api/v1/admin/seed-history` | Trigger on-demand historical order analytics seeding | `ADMIN` |
 
 ---
 

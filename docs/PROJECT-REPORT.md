@@ -3,7 +3,7 @@
 ---
 
 ## 1. Abstract
-**MyKart** is a production-grade multi-vendor e-commerce marketplace built using Next.js 16 (App Router), NestJS 10, PostgreSQL (Neon), Prisma ORM 7, and Redis. The platform delivers an enterprise shopping experience for customers while offering operational management portals for sellers and system administrators. Engineered as a clean **Modular Monolith**, the system emphasizes ACID transactional consistency, sub-10ms fuzzy search via Meilisearch, dual JWT access/refresh-token rotation, role-based authorization (RBAC), and 100% responsive user interface design across desktop and mobile viewports.
+**MyKart** is a production-grade multi-vendor e-commerce marketplace built using Next.js 16 (App Router), NestJS 10, PostgreSQL (Neon), Prisma ORM 7, and Redis. The platform delivers an enterprise shopping experience for customers while offering operational management portals for sellers and system administrators. Engineered as a clean **Modular Monolith**, the system emphasizes ACID transactional consistency, sub-10ms fuzzy search via Meilisearch (with automatic PostgreSQL database fallback), dual JWT access/refresh-token rotation, role-based authorization (RBAC), fast <2s idempotent boot, and 100% responsive user interface design across desktop and mobile viewports.
 
 ---
 
@@ -16,7 +16,7 @@ Traditional e-commerce web applications often suffer from fragmented architectur
 - **Architect a High-Performance Modular Monolith**: Design a domain-bounded NestJS backend API connected via Prisma ORM to PostgreSQL.
 - **Deliver a Responsive Frontend**: Build a modern, accessible user interface in Next.js 16 App Router and Tailwind CSS.
 - **Implement Enterprise Authentication & RBAC**: Combine federated Google OAuth 2.0 and credential sign-in with short-lived JWT access tokens and HttpOnly, Secure refresh-token cookie rotation.
-- **Enable Sub-10ms Search & Discovery**: Deploy Meilisearch for typo-tolerant full-text search, autocomplete suggestions, and dynamic facet filtering.
+- **Enable Sub-10ms Search & Discovery**: Deploy Meilisearch for typo-tolerant full-text search, autocomplete suggestions, and dynamic facet filtering, backed by a seamless PostgreSQL search fallback.
 - **Build Multi-Role Operational Portals**: Establish dedicated suites for Customer Account Management, Seller Inventory Control, and Admin Marketplace Governance.
 - **Guarantee Zero Visual & Layout Regressions**: Validate 100% layout integrity across desktop (1440x900) and mobile (390x844, 412x915) screen resolutions.
 
@@ -136,9 +136,10 @@ The database schema (`prisma/schema.prisma`) models 16 relational entities:
 
 ## 12. Results & Verified Baseline
 
-- **110 Authentic Catalog Products** across **8 Parent Categories** and **46 Verified Brands**.
-- **100% Build & Test Pass Rate** across API build, Web build, Jest unit tests, and Playwright E2E suites.
-- **Production Credentials & Demo Access**: Available for Customer, Seller, and Admin roles without data modification.
+- **Initial Baseline Catalog**: 110 authentic baseline products across 8 parent categories and 46 verified brands (expandable via seller products).
+- **100% Build & Test Pass Rate**: Clean compilation across API build, Web build, Jest unit tests, and Playwright E2E suites.
+- **Production Demo Access**: Seeded demo customer credentials (`customer@mykart.test` / `Password123!`) configured for quick evaluation.
+- **Fast Startup Performance**: Boot completes in **< 2 seconds** with `ensureAdminUser()`; catalog/history seeding accessible via admin API.
 
 ---
 

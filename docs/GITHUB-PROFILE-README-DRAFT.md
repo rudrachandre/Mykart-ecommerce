@@ -25,9 +25,9 @@ Full-Stack Software Engineer specializing in high-performance web applications, 
 
 ### 🛒 [MyKart — Multi-Vendor E-Commerce Marketplace](https://github.com/rudrachandre/Mykart-ecommerce)
 > **Stack**: `Next.js 16` | `NestJS 10` | `PostgreSQL (Neon)` | `Prisma ORM` | `Redis` | `Meilisearch` | `TypeScript`
-> - Architected a production-deployed e-commerce marketplace featuring **Customer**, **Seller**, and **Admin** portals across 110 catalog items.
+> - Architected a production-deployed e-commerce marketplace featuring **Customer**, **Seller**, and **Admin** portals across an initial baseline catalog of 110 products.
 > - Implemented dual JWT refresh-token rotation with HttpOnly cookies, token reuse detection, server-side IDOR protection, and RBAC guards.
-> - Integrated Meilisearch for sub-10ms typo-tolerant full-text search with dynamic multi-facet filtering.
+> - Integrated Meilisearch for sub-10ms typo-tolerant full-text search with automatic PostgreSQL database fallback and dynamic multi-facet filtering.
 > - Applied Redis TTL locks for 15-minute stock reservations during checkout to guarantee inventory consistency.
 > - **Live Storefront**: [https://mykart-ecommerce-web.vercel.app](https://mykart-ecommerce-web.vercel.app)
 > - **API Docs**: [https://mykart-ecommerce.onrender.com/api/docs](https://mykart-ecommerce.onrender.com/api/docs)

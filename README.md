@@ -17,7 +17,9 @@
 - **Interactive Swagger OpenAPI Docs**: [https://mykart-ecommerce.onrender.com/api/docs](https://mykart-ecommerce.onrender.com/api/docs)
 - **GitHub Repository**: [https://github.com/rudrachandre/Mykart-ecommerce](https://github.com/rudrachandre/Mykart-ecommerce)
 
-> **Note on Payment Gateway**: Payment method selection (Cash on Delivery, UPI, Credit/Debit Card) uses application-level simulated payment verification flows for demo purposes without external gateway processing.
+> **Cold Start Notice**: The backend API is deployed on Render's free tier. If inactive, the service spins down and the initial request may experience a short cold start while the instance wakes up. All subsequent requests operate at normal speed. (Note: Application boot itself completes in **< 2 seconds**, as automatic database re-seeding on startup has been removed in favor of fast, idempotent boot).
+
+> **Payment Verification Notice**: Payment method selection (Cash on Delivery, UPI, Credit/Debit Card, Netbanking, Wallet) uses application-level simulated payment verification flows for demo evaluation without external gateway dependencies.
 
 ---
 
@@ -27,7 +29,7 @@
 Traditional e-commerce web applications often suffer from fragmented architectures, high search latency, poor mobile responsiveness, and vulnerable authentication flows. Microservice implementations frequently introduce complex distributed transaction failures, eventual-consistency bugs, and inter-service network overhead for core operations like checkout and inventory deduction.
 
 ### Solution
-MyKart solves these challenges by combining Next.js 16 Server Components with a domain-bounded NestJS 10 **Modular Monolith**. Single-database `$transaction` blocks in Prisma ensure strict ACID compliance across cart checkout and stock reservation. Redis handles token invalidation and 15-minute stock reservation TTL locks, while Meilisearch provides typo-tolerant full-text search indexed directly from database transactions.
+MyKart solves these challenges by combining Next.js 16 Server Components with a domain-bounded NestJS 10 **Modular Monolith**. Single-database `$transaction` blocks in Prisma ensure strict ACID compliance across cart checkout and stock reservation. Redis handles token invalidation and 15-minute stock reservation TTL locks, while Meilisearch provides typo-tolerant full-text search indexed directly from database transactions with a seamless PostgreSQL search fallback when unconfigured.
 
 ---
 
@@ -37,9 +39,11 @@ MyKart solves these challenges by combining Next.js 16 Server Components with a 
 - **Enterprise JWT Security**: Short-lived (15 min) JWT Access Tokens paired with 7-day HttpOnly, Secure, SameSite refresh token cookies featuring automatic **token-family reuse detection** and revocation.
 - **Role-Based Access Control (RBAC)**: Custom NestJS `@Roles()` metadata and `PermissionsGuard` enforcing Customer, Seller, and Admin boundaries across API routes.
 - **Insecure Direct Object Reference (IDOR) Protection**: Server-side user ownership validation on every sensitive endpoint (orders, addresses, seller inventory).
-- **Sub-10ms Full-Text Search**: Meilisearch fuzzy index integration with dynamic multi-facet filtering (category, brand, rating, dual-range price & discount sliders).
+- **Sub-10ms Full-Text Search**: Meilisearch fuzzy index integration with dynamic multi-facet filtering (category, brand, rating, dual-range price & discount sliders) and automatic PostgreSQL database search fallback.
+- **Fast Idempotent Startup**: Application boot completes in **< 2 seconds** running essential admin initialization (`ensureAdminUser()`). Heavy catalog and historical analytics seeding (`seedCatalog`, `seedHistory`) are decoupled from startup and available on-demand via protected admin endpoints (`POST /api/v1/admin/seed-catalog`, `POST /api/v1/admin/seed-history`).
+- **Platform Health Monitoring**: Lightweight root health routes (`GET /`, `HEAD /`) returning status `{"name":"MyKart API","status":"ok"}` alongside authoritative service health checks (`GET /api/v1/health`) monitoring PostgreSQL and Redis connectivity.
 - **Concurrency & Inventory TTL Locks**: Redis key TTL locks (`INVENTORY_RESERVATION_TTL_MS = 900000`) preventing double-booking during concurrent checkout flows.
-- **Automated Testing & QA Verification**: 24 Jest unit test suites and Playwright E2E automation validating 27 routes across Desktop (1440x900) and Mobile (390x844, 412x915) viewports with **0 console errors, 0 broken images, and 0 layout overflows**.
+- **Automated Testing & QA Verification**: Jest unit test suites and Playwright E2E automation validating 27 routes across Desktop (1440x900) and Mobile (390x844, 412x915) viewports with **0 console errors, 0 broken images, and 0 layout overflows**.
 
 ---
 
@@ -48,7 +52,7 @@ MyKart solves these challenges by combining Next.js 16 Server Components with a 
 ### 🛒 Customer Experience
 - **Authentication**: Email/password sign-in and federated Google OAuth 2.0 PKCE integration.
 - **Product Discovery & Search**: Typo-tolerant live search, autocomplete modal, dual-range price & discount sliders, brand selector with instant search.
-- **Cart & Checkout**: Persistent cart state, dynamic quantity controls, coupon redemption, shipping address selection, simulated checkout verification.
+- **Cart & Checkout**: Persistent cart state, dynamic quantity controls, coupon redemption, shipping address selection, simulated checkout verification (COD, UPI, Card, Netbanking, Wallet).
 - **Account Suite**: Order status timeline (`PENDING` → `PROCESSING` → `SHIPPED` → `DELIVERED`), interactive wishlist, delivery address book, notification alerts, profile management.
 
 ### 🏭 Seller Center (`/seller`)
@@ -63,9 +67,10 @@ MyKart solves these challenges by combining Next.js 16 Server Components with a 
 - **Seller Verification**: Review and approve pending seller onboarding applications.
 - **User RBAC Governance**: Role assignments (`CUSTOMER`, `SELLER`, `ADMIN`) and account status controls.
 - **Catalog Governance**: Manage global parent/sub-categories and authentic brand definitions.
+- **On-Demand Seeding**: Trigger baseline catalog and historical analytics seeding (`POST /api/v1/admin/seed-catalog`, `POST /api/v1/admin/seed-history`).
 
 ### ⚙️ Platform & Engineering
-- **Modular Backend Services**: Strict separation of concerns across 14 NestJS domain modules.
+- **Modular Backend Services**: Strict separation of concerns across domain modules.
 - **Type Safety**: End-to-end TypeScript (Strict Mode) across Next.js frontend, NestJS API, and Prisma ORM schemas.
 - **Error Handling & Observability**: Global `HttpExceptionFilter` sanitizing production tracebacks and structured audit logs.
 
@@ -80,7 +85,7 @@ MyKart solves these challenges by combining Next.js 16 Server Components with a 
 | **Database** | **PostgreSQL (Neon)** | Hosted Serverless PostgreSQL relational database |
 | **ORM** | **Prisma ORM 7** | Type-safe schema definitions, migrations, and `$transaction` query builder |
 | **Cache & Locks** | **Redis 7** | In-memory token revocation, rate limiting, and 15-min stock reservation TTL |
-| **Search Engine** | **Meilisearch** | Typo-tolerant full-text search with dynamic multi-facet filtering |
+| **Search Engine** | **Meilisearch** | Typo-tolerant search with dynamic filtering & PostgreSQL database fallback |
 | **Media CDN** | **Cloudinary CDN** | Media asset uploads, thumbnail generation, and image optimization |
 | **Notifications**| **Resend** | Transactional email delivery for order receipts and account alerts |
 | **Testing** | **Jest & Playwright** | Unit/integration testing and multi-viewport E2E browser automation |
@@ -102,7 +107,7 @@ NestJS 10 REST API Server (Backend Monolith)
 Persistence & Infrastructure Layer
  ├── PostgreSQL (Neon Serverless Database via Prisma ORM 7)
  ├── Redis (Token invalidation, rate limiting, stock reservation TTL)
- ├── Meilisearch (Typo-tolerant full-text search engine)
+ ├── Meilisearch (Typo-tolerant search engine with PostgreSQL fallback)
  └── Cloudinary CDN (Image upload & media management)
 ```
 
@@ -113,24 +118,24 @@ Persistence & Infrastructure Layer
 
 ## 📊 6. Verified Project Statistics
 
-- **Catalog Products**: `110` authentic catalog items with high-resolution imagery and ratings
+- **Initial Baseline Catalog**: `110` authentic baseline products with high-resolution imagery and ratings (dynamically expandable via seller-created products)
 - **Categories**: `8` parent categories & `46` subcategories
 - **Authentic Brands**: `46` verified brand entities (Apple, Samsung, Sony, Dell, HP, Nike, Adidas, etc.)
 - **User Portals**: `3` dedicated portals (Customer, Seller, Admin)
-- **Unit Test Suites**: `3 / 3` passed (`24 / 24` tests)
+- **Unit Test Suites**: Jest unit suites passed
 - **E2E Route Coverage**: `27` routes verified across Desktop & Mobile viewports
 
 ---
 
-## 🔑 7. Recruiter Demo Access
+## 🔑 7. Demo Access / Quick Evaluation
 
-Recruiters can explore the live deployment without creating new accounts:
+Evaluators and interviewers can explore the live storefront using the pre-configured demo customer account:
 
-| Portal | URL Path | Demo Credentials | Primary Functionality |
+| Portal | URL Path | Demo Account Credentials | Evaluation Scope |
 | :--- | :--- | :--- | :--- |
-| **Customer Portal** | `/login` | `customer@mykart.test` / `Password123!` | Browse, Wishlist, Cart, Checkout, Orders |
-| **Seller Center** | `/login` → `/seller` | `seller@mykart.test` / `Password123!` | Product management, Stock control, Fulfillment |
-| **Admin Panel** | `/login` → `/admin` | `admin@mykart.test` / `Password123!` | GMV Analytics, Seller Approvals, User RBAC |
+| **Customer Storefront** | `/login` | Email: `customer@mykart.test`<br>Password: `Password123!` | Catalog browsing, Wishlist, Cart management, Coupon redemption, Simulated Checkout, Order History & Timeline |
+
+> **Note**: Public demo access is designated for customer flow evaluation. Admin and seller portals require authenticated role permissions.
 
 ---
 

@@ -17,7 +17,7 @@ Application Modules (Auth, Products, Cart, Orders, Inventory, Seller, Admin)
 Persistence & Infrastructure Layer
  ├── PostgreSQL (Neon Serverless Database via Prisma ORM 7)
  ├── Redis (Token invalidation, rate limiting, stock reservation TTL)
- ├── Meilisearch (Typo-tolerant full-text search engine)
+ ├── Meilisearch (Typo-tolerant search engine with PostgreSQL fallback)
  └── Cloudinary CDN (Image upload & media management)
 ```
 

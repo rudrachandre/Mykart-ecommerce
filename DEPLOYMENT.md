@@ -26,12 +26,11 @@ Ensure `.env.production` is secure and NEVER committed. The `apps/api/.env.examp
 **Critical Requirements:**
 - `DATABASE_URL`: Must point to the production PostgreSQL instance.
 - `AUTH_SECRET`: Cryptographically strong random string (≥ 32 characters). The API refuses to start without it.
-- `REDIS_URL`: Must point to the production Redis instance (required for BullMQ).
-- `MEILISEARCH_HOST` and `MEILISEARCH_API_KEY`: Production credentials. Keep the private key server-side.
-- `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET`: Live-mode Razorpay credentials.
+- `REDIS_URL`: (Optional) Redis instance URL for token revocation, rate limiting, and stock reservation locks (falls back gracefully).
+- `MEILISEARCH_HOST` and `MEILISEARCH_API_KEY`: (Optional) Production Meilisearch credentials. If unconfigured, API gracefully falls back to PostgreSQL ILIKE search.
 - `NEXT_PUBLIC_API_URL`: Public base URL of the deployed API (required by the storefront at build time).
-- `CORS_ORIGIN`: Must be a comma-separated list of exact frontend domains (e.g., `https://mykart.com,https://admin.mykart.com`).
-- `COOKIE_DOMAIN`: (Optional) Use `.mykart.com` to share auth cookies between `admin.mykart.com` and `mykart.com`.
+- `CORS_ORIGIN`: Must be a comma-separated list of exact frontend domains (e.g., `https://mykart-ecommerce-web.vercel.app`).
+- `COOKIE_DOMAIN`: (Optional) Domain scope for auth cookies.
 - `COOKIE_SAME_SITE`: Set to `lax` or `strict` if on the same root domain. If cross-domain, set to `none`.
 
 ## 4. Database & Migrations
@@ -52,22 +51,24 @@ npx prisma migrate deploy
 
 Deploy the API using the provided multi-stage `Dockerfile`.
 - The `Dockerfile` compiles the TypeScript, bundles dependencies cleanly, generates Prisma clients, and runs securely without the development server.
-- Exposes port `3001` by default.
+- Exposes port `3001` (or dynamic `PORT`) by default.
 
-## 6. External Services (Redis, Meilisearch, Cloudinary, Razorpay)
+## 6. External Services (Redis, Meilisearch, Cloudinary)
 
-- **Redis (BullMQ)**: The API relies on BullMQ for asynchronous tasks (like email and search indexing). A highly available Redis instance is required.
-- **Meilisearch**: Used for product search. Product changes automatically sync to Meilisearch via BullMQ.
-- **Cloudinary**: Production image uploads must use Cloudinary. Local disk storage is ephemeral and will be wiped upon container restart.
-- **Razorpay**: Production payments require Razorpay Webhooks to be correctly configured to point to `/api/v1/payments/webhooks/razorpay`.
+- **Redis**: Provides token revocation, rate limiting, and 15-minute stock reservation TTL locks during checkout.
+- **Meilisearch**: Used for high-speed typo-tolerant product search with automatic PostgreSQL search fallback when unconfigured.
+- **Cloudinary**: Production image uploads use Cloudinary CDN.
+- **Simulated Payments**: Multi-method simulated payment checkout (COD, UPI, Card, Netbanking, Wallet) operating without third-party gateway dependencies.
 
 ## 7. Security, CORS, and HTTPS
 
-- **HTTPS**: All production traffic MUST terminate at a reverse proxy (e.g., Nginx, ALB, Cloudflare) utilizing TLS/SSL.
+- **HTTPS**: All production traffic MUST terminate at a reverse proxy (e.g., Nginx, Cloudflare, Render) utilizing TLS/SSL.
 - **CORS**: Enforced securely by the API using `CORS_ORIGIN`.
 - **Cookies**: Set `NODE_ENV=production` to ensure the `Secure` flag is enforced on HTTP-Only tokens.
 
 ## 8. Graceful Shutdown & Health Checks
 
 - The NestJS API supports graceful shutdown. Load balancers should send `SIGTERM` and allow existing HTTP requests to complete before terminating the container.
-- Use `GET /api/v1/health` for Load Balancer health probes. It validates the PostgreSQL and Redis connections before returning `200 OK`.
+- **Root Health Route**: `GET /` and `HEAD /` return status `{"name": "MyKart API", "status": "ok"}` for load balancer pings.
+- **Authoritative Service Health Check**: `GET /api/v1/health` validates PostgreSQL and Redis connections before returning `200 OK`.
+- **Fast Startup**: Boot completes in **< 2 seconds** (`ensureAdminUser()` only). Catalog/history seeding is available on-demand via `POST /api/v1/admin/seed-catalog` and `POST /api/v1/admin/seed-history`.

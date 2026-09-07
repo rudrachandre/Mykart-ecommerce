@@ -15,8 +15,8 @@ MyKart features three distinct user portals: **Customer Portal**, **Seller Cente
 ### Product Discovery & Catalog Exploration
 - **Homepage Showcase**: Hero deals carousel, trending products, top categories grid, brand bar, and flash discounts.
 - **Category Navigation**: 8 parent categories and 40+ subcategories with dynamic breadcrumbs.
-- **Brand Pages**: Explore dedicated brand landing pages for all 46 authentic brands.
-- **Live Search & Autocomplete**: Instant search suggestions modal with image thumbnails and instant navigation.
+- **Brand Pages**: Explore dedicated brand landing pages for authentic brands.
+- **Live Search & Autocomplete**: Typo-tolerant search modal powered by Meilisearch with automatic PostgreSQL database fallback.
 - **Algolia/Amazon-style Filter Sidebar**:
   - **Dual-Range Price Slider**: Interactive dual handles with Indian Rupee formatting.
   - **Dual-Range Discount Slider**: Interactive dual handles for percentage filtering.
@@ -33,7 +33,7 @@ MyKart features three distinct user portals: **Customer Portal**, **Seller Cente
 - **Checkout Process**:
   - Address selection / inline new address entry.
   - Coupon code validation & percentage/fixed discount deduction.
-  - Payment Method Selection: Cash on Delivery (COD), UPI (QR Code / VPA), Credit/Debit Card UI.
+  - Payment Method Selection: Simulated checkout verification (Cash on Delivery, UPI, Credit/Debit Card, Netbanking, Wallet).
   - Order Confirmation screen with order breakdown and itemized receipt.
 
 ### Customer Dashboard & History
@@ -76,9 +76,10 @@ MyKart features three distinct user portals: **Customer Portal**, **Seller Cente
 - **Seller Verification**: Approve or suspend seller accounts.
 - **User Management**: View user list, modify role assignments (Customer, Seller, Admin), toggle active account status.
 
-### Catalog Governance
+### Catalog Governance & Seeding
 - **Category Manager**: Create, edit, or delete parent categories and subcategories.
 - **Brand Manager**: Maintain authentic brand definitions, logos, and slugs.
+- **On-Demand Seeding**: Trigger baseline catalog and historical analytics seeding via protected admin endpoints (`POST /api/v1/admin/seed-catalog`, `POST /api/v1/admin/seed-history`).
 
 ### Audit & System Logging
 - **Global Audit Logs**: Immutable audit log of administrative actions, user permission updates, and order state overrides.
