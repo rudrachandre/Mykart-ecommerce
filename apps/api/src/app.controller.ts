@@ -70,6 +70,7 @@ export class AppController {
           OR: [
             { productId: { in: targetProductIds } },
             { variantId: { in: variantIds } },
+            { variant: { productId: { in: targetProductIds } } },
           ],
         },
       });
@@ -92,18 +93,28 @@ export class AppController {
             { productId: { in: targetProductIds } },
             { variantId: { in: variantIds } },
             { sellerId: { in: targetSellerIds } },
+            { variant: { productId: { in: targetProductIds } } },
+            { product: { sellerId: { in: targetSellerIds } } },
           ],
         },
       });
 
-      if (variantIds.length > 0) {
-        await tx.inventory.deleteMany({
-          where: { variantId: { in: variantIds } },
-        });
-      }
+      await tx.inventory.deleteMany({
+        where: {
+          OR: [
+            { variantId: { in: variantIds } },
+            { variant: { productId: { in: targetProductIds } } },
+          ],
+        },
+      });
 
       await tx.productVariant.deleteMany({
-        where: { productId: { in: targetProductIds } },
+        where: {
+          OR: [
+            { id: { in: variantIds } },
+            { productId: { in: targetProductIds } },
+          ],
+        },
       });
 
       // Delete target products
