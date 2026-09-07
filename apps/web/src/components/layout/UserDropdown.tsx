@@ -66,7 +66,7 @@ export function UserDropdown() {
               Edit Profile
             </Link>
 
-                                    {user.role === 'ADMIN' && (
+                                    {user.role?.toUpperCase() === 'ADMIN' ? (
               <Link
                 href="/admin"
                 className="px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors font-medium border-t mt-1"
@@ -74,15 +74,21 @@ export function UserDropdown() {
               >
                 Admin Dashboard
               </Link>
-            )}
-            
-            {user.role === 'SELLER' && (
+            ) : user.role?.toUpperCase() === 'SELLER' ? (
               <Link 
                 href={user.seller?.id || user.seller?.storeName ? "/seller" : "/seller/onboard"} 
                 className="px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors font-medium border-t mt-1"
                 onClick={() => setIsOpen(false)}
               >
                 Seller Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/seller/onboard"
+                className="px-4 py-2 text-sm text-primary hover:bg-primary/10 transition-colors font-medium border-t mt-1"
+                onClick={() => setIsOpen(false)}
+              >
+                Sell on MyKart
               </Link>
             )}
 

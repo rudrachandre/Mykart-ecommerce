@@ -26,9 +26,9 @@ export function Header() {
 
   const roleNav = !user
     ? { href: '/login?callbackUrl=/seller/onboard', label: 'Sell on MyKart', icon: Store }
-    : user.role === 'ADMIN'
+    : user.role?.toUpperCase() === 'ADMIN'
     ? { href: '/admin', label: 'Admin Dashboard', icon: ShieldCheck }
-    : user.role === 'SELLER'
+    : user.role?.toUpperCase() === 'SELLER'
     ? { href: user.seller?.id || user.seller?.storeName ? '/seller' : '/seller/onboard', label: 'Seller Dashboard', icon: Store }
     : { href: '/seller/onboard', label: 'Sell on MyKart', icon: Store };
 

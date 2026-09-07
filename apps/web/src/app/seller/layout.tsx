@@ -19,7 +19,7 @@ export default async function SellerLayout({ children }: { children: React.React
   } catch {
     // Ignore error
   }
-  if (userProfile?.role === 'ADMIN') {
+  if (userProfile?.role?.toUpperCase() === 'ADMIN') {
     redirect('/admin');
   }
 

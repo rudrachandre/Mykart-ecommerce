@@ -26,7 +26,7 @@ export default async function OnboardSellerPage() {
   } catch {
     // Fallback: default to customer onboarding
   }
-  if (userProfile?.role === "ADMIN") {
+  if (userProfile?.role?.toUpperCase() === "ADMIN") {
     redirect("/admin");
   }
 

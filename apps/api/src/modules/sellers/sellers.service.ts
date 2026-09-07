@@ -81,10 +81,13 @@ export class SellersService {
           logo: dto.logo,
         },
       });
-      await prisma.user.update({
-        where: { id: userId },
-        data: { role: Role.SELLER },
-      });
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user && user.role !== Role.ADMIN) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: { role: Role.SELLER },
+        });
+      }
       return seller;
     });
 
@@ -598,10 +601,13 @@ export class SellersService {
       select: { status: true },
     });
 
-    const statusDistribution = orders.reduce((acc, order) => {
-      acc[order.status] = (acc[order.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const statusDistribution = orders.reduce(
+      (acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     return {
       topProducts: topProductsWithDetails,
