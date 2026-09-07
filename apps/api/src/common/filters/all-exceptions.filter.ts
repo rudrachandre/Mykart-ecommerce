@@ -17,34 +17,47 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    const isProd = process.env.NODE_ENV === 'production';
+
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
-      exception instanceof Error
-        ? exception.message
-        : typeof exception === 'object' &&
-            exception !== null &&
-            'message' in exception
-          ? (exception as any).message
-          : 'Internal server error';
+    let message: any;
+    if (exception instanceof HttpException) {
+      const res = exception.getResponse();
+      message =
+        typeof res === 'object' && res !== null && 'message' in res
+          ? (res as any).message
+          : exception.message;
+    } else if (exception instanceof Error) {
+      message = isProd ? 'Internal server error' : exception.message;
+    } else {
+      message = 'Internal server error';
+    }
 
     const stack = exception instanceof Error ? exception.stack : undefined;
 
     this.logger.error(
-      `[${request.method}] ${request.url} Status: ${status} Error: ${message}`,
+      `[${request.method}] ${request.url} Status: ${status} Error: ${
+        exception instanceof Error ? exception.message : String(exception)
+      }`,
       stack,
     );
 
-    response.status(status).json({
+    const responseBody: Record<string, any> = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       message,
-      stack: process.env.NODE_ENV !== 'production' ? stack : message,
-      errorDetail: String(exception),
-    });
+    };
+
+    if (!isProd) {
+      responseBody.stack = stack;
+      responseBody.errorDetail = String(exception);
+    }
+
+    response.status(status).json(responseBody);
   }
 }
