@@ -57,26 +57,44 @@ export class AppController {
 
     // 3. Execute atomic transaction deletion
     const result = await this.prisma.$transaction(async (tx) => {
-      // Delete child entries referencing target products
-      await tx.cartItem.deleteMany({
-        where: { productId: { in: targetProductIds } },
-      });
-      await tx.wishlistItem.deleteMany({
-        where: { productId: { in: targetProductIds } },
-      });
-      await tx.review.deleteMany({
-        where: { productId: { in: targetProductIds } },
-      });
-      await tx.productImage.deleteMany({
-        where: { productId: { in: targetProductIds } },
-      });
-
-      // Get variant IDs for inventory cleanup
+      // Get all variant IDs for target products
       const variants = await tx.productVariant.findMany({
         where: { productId: { in: targetProductIds } },
         select: { id: true },
       });
       const variantIds = variants.map((v) => v.id);
+
+      // Delete child entries referencing target products or variants
+      await tx.cartItem.deleteMany({
+        where: {
+          OR: [
+            { productId: { in: targetProductIds } },
+            { variantId: { in: variantIds } },
+          ],
+        },
+      });
+
+      await tx.wishlistItem.deleteMany({
+        where: { productId: { in: targetProductIds } },
+      });
+
+      await tx.review.deleteMany({
+        where: { productId: { in: targetProductIds } },
+      });
+
+      await tx.productImage.deleteMany({
+        where: { productId: { in: targetProductIds } },
+      });
+
+      await tx.orderItem.deleteMany({
+        where: {
+          OR: [
+            { productId: { in: targetProductIds } },
+            { variantId: { in: variantIds } },
+            { sellerId: { in: targetSellerIds } },
+          ],
+        },
+      });
 
       if (variantIds.length > 0) {
         await tx.inventory.deleteMany({
@@ -88,7 +106,7 @@ export class AppController {
         where: { productId: { in: targetProductIds } },
       });
 
-      // Now delete target products
+      // Delete target products
       const deletedProducts = await tx.product.deleteMany({
         where: { id: { in: targetProductIds } },
       });
