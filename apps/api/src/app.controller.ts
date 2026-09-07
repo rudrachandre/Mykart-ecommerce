@@ -57,14 +57,48 @@ export class AppController {
 
     // 3. Execute atomic transaction deletion
     const result = await this.prisma.$transaction(async (tx) => {
+      // Delete child entries referencing target products
+      await tx.cartItem.deleteMany({
+        where: { productId: { in: targetProductIds } },
+      });
+      await tx.wishlistItem.deleteMany({
+        where: { productId: { in: targetProductIds } },
+      });
+      await tx.review.deleteMany({
+        where: { productId: { in: targetProductIds } },
+      });
+      await tx.productImage.deleteMany({
+        where: { productId: { in: targetProductIds } },
+      });
+
+      // Get variant IDs for inventory cleanup
+      const variants = await tx.productVariant.findMany({
+        where: { productId: { in: targetProductIds } },
+        select: { id: true },
+      });
+      const variantIds = variants.map((v) => v.id);
+
+      if (variantIds.length > 0) {
+        await tx.inventory.deleteMany({
+          where: { variantId: { in: variantIds } },
+        });
+      }
+
+      await tx.productVariant.deleteMany({
+        where: { productId: { in: targetProductIds } },
+      });
+
+      // Now delete target products
       const deletedProducts = await tx.product.deleteMany({
         where: { id: { in: targetProductIds } },
       });
 
+      // Delete target sellers
       const deletedSellers = await tx.seller.deleteMany({
         where: { id: { in: targetSellerIds } },
       });
 
+      // Delete target users
       const deletedUsers = await tx.user.deleteMany({
         where: { id: { in: userIds } },
       });
