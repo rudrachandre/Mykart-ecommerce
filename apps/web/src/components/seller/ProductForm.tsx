@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Cookies from 'js-cookie';
-import { createProduct, updateProduct } from '@/lib/api/sellers';
+import { toast } from 'sonner';
+import { createProduct, updateProduct, uploadProductImage } from '@/lib/api/sellers';
 import { ImageUploader } from './ImageUploader';
 
 interface ProductFormProps {
@@ -84,6 +85,15 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
       const token = Cookies.get('accessToken');
       if (!token) throw new Error('Not authenticated');
 
+      const stagedFiles = formData.images.filter((img: any) => img.file && img.file instanceof File);
+      const permanentImages = formData.images
+        .filter((img: any) => !img.file && img.url && !img.url.startsWith('blob:') && !img.url.startsWith('data:'))
+        .map((img: any, i: number) => ({
+          url: img.url,
+          alt: img.alt,
+          sortOrder: img.sortOrder ?? i,
+        }));
+
       const payload: any = { ...formData };
       // Decimal-backed fields round-trip as strings from list endpoints; never
       // echo them back raw or @IsNumber() DTO validation rejects the update.
@@ -98,11 +108,8 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
         price: Number(v.price ?? 0),
         inventory: { quantity: Number(v.inventory?.quantity ?? 0) },
       }));
-      payload.images = formData.images.map((img: any, i: number) => ({
-        url: img.url,
-        alt: img.alt,
-        sortOrder: img.sortOrder ?? i,
-      }));
+      payload.images = permanentImages;
+
       // Optional UUID fields must be omitted - not sent as "" - because
       // class-validator @IsOptional() still rejects empty strings against
       // @IsUUID(), which made no-brand submissions fail with 400.
@@ -112,12 +119,32 @@ export function ProductForm({ initialData, categories, brands, adminMode = false
         payload.sellerId = sellerId;
       }
 
+      let createdProduct: any = null;
+
       if (initialData) {
         // Edit
         await updateProduct(token, initialData.id, payload);
       } else {
         // Create
-        await createProduct(token, payload);
+        createdProduct = await createProduct(token, payload);
+      }
+
+      // If creating a new product and there are staged File objects, upload them via the existing image endpoint
+      if (createdProduct?.id && stagedFiles.length > 0) {
+        let uploadErrors = 0;
+        for (const item of stagedFiles) {
+          try {
+            await uploadProductImage(token, createdProduct.id, item.file);
+          } catch (err: any) {
+            uploadErrors++;
+            console.error(`Failed to upload image ${item.file.name}:`, err);
+          }
+        }
+        if (uploadErrors > 0) {
+          toast.error(`Product created, but ${uploadErrors} image(s) failed to upload.`);
+        } else {
+          toast.success('Product and images uploaded successfully');
+        }
       }
       
       if (adminMode && sellerId) {

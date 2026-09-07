@@ -70,7 +70,30 @@ export async function createProduct(token: string, data: any) {
     },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create product");
+  if (!res.ok) {
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || "Failed to create product");
+  }
+  return res.json();
+}
+
+export async function uploadProductImage(token: string, productId: string, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${BASE_URL}/api/v1/products/${productId}/images`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.message || "Failed to upload product image");
+  }
+
   return res.json();
 }
 

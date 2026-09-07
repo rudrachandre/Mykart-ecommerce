@@ -4,9 +4,18 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
+export interface ProductImageItem {
+  id?: string;
+  url: string;
+  alt?: string;
+  sortOrder?: number;
+  publicId?: string;
+  file?: File;
+}
+
 interface ImageUploaderProps {
-  images: Array<{ id?: string; url: string; alt?: string; sortOrder?: number; publicId?: string }>;
-  onChange: (images: Array<{ id?: string; url: string; alt?: string; sortOrder?: number; publicId?: string }>) => void;
+  images: ProductImageItem[];
+  onChange: (images: ProductImageItem[]) => void;
   token: string;
   productId?: string;
   disabled?: boolean;
@@ -18,27 +27,33 @@ export function ImageUploader({ images, onChange, token, productId, disabled }: 
 
   const uploadFile = useCallback(
     async (file: File) => {
-      if (!productId) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result as string;
-          onChange([
-            ...images,
-            {
-              url: dataUrl,
-              alt: '',
-              sortOrder: images.length,
-            },
-          ]);
-          toast.success('Image staged for product');
-        };
-        reader.onerror = () => {
-          toast.error('Failed to read image file');
-        };
-        reader.readAsDataURL(file);
+      // Validate file size and type
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image file size must be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error('Only image files (PNG, JPG, GIF, WebP) are allowed');
         return;
       }
 
+      if (!productId) {
+        // New Product Mode: Store the actual File object and generate a temporary browser object URL for preview
+        const objectUrl = URL.createObjectURL(file);
+        onChange([
+          ...images,
+          {
+            url: objectUrl,
+            alt: '',
+            sortOrder: images.length,
+            file,
+          },
+        ]);
+        toast.success('Image added to product preview');
+        return;
+      }
+
+      // Edit Mode (productId exists): Upload directly via existing API endpoint
       setUploading(true);
       try {
         const formData = new FormData();
@@ -95,6 +110,10 @@ export function ImageUploader({ images, onChange, token, productId, disabled }: 
   };
 
   const handleRemove = (index: number) => {
+    const target = images[index];
+    if (target?.url && target.url.startsWith('blob:')) {
+      URL.revokeObjectURL(target.url);
+    }
     const newImages = images.filter((_, i) => i !== index);
     newImages.forEach((img, i) => {
       img.sortOrder = i;
