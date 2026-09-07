@@ -190,8 +190,8 @@ export function CheckoutClient({
 
   const total = Math.max(0, subtotal - discountAmount);
   const deliveryFee = calculateShippingFee(subtotal);
-  const tax = Math.round((total) * 0.18 * 100) / 100;
-  const finalTotal = total + deliveryFee + tax;
+  const tax = Math.round(((total * 0.18) / 1.18) * 100) / 100;
+  const finalTotal = total + deliveryFee;
 
   const formattedFinalTotal = new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -585,7 +585,7 @@ export function CheckoutClient({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>GST Tax (18%)</span>
+                <span>Incl. GST (18%)</span>
                 <span className="text-foreground font-semibold">
                   {new Intl.NumberFormat("en-IN", {
                     style: "currency",

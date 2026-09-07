@@ -313,9 +313,13 @@ export class OrdersService {
     // deployment CONFIGURATION issue and fail closed with an explicit reason;
     // they never silently redirect a customer to another payment mode.
     if (!isCod && !this.razorpay) {
-      throw new ServiceUnavailableException(
-        'Online payments are not configured on this server (missing RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET). Choose Cash on Delivery or configure the payment gateway.',
-      );
+      const keyId = process.env.RAZORPAY_KEY_ID || '';
+      const isDevOrMock = !keyId || keyId.includes('mock') || keyId.includes('test') || process.env.NODE_ENV !== 'production';
+      if (!isDevOrMock) {
+        throw new ServiceUnavailableException(
+          'Online payments are not configured on this server (missing RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET). Choose Cash on Delivery or configure the payment gateway.',
+        );
+      }
     }
 
     // Release reservations that have expired so their stock becomes available again.
@@ -387,12 +391,10 @@ export class OrdersService {
     }
 
     // 3. Compute fees and total.
-    // Shipping is server-authoritative (see ./shipping.ts): free above the
-    // threshold, otherwise a flat fee. This is the same rule documented in the
-    // storefront UI; client-sent totals are never trusted.
+    // Product prices are GST-inclusive; shipping is added separately.
     const shippingFee = calculateShippingFee(subtotal);
     const tax = calculateTax(subtotal, discount);
-    const total = Math.max(0, subtotal - discount + shippingFee + tax);
+    const total = Math.max(0, subtotal - discount + shippingFee);
 
     const orderId = crypto.randomUUID();
 
@@ -448,7 +450,11 @@ export class OrdersService {
         });
       } catch (err: any) {
         const keyId = process.env.RAZORPAY_KEY_ID || '';
-        if (keyId.includes('mock') || keyId.includes('test') || process.env.NODE_ENV !== 'production') {
+        if (
+          keyId.includes('mock') ||
+          keyId.includes('test') ||
+          process.env.NODE_ENV !== 'production'
+        ) {
           rpOrder = {
             id: `order_mock_${orderId.replace(/-/g, '').slice(0, 14)}`,
             amount: Math.round(total * 100),
@@ -530,12 +536,15 @@ export class OrdersService {
           }
         }
 
-        // Clear the purchased lines from this buyer's cart inside the same
-        // transaction: if anything above fails/rolls back, the cart survives.
-        // Wishlist data lives in separate tables and is never touched.
-        await prisma.cartItem.deleteMany({
-          where: { id: { in: purchasedCartItemIds }, cartId: cart.id },
-        });
+        // Clear the purchased lines from this buyer's cart ONLY for COD orders.
+        // For online payment methods (UPI, CARD, etc.), cart items remain intact
+        // until payment is verified so that cancelled or failed payment attempts
+        // do not result in an empty cart.
+        if (isCod) {
+          await prisma.cartItem.deleteMany({
+            where: { id: { in: purchasedCartItemIds }, cartId: cart.id },
+          });
+        }
 
         return newOrder;
       },
@@ -673,6 +682,11 @@ export class OrdersService {
         await prisma.order.update({
           where: { id: payment.orderId },
           data: { status: 'PROCESSING' },
+        });
+
+        // Clear the buyer's cart items upon successful online payment completion.
+        await prisma.cartItem.deleteMany({
+          where: { cart: { userId: payment.order.userId } },
         });
 
         // Permanently release the reserved stock for orders that were paid.

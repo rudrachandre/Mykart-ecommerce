@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, Truck, Sparkles, HelpCircle, Store } from 'lucide-react';
+import { Heart, Truck, Sparkles, HelpCircle, Store, ShieldCheck } from 'lucide-react';
 import { SearchBar } from '../search/SearchBar';
 import { NotificationDropdown } from './NotificationDropdown';
 import { UserDropdown } from './UserDropdown';
@@ -24,11 +24,15 @@ export function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const sellerHref = !user
-    ? '/login?callbackUrl=/seller/onboard'
-    : user.role === 'SELLER' && (user.seller?.id || user.seller?.storeName)
-    ? '/seller'
-    : '/seller/onboard';
+  const roleNav = !user
+    ? { href: '/login?callbackUrl=/seller/onboard', label: 'Sell on MyKart', icon: Store }
+    : user.role === 'ADMIN'
+    ? { href: '/admin', label: 'Admin Dashboard', icon: ShieldCheck }
+    : user.role === 'SELLER'
+    ? { href: user.seller?.id || user.seller?.storeName ? '/seller' : '/seller/onboard', label: 'Seller Dashboard', icon: Store }
+    : { href: '/seller/onboard', label: 'Sell on MyKart', icon: Store };
+
+  const RoleIcon = roleNav.icon;
 
   return (
     <header
@@ -54,8 +58,8 @@ export function Header() {
             <Link href="/products" className="hover:text-primary transition-colors flex items-center gap-1 hidden sm:flex">
               <HelpCircle className="w-3.5 h-3.5" /> Help & Support
             </Link>
-            <Link href={sellerHref} className="hover:text-primary transition-colors flex items-center gap-1 font-semibold text-primary">
-              <Store className="w-3.5 h-3.5" /> Sell on MyKart
+            <Link href={roleNav.href} className="hover:text-primary transition-colors flex items-center gap-1 font-semibold text-primary">
+              <RoleIcon className="w-3.5 h-3.5" /> {roleNav.label}
             </Link>
           </div>
         </div>

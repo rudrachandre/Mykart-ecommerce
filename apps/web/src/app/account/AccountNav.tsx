@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Heart, Star, MapPin, Bell, User, ShieldCheck } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { LayoutDashboard, Package, Heart, Star, MapPin, Bell, User, ShieldCheck, Store } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +27,18 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AccountNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const navItems = [...NAV_ITEMS];
+  if (user?.role === 'ADMIN') {
+    navItems.unshift({ label: 'Admin Dashboard', href: '/admin', icon: ShieldCheck });
+  } else if (user?.role === 'SELLER') {
+    navItems.unshift({
+      label: 'Seller Dashboard',
+      href: user.seller?.id || user.seller?.storeName ? '/seller' : '/seller/onboard',
+      icon: Store,
+    });
+  }
 
   const isLinkActive = (item: NavItem) => {
     if (item.exact) {
@@ -39,7 +52,7 @@ export function AccountNav() {
       {/* Mobile Horizontal Navigation Tab Bar */}
       <div className="md:hidden w-full overflow-x-auto no-scrollbar border-b border-border/40 pb-2 mb-6">
         <div className="flex items-center gap-2 min-w-max px-1">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const active = isLinkActive(item);
             const Icon = item.icon;
             return (
@@ -66,7 +79,7 @@ export function AccountNav() {
         <div className="sticky top-24">
           <h2 className="text-xl font-extrabold mb-6 tracking-tight">My Account</h2>
           <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const active = isLinkActive(item);
               const Icon = item.icon;
               return (
