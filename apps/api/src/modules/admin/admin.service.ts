@@ -27,12 +27,9 @@ export class AdminService implements OnModuleInit {
   async onModuleInit() {
     try {
       await this.ensureAdminUser();
-      console.log('[AdminService] Running seedCatalog() on startup...');
-      await this.seedCatalog();
-      await this.seedHistory();
     } catch (e: any) {
       console.warn(
-        '[AdminService] Startup catalog seed check skipped/failed:',
+        '[AdminService] Startup admin user check skipped/failed:',
         e?.message || e,
       );
     }

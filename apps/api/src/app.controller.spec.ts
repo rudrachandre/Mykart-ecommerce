@@ -13,6 +13,12 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
+    it('should return root info', () => {
+      const result = appController.getRoot();
+      expect(result.name).toBe('MyKart API');
+      expect(result.status).toBe('ok');
+    });
+
     it('should return health status', () => {
       const result = appController.getHealth();
       expect(result.status).toBe('ok');

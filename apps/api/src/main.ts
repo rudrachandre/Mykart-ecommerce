@@ -23,8 +23,8 @@ async function bootstrap() {
   // (the real client IP set by Cloudflare) so throttling is per-user.
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
-  // Global prefix for all API routes
-  app.setGlobalPrefix('api/v1');
+  // Global prefix for all API routes (excluding root '/' for health checks)
+  app.setGlobalPrefix('api/v1', { exclude: ['/'] });
 
   // Security Headers
   app.use(helmet());
