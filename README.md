@@ -133,7 +133,7 @@ Evaluators and interviewers can explore the live storefront using the pre-config
 
 | Portal | URL Path | Demo Account Credentials | Evaluation Scope |
 | :--- | :--- | :--- | :--- |
-| **Customer Storefront** | `/login` | Email: `customer@mykart.test`<br>Password: `Password123!` | Catalog browsing, Wishlist, Cart management, Coupon redemption, Simulated Checkout, Order History & Timeline |
+| **Customer Storefront** | `/login` | Email: `customer@mykart.test`<br>Password: `MyKart@123` | Catalog browsing, Wishlist, Cart management, Coupon redemption, Simulated Checkout, Order History & Timeline |
 
 > **Note**: Public demo access is designated for customer flow evaluation. Admin and seller portals require authenticated role permissions.
 

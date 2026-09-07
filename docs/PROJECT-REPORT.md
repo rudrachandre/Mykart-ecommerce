@@ -138,7 +138,7 @@ The database schema (`prisma/schema.prisma`) models 16 relational entities:
 
 - **Initial Baseline Catalog**: 110 authentic baseline products across 8 parent categories and 46 verified brands (expandable via seller products).
 - **100% Build & Test Pass Rate**: Clean compilation across API build, Web build, Jest unit tests, and Playwright E2E suites.
-- **Production Demo Access**: Seeded demo customer credentials (`customer@mykart.test` / `Password123!`) configured for quick evaluation.
+- **Production Demo Access**: Seeded demo customer credentials (`customer@mykart.test` / `MyKart@123`) configured for quick evaluation.
 - **Fast Startup Performance**: Boot completes in **< 2 seconds** with `ensureAdminUser()`; catalog/history seeding accessible via admin API.
 
 ---
