@@ -15,15 +15,29 @@ export class CloudinaryService {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim().replace(/^["']|["']$/g, '');
     const apiKey = process.env.CLOUDINARY_API_KEY?.trim().replace(/^["']|["']$/g, '');
     const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim().replace(/^["']|["']$/g, '');
+    const cloudinaryUrl = process.env.CLOUDINARY_URL?.trim().replace(/^["']|["']$/g, '');
 
-    if (cloudName && apiKey && apiSecret) {
-      cloudinary.config({
-        cloud_name: cloudName,
-        api_key: apiKey,
-        api_secret: apiSecret,
-      });
+    if ((cloudName && apiKey && apiSecret) || cloudinaryUrl) {
+      if (cloudinaryUrl) {
+        cloudinary.config({ cloudinary_url: cloudinaryUrl });
+      } else {
+        cloudinary.config({
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret,
+        });
+      }
       this.configured = true;
       return true;
+    }
+
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('[CloudinaryService] Cloudinary configuration missing on server:', {
+        CLOUDINARY_CLOUD_NAME: Boolean(cloudName),
+        CLOUDINARY_API_KEY: Boolean(apiKey),
+        CLOUDINARY_API_SECRET: Boolean(apiSecret),
+        CLOUDINARY_URL: Boolean(cloudinaryUrl),
+      });
     }
     return false;
   }
