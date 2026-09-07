@@ -25,33 +25,59 @@ export interface PopularSearch {
 @Injectable()
 export class SearchService implements OnModuleInit {
   private readonly logger = new Logger(SearchService.name);
-  private client: Meilisearch;
+  private client: Meilisearch | null = null;
   private indexReady = false;
 
   constructor(
     private prisma: PrismaService,
     private readonly redisService: RedisService,
   ) {
+    const host =
+      process.env.MEILISEARCH_HOST ||
+      (process.env.NODE_ENV !== 'production'
+        ? 'http://localhost:7700'
+        : undefined);
     const apiKey = process.env.MEILISEARCH_API_KEY;
-    if (!apiKey) {
-      throw new Error('MEILISEARCH_API_KEY is required');
+
+    if (host && apiKey) {
+      try {
+        this.client = new Meilisearch({
+          host,
+          apiKey,
+        });
+      } catch (error) {
+        this.logger.error(
+          'Failed to instantiate Meilisearch client, using PostgreSQL fallback',
+          error,
+        );
+        this.client = null;
+      }
+    } else {
+      this.logger.log(
+        'Meilisearch host or API key not configured. Using PostgreSQL search fallback.',
+      );
     }
-    this.client = new Meilisearch({
-      host: process.env.MEILISEARCH_HOST || 'http://localhost:7700',
-      apiKey,
-    });
   }
 
   async onModuleInit() {
+    if (!this.client) {
+      this.indexReady = false;
+      return;
+    }
     try {
       await this.setupIndex();
       this.indexReady = true;
     } catch (error) {
-      this.logger.error('Failed to setup Meilisearch index', error);
+      this.indexReady = false;
+      this.logger.warn(
+        'Failed to setup Meilisearch index on startup. Using PostgreSQL search fallback.',
+        error,
+      );
     }
   }
 
   private async setupIndex() {
+    if (!this.client) return;
     const index = this.client.index('products');
 
     await index.updateSearchableAttributes([
@@ -137,7 +163,7 @@ export class SearchService implements OnModuleInit {
       await this.recordSearch(q);
     }
 
-    if (!this.indexReady) {
+    if (!this.client || !this.indexReady) {
       return this.fallbackSearch({
         q,
         category,
@@ -375,50 +401,21 @@ export class SearchService implements OnModuleInit {
 
     let products: any[] = [];
 
-    try {
-      const result = await this.client.index('products').search(query, {
-        limit: 5,
-        attributesToRetrieve: ['id', 'name', 'slug', 'basePrice', 'images'],
-      });
-      products = result.hits;
-    } catch (error) {
-      this.logger.warn(
-        `Meilisearch autocomplete unavailable, executing database search fallback for "${query}"`,
-      );
+    if (this.client && this.indexReady) {
       try {
-        const rawProducts = await this.prisma.product.findMany({
-          where: {
-            OR: [
-              { name: { contains: query, mode: 'insensitive' } },
-              { description: { contains: query, mode: 'insensitive' } },
-            ],
-            status: 'ACTIVE',
-          },
-          take: 5,
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            basePrice: true,
-            salePrice: true,
-            images: {
-              take: 1,
-              select: { url: true },
-            },
-          },
+        const result = await this.client.index('products').search(query, {
+          limit: 5,
+          attributesToRetrieve: ['id', 'name', 'slug', 'basePrice', 'images'],
         });
-        products = rawProducts.map((p) => ({
-          id: p.id,
-          name: p.name,
-          slug: p.slug,
-          basePrice: Number(p.basePrice),
-          salePrice: p.salePrice ? Number(p.salePrice) : null,
-          images: p.images.map((img) => img.url),
-        }));
-      } catch (dbErr) {
-        this.logger.error('Database autocomplete fallback error', dbErr);
-        products = [];
+        products = result.hits;
+      } catch (error) {
+        this.logger.warn(
+          `Meilisearch autocomplete unavailable, executing database search fallback for "${query}"`,
+        );
+        products = await this.fallbackAutocompleteProducts(query);
       }
+    } else {
+      products = await this.fallbackAutocompleteProducts(query);
     }
 
     const [categories, brands] = await Promise.all([
@@ -431,6 +428,43 @@ export class SearchService implements OnModuleInit {
       categories,
       brands,
     };
+  }
+
+  private async fallbackAutocompleteProducts(query: string) {
+    try {
+      const rawProducts = await this.prisma.product.findMany({
+        where: {
+          OR: [
+            { name: { contains: query, mode: 'insensitive' } },
+            { description: { contains: query, mode: 'insensitive' } },
+          ],
+          status: 'ACTIVE',
+        },
+        take: 5,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          basePrice: true,
+          salePrice: true,
+          images: {
+            take: 1,
+            select: { url: true },
+          },
+        },
+      });
+      return rawProducts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        basePrice: Number(p.basePrice),
+        salePrice: p.salePrice ? Number(p.salePrice) : null,
+        images: p.images.map((img) => img.url),
+      }));
+    } catch (dbErr) {
+      this.logger.error('Database autocomplete fallback error', dbErr);
+      return [];
+    }
   }
 
   /**

@@ -7,18 +7,32 @@ import { Meilisearch } from 'meilisearch';
 @Processor('search-sync-queue')
 export class SearchSyncProcessor extends WorkerHost {
   private readonly logger = new Logger(SearchSyncProcessor.name);
-  private client: Meilisearch;
+  private client: Meilisearch | null = null;
 
   constructor(private readonly prisma: PrismaService) {
     super();
+    const host =
+      process.env.MEILISEARCH_HOST ||
+      (process.env.NODE_ENV !== 'production'
+        ? 'http://localhost:7700'
+        : undefined);
     const apiKey = process.env.MEILISEARCH_API_KEY;
-    if (!apiKey) {
-      throw new Error('MEILISEARCH_API_KEY is required');
+
+    if (host && apiKey) {
+      try {
+        this.client = new Meilisearch({ host, apiKey });
+      } catch (error) {
+        this.logger.error(
+          'Failed to instantiate Meilisearch client in SearchSyncProcessor',
+          error,
+        );
+        this.client = null;
+      }
+    } else {
+      this.logger.log(
+        'Meilisearch host or API key not configured in SearchSyncProcessor. Sync tasks will be skipped.',
+      );
     }
-    this.client = new Meilisearch({
-      host: process.env.MEILISEARCH_HOST || 'http://localhost:7700',
-      apiKey,
-    });
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
@@ -47,6 +61,12 @@ export class SearchSyncProcessor extends WorkerHost {
   }
 
   private async handleUpsertProduct(productId: string) {
+    if (!this.client) {
+      this.logger.debug(
+        `Skipping Meilisearch sync for product ${productId}: Meilisearch not configured`,
+      );
+      return;
+    }
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
       include: {
@@ -101,6 +121,12 @@ export class SearchSyncProcessor extends WorkerHost {
   }
 
   private async handleDeleteProduct(productId: string) {
+    if (!this.client) {
+      this.logger.debug(
+        `Skipping Meilisearch delete for product ${productId}: Meilisearch not configured`,
+      );
+      return;
+    }
     await this.client.index('products').deleteDocument(productId);
     this.logger.log(`Successfully deleted product ${productId} from index`);
   }
