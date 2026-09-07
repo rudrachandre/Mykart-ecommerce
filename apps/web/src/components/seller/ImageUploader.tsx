@@ -19,7 +19,23 @@ export function ImageUploader({ images, onChange, token, productId, disabled }: 
   const uploadFile = useCallback(
     async (file: File) => {
       if (!productId) {
-        toast.error('Product ID is required for upload');
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          onChange([
+            ...images,
+            {
+              url: dataUrl,
+              alt: '',
+              sortOrder: images.length,
+            },
+          ]);
+          toast.success('Image staged for product');
+        };
+        reader.onerror = () => {
+          toast.error('Failed to read image file');
+        };
+        reader.readAsDataURL(file);
         return;
       }
 

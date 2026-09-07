@@ -78,7 +78,8 @@ function RegisterForm() {
       }
 
       Cookies.set("accessToken", data.accessToken, {
-        sameSite: "strict",
+        path: "/",
+        sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
       });
       await refreshUser();

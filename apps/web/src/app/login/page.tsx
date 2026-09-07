@@ -83,6 +83,7 @@ function LoginForm() {
       }
 
       Cookies.set("accessToken", data.accessToken, {
+        path: "/",
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
       });

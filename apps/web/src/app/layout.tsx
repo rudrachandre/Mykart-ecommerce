@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/marketing/footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { PreventNumberScroll } from "@/components/ui/PreventNumberScroll";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${outfit.variable} ${geist.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background">
+        <PreventNumberScroll />
         <AuthProvider>
           <CartProvider>
             <Header />

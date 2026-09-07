@@ -23,6 +23,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 let inProgressRefreshPromise: Promise<string | null> | null = null;
+let inProgressFetchUserPromise: Promise<User | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
   if (inProgressRefreshPromise) {
@@ -40,13 +41,14 @@ async function refreshAccessToken(): Promise<string | null> {
         const data = await response.json();
         if (data?.accessToken) {
           Cookies.set('accessToken', data.accessToken, {
-            sameSite: 'strict',
+            path: '/',
+            sameSite: 'lax',
             secure: process.env.NODE_ENV === 'production',
           });
           return data.accessToken;
         }
       }
-      Cookies.remove('accessToken');
+      Cookies.remove('accessToken', { path: '/' });
       return null;
     } catch {
       return null;
@@ -63,36 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const fetchUser = async () => {
+  const fetchUserInternal = async (): Promise<User | null> => {
     let token: string | null | undefined = Cookies.get('accessToken');
 
     if (!token && typeof window !== 'undefined') {
       token = localStorage.getItem('token') || undefined;
-    }
-
-    let jwtUser: User | null = null;
-    if (token) {
-      try {
-        const parts = token.split('.');
-        if (parts.length === 3) {
-          let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-          while (base64.length % 4 !== 0) {
-            base64 += '=';
-          }
-          const payload = JSON.parse(atob(base64));
-          if (payload.role) {
-            jwtUser = {
-              id: payload.sub,
-              email: payload.email || '',
-              role: payload.role,
-            };
-            setUser(jwtUser);
-            setLoading(false);
-          }
-        }
-      } catch {
-        // Ignore parse error
-      }
     }
 
     if (!token) {
@@ -100,9 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
+      return null;
     }
 
     try {
@@ -116,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.status === 401) {
         const refreshedToken = await refreshAccessToken();
         if (refreshedToken) {
+          token = refreshedToken;
           response = await fetch(`${apiUrl}/api/v1/users/me`, {
             headers: {
               'Authorization': `Bearer ${refreshedToken}`
@@ -126,40 +102,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data);
 
-        // Merge guest wishlist
-        const guestWishlistRaw = localStorage.getItem('guest_wishlist');
-        if (guestWishlistRaw) {
-          try {
-            const productIds = JSON.parse(guestWishlistRaw);
-            if (Array.isArray(productIds) && productIds.length > 0) {
-              await fetch(`${apiUrl}/api/v1/wishlist/merge`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ productIds }),
-              });
+        // Merge guest wishlist if present
+        if (typeof window !== 'undefined') {
+          const guestWishlistRaw = localStorage.getItem('guest_wishlist');
+          if (guestWishlistRaw) {
+            try {
+              const productIds = JSON.parse(guestWishlistRaw);
+              if (Array.isArray(productIds) && productIds.length > 0) {
+                await fetch(`${apiUrl}/api/v1/wishlist/merge`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({ productIds }),
+                });
+              }
+            } catch {
+            } finally {
+              localStorage.removeItem('guest_wishlist');
             }
-          } catch {
-          } finally {
-            localStorage.removeItem('guest_wishlist');
           }
         }
-      } else if (jwtUser) {
-        setUser(jwtUser);
-      } else {
-        setUser(null);
+        return data;
       }
     } catch {
-      if (jwtUser) {
-        setUser(jwtUser);
-      } else {
-        setUser(null);
+      // Ignore API errors, fall through to JWT payload
+    }
+
+    // Fallback: parse JWT token payload if /me endpoint fails
+    try {
+      if (token) {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          while (base64.length % 4 !== 0) base64 += '=';
+          const payload = JSON.parse(atob(base64));
+          if (payload.role) {
+            return {
+              id: payload.sub,
+              email: payload.email || '',
+              role: payload.role,
+            };
+          }
+        }
       }
+    } catch {
+      // Ignore
+    }
+
+    return null;
+  };
+
+  const fetchUser = async () => {
+    if (inProgressFetchUserPromise) {
+      const result = await inProgressFetchUserPromise;
+      setUser(result);
+      setLoading(false);
+      return;
+    }
+
+    inProgressFetchUserPromise = fetchUserInternal();
+    try {
+      const result = await inProgressFetchUserPromise;
+      setUser(result);
     } finally {
+      inProgressFetchUserPromise = null;
       setLoading(false);
     }
   };
@@ -187,7 +196,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch {
     } finally {
-      Cookies.remove('accessToken');
+      Cookies.remove('accessToken', { path: '/' });
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+      }
       setUser(null);
       router.push('/');
       router.refresh();

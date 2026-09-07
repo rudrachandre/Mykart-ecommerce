@@ -61,7 +61,8 @@ export function OnboardSellerForm({
           const data = await refreshRes.json().catch(() => null);
           if (data?.accessToken) {
             Cookies.set("accessToken", data.accessToken, {
-              sameSite: "strict",
+              path: "/",
+              sameSite: "lax",
               secure: process.env.NODE_ENV === "production",
             });
           }

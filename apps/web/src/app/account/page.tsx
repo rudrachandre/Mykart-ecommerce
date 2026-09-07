@@ -11,20 +11,24 @@ export const metadata = {
 export default async function AccountDashboardPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('accessToken')?.value;
+  const refreshToken = cookieStore.get('refreshToken')?.value;
 
-  if (!token) redirect('/login');
+  if (!token && !refreshToken) redirect('/login?callbackUrl=/account');
 
-  let profile: Awaited<ReturnType<typeof getProfile>>;
-  try {
-    profile = await getProfile(token);
-  } catch {
-    // Keep the account shell (and Logout) mounted instead of the Next.js
-    // route-level error overlay, which previously hid the only Logout control
-    // the RBAC tests click after visiting seller/admin dashboards.
+  let profile: Awaited<ReturnType<typeof getProfile>> | null = null;
+  if (token) {
+    try {
+      profile = await getProfile(token);
+    } catch {
+      // Fall through to client-side auth context hydration
+    }
+  }
+
+  if (!profile) {
     return (
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight mb-8">Dashboard</h1>
-        <p role="alert">Unable to load your account details. Please retry or log out.</p>
+        <p className="text-muted-foreground text-sm">Loading your account details...</p>
       </div>
     );
   }

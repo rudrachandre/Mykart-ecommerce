@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import Cookies from 'js-cookie';
+import { getOrders } from '@/lib/api/orders';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Package, ArrowRight, Clock, CheckCircle2, XCircle, Search, CreditCard, DollarSign } from 'lucide-react';
@@ -14,10 +16,26 @@ interface OrdersListClientProps {
 }
 
 export function OrdersListClient({ initialOrders }: OrdersListClientProps) {
+  const [orders, setOrders] = useState<any[]>(initialOrders);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
-  const filteredOrders = initialOrders.filter((order) => {
+  useEffect(() => {
+    setOrders(initialOrders);
+  }, [initialOrders]);
+
+  useEffect(() => {
+    const token = Cookies.get('accessToken');
+    if (token && orders.length === 0) {
+      getOrders(token)
+        .then((data) => {
+          if (Array.isArray(data)) setOrders(data);
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  const filteredOrders = orders.filter((order) => {
     // Status filter
     if (statusFilter !== 'ALL' && order.status !== statusFilter) {
       return false;

@@ -62,6 +62,7 @@ export default function GoogleCallbackPage() {
             const data = await res.json();
             if (data?.accessToken) {
               Cookies.set("accessToken", data.accessToken, {
+                path: "/",
                 sameSite: "lax",
                 secure: process.env.NODE_ENV === "production",
               });

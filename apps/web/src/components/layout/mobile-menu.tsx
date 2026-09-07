@@ -12,7 +12,7 @@ const links = [
   { href: '/categories', label: 'Categories' },
   { href: '/brands', label: 'Brands' },
   { href: '/wishlist', label: 'Wishlist' },
-  { href: '/orders', label: 'Orders' },
+  { href: '/account/orders', label: 'Orders' },
 ];
 
 /** Mobile navigation drawer (spec §26 — hamburger below tablet). */

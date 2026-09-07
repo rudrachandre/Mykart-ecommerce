@@ -51,7 +51,7 @@ export function UserDropdown() {
             </Link>
             
             <Link 
-              href="/orders" 
+              href="/account/orders"
               className="px-4 py-2 text-sm hover:bg-muted transition-colors"
               onClick={() => setIsOpen(false)}
             >

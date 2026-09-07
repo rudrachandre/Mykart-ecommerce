@@ -11,14 +11,17 @@ export const metadata = {
 export default async function AccountOrdersPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('accessToken')?.value;
+  const refreshToken = cookieStore.get('refreshToken')?.value;
 
-  if (!token) redirect('/login');
+  if (!token && !refreshToken) redirect('/login?callbackUrl=/account/orders');
 
   let orders: any[] = [];
-  try {
-    orders = await getOrders(token);
-  } catch (error) {
-    console.error('Failed to fetch orders', error);
+  if (token) {
+    try {
+      orders = await getOrders(token);
+    } catch (error) {
+      console.error('Failed to fetch orders', error);
+    }
   }
 
   return (

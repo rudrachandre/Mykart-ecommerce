@@ -66,7 +66,7 @@ export function Footer() {
       heading: 'Support',
       links: [
         { label: 'My Account', href: '/account' },
-        { label: 'My Orders', href: '/orders' },
+        { label: 'My Orders', href: '/account/orders' },
         { label: 'Wishlist', href: '/wishlist' },
         { label: 'Cart', href: '/cart' },
       ],
