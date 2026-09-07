@@ -58,9 +58,11 @@ export function Header() {
             <Link href="/products" className="hover:text-primary transition-colors flex items-center gap-1 hidden sm:flex">
               <HelpCircle className="w-3.5 h-3.5" /> Help & Support
             </Link>
-            <Link href={roleNav.href} className="hover:text-primary transition-colors flex items-center gap-1 font-semibold text-primary">
-              <RoleIcon className="w-3.5 h-3.5" /> {roleNav.label}
-            </Link>
+            {roleNav && RoleIcon && (
+              <Link href={roleNav.href} className="hover:text-primary transition-colors flex items-center gap-1 font-semibold text-primary">
+                <RoleIcon className="w-3.5 h-3.5" /> {roleNav.label}
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -16,6 +16,20 @@ export default async function OnboardSellerPage() {
     redirect("/login?callbackUrl=/seller/onboard");
   }
 
+  let isExistingSeller = false;
+  let userProfile;
+  try {
+    userProfile = await getProfile(token);
+    if (userProfile?.role === "SELLER") {
+      isExistingSeller = true;
+    }
+  } catch {
+    // Fallback: default to customer onboarding
+  }
+  if (userProfile?.role === "ADMIN") {
+    redirect("/admin");
+  }
+
   // Check if user already has an active seller profile/store
   try {
     const profile = await getSellerProfile(token);
@@ -24,16 +38,6 @@ export default async function OnboardSellerPage() {
     }
   } catch {
     // User does not have a seller store yet -> allow onboarding form
-  }
-
-  let isExistingSeller = false;
-  try {
-    const userProfile = await getProfile(token);
-    if (userProfile?.role === "SELLER") {
-      isExistingSeller = true;
-    }
-  } catch {
-    // Fallback: default to customer onboarding
   }
 
   return (

@@ -6,12 +6,39 @@ const BASE_URL = API_URL_ENV || 'http://localhost:3001';
 const API_URL = `${BASE_URL}/api/v1`;
 
 export async function getProfile(token: string) {
-  const res = await fetch(`${API_URL}/users/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store'
-  });
-  if (!res.ok) throw new Error('Failed to fetch profile');
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store'
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // API server unreachable or offline — fall through to token payload fallback
+  }
+
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(Buffer.from(base64, 'base64').toString('utf8'));
+      if (payload.role) {
+        return {
+          id: payload.sub,
+          email: payload.email || '',
+          name: payload.email ? payload.email.split('@')[0] : 'User',
+          role: payload.role,
+          addresses: [],
+          _count: { orders: 0, wishlists: 0, notifications: 0 },
+        };
+      }
+    }
+  } catch {
+    // Fall through to error
+  }
+
+  throw new Error('Failed to fetch profile');
 }
 
 export async function updateProfile(token: string, data: { name?: string, avatar?: string }) {

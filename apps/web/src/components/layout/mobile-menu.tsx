@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ShieldCheck, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 
 const links = [
   { href: '/products', label: 'Products' },
@@ -18,6 +19,15 @@ const links = [
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const roleLink = user?.role === 'ADMIN'
+    ? { href: '/admin', label: 'Admin Dashboard', icon: ShieldCheck }
+    : user?.role === 'SELLER'
+    ? { href: user.seller?.id || user.seller?.storeName ? '/seller' : '/seller/onboard', label: 'Seller Dashboard', icon: Store }
+    : { href: '/seller/onboard', label: 'Become a Seller', icon: Store };
+
+  const RoleIcon = roleLink.icon;
 
   return (
     <div className="lg:hidden">
@@ -47,7 +57,7 @@ export function MobileMenu() {
               className="absolute inset-x-0 top-full z-50 border-b bg-background px-5 py-4"
               aria-label="Main navigation"
             >
-              <ul className="flex flex-col">
+              <ul className="flex flex-col gap-1">
                 {links.map((l) => (
                   <li key={l.href}>
                     <Link
@@ -63,6 +73,17 @@ export function MobileMenu() {
                     </Link>
                   </li>
                 ))}
+
+                <li className="pt-2 border-t mt-1">
+                  <Link
+                    href={roleLink.href}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-3 font-display text-[15px] font-bold text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <RoleIcon className="w-4 h-4" />
+                    <span>{roleLink.label}</span>
+                  </Link>
+                </li>
               </ul>
             </motion.nav>
           </>

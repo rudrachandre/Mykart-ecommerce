@@ -33,18 +33,43 @@ export default async function AccountDashboardPage() {
     <div>
       <h1 className="text-3xl font-extrabold tracking-tight mb-8">Dashboard</h1>
       
-      <div className="bg-secondary border border-border/40 p-8 mb-8 flex items-center gap-6">
-        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary border border-primary/20">
-          {profile.avatar ? (
-            <img src={profile.avatar} alt={profile.name} className="w-full h-full rounded-full object-cover" />
-          ) : (
-            <span className="text-2xl font-bold">{profile.name?.charAt(0).toUpperCase()}</span>
-          )}
+      <div className="bg-secondary border border-border/40 p-8 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary border border-primary/20 shrink-0">
+            {profile.avatar ? (
+              <img src={profile.avatar} alt={profile.name} className="w-full h-full rounded-full object-cover" />
+            ) : (
+              <span className="text-2xl font-bold">{profile.name?.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold">{profile.name}</h2>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                {profile.role}
+              </span>
+            </div>
+            <p className="text-muted-foreground text-sm">{profile.email}</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold">{profile.name}</h2>
-          <p className="text-muted-foreground">{profile.email}</p>
-        </div>
+
+        {profile.role === 'ADMIN' && (
+          <Link
+            href="/admin"
+            className="w-full sm:w-auto px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/90 text-center transition-colors shadow-sm text-sm"
+          >
+            Go to Admin Dashboard →
+          </Link>
+        )}
+
+        {profile.role === 'SELLER' && (
+          <Link
+            href="/seller"
+            className="w-full sm:w-auto px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/90 text-center transition-colors shadow-sm text-sm"
+          >
+            Go to Seller Dashboard →
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">

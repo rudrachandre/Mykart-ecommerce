@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { getSellerDashboard } from '@/lib/api/sellers';
+import { getProfile } from '@/lib/api/users';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
@@ -16,6 +17,16 @@ export default async function SellerDashboardPage() {
 
   if (!token) {
     redirect('/login');
+  }
+
+  let userProfile;
+  try {
+    userProfile = await getProfile(token);
+  } catch {
+    // Ignore error
+  }
+  if (userProfile?.role === 'ADMIN') {
+    redirect('/admin');
   }
 
   let dashboard;

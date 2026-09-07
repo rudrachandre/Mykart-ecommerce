@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { getSellerProfile } from '@/lib/api/sellers';
+import { getProfile } from '@/lib/api/users';
 import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, Gift, MessageSquare } from 'lucide-react';
 
 export default async function SellerLayout({ children }: { children: React.ReactNode }) {
@@ -9,6 +11,16 @@ export default async function SellerLayout({ children }: { children: React.React
 
   if (!token) {
     return <>{children}</>;
+  }
+
+  let userProfile;
+  try {
+    userProfile = await getProfile(token);
+  } catch {
+    // Ignore error
+  }
+  if (userProfile?.role === 'ADMIN') {
+    redirect('/admin');
   }
 
   let profile;

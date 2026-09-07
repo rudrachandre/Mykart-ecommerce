@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import type { SVGProps } from 'react';
 import { Logo } from '@/components/marketing/logo';
+import { useAuth } from '@/contexts/AuthContext';
 
 /* Brand glyphs (lucide-react dropped brand icons, so inline them here). */
 const Instagram = (props: SVGProps<SVGSVGElement>) => (
@@ -27,38 +30,6 @@ const Youtube = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-/**
- * Figma §23 — warm surface footer: 4-column top row (brand 280px +
- * Shop/Company/Support 160px), hairline divider, legal + payment badges.
- */
-const columns = [
-  {
-    heading: 'Shop',
-    links: [
-      { label: 'All Products', href: '/products' },
-      { label: 'Categories', href: '/categories' },
-      { label: 'Brands', href: '/brands' },
-      { label: 'Search', href: '/search' },
-    ],
-  },
-  {
-    heading: 'Company',
-    links: [
-      { label: 'Become a Seller', href: '/seller/onboard' },
-      { label: 'Seller Dashboard', href: '/seller' },
-    ],
-  },
-  {
-    heading: 'Support',
-    links: [
-      { label: 'My Account', href: '/account' },
-      { label: 'My Orders', href: '/orders' },
-      { label: 'Wishlist', href: '/wishlist' },
-      { label: 'Cart', href: '/cart' },
-    ],
-  },
-];
-
 const socials = [
   { label: 'Instagram', icon: Instagram, href: '#' },
   { label: 'Twitter', icon: Twitter, href: '#' },
@@ -69,6 +40,39 @@ const socials = [
 const payments = ['VISA', 'MASTERCARD', 'APPLE PAY', 'PAYPAL'];
 
 export function Footer() {
+  const { user } = useAuth();
+
+  const companyLinks = user?.role === 'ADMIN'
+    ? [{ label: 'Admin Dashboard', href: '/admin' }]
+    : user?.role === 'SELLER'
+    ? [{ label: 'Seller Dashboard', href: user.seller?.id || user.seller?.storeName ? '/seller' : '/seller/onboard' }]
+    : [{ label: 'Become a Seller', href: '/seller/onboard' }];
+
+  const columns = [
+    {
+      heading: 'Shop',
+      links: [
+        { label: 'All Products', href: '/products' },
+        { label: 'Categories', href: '/categories' },
+        { label: 'Brands', href: '/brands' },
+        { label: 'Search', href: '/search' },
+      ],
+    },
+    {
+      heading: 'Company',
+      links: companyLinks,
+    },
+    {
+      heading: 'Support',
+      links: [
+        { label: 'My Account', href: '/account' },
+        { label: 'My Orders', href: '/orders' },
+        { label: 'Wishlist', href: '/wishlist' },
+        { label: 'Cart', href: '/cart' },
+      ],
+    },
+  ];
+
   return (
     <footer className="bg-secondary">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 pb-10 md:pb-12">

@@ -66,6 +66,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = async () => {
     let token: string | null | undefined = Cookies.get('accessToken');
 
+    if (!token && typeof window !== 'undefined') {
+      token = localStorage.getItem('token') || undefined;
+    }
+
+    let jwtUser: User | null = null;
+    if (token) {
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          while (base64.length % 4 !== 0) {
+            base64 += '=';
+          }
+          const payload = JSON.parse(atob(base64));
+          if (payload.role) {
+            jwtUser = {
+              id: payload.sub,
+              email: payload.email || '',
+              role: payload.role,
+            };
+            setUser(jwtUser);
+            setLoading(false);
+          }
+        }
+      } catch {
+        // Ignore parse error
+      }
+    }
+
     if (!token) {
       token = await refreshAccessToken();
     }
@@ -119,11 +148,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.removeItem('guest_wishlist');
           }
         }
+      } else if (jwtUser) {
+        setUser(jwtUser);
       } else {
         setUser(null);
       }
     } catch {
-      setUser(null);
+      if (jwtUser) {
+        setUser(jwtUser);
+      } else {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
