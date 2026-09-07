@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class VerifyPaymentDto {
   @IsString()
@@ -6,14 +6,18 @@ export class VerifyPaymentDto {
   orderId: string;
 
   @IsString()
-  @IsNotEmpty()
-  razorpayPaymentId: string;
+  @IsOptional()
+  paymentId?: string;
 
   @IsString()
-  @IsNotEmpty()
-  razorpayOrderId: string;
+  @IsOptional()
+  razorpayPaymentId?: string;
 
   @IsString()
-  @IsNotEmpty()
-  razorpaySignature: string;
+  @IsOptional()
+  razorpayOrderId?: string;
+
+  @IsString()
+  @IsOptional()
+  razorpaySignature?: string;
 }

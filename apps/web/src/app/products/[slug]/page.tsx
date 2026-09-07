@@ -15,12 +15,26 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await getProductBySlug(resolvedParams.slug).catch(() => null);
   
   if (!product) {
-    return { title: 'Product Not Found | MyKart' };
+    return { title: 'Product Not Found' };
   }
 
+  const imageUrl = product.images?.[0]?.url || null;
+  const desc = product.description?.substring(0, 160) || `Buy ${product.name} online at MyKart`;
+
   return {
-    title: `${product.name} | MyKart`,
-    description: product.description,
+    title: product.name,
+    description: desc,
+    openGraph: {
+      title: product.name,
+      description: desc,
+      images: imageUrl ? [{ url: imageUrl, alt: product.name }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.name,
+      description: desc,
+      images: imageUrl ? [imageUrl] : [],
+    },
   };
 }
 
@@ -125,7 +139,7 @@ export default async function ProductDetailPage({
                 <ShieldCheck className="w-5 h-5 mt-0.5 text-primary/70" />
                 <div>
                   <p className="font-semibold text-foreground">Secure Payment</p>
-                  <p className="text-muted-foreground text-xs mt-1">100% secure Razorpay transactions.</p>
+                  <p className="text-muted-foreground text-xs mt-1">100% secure transactions.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

@@ -129,59 +129,26 @@ export function CheckoutClient({
 
       const result = await checkout(token, payload);
 
-      if (!result.razorpayOrderId) {
+      if (paymentMethod === 'COD') {
         await refreshCart();
         toast.success("Order placed! Pay on delivery.");
         router.push(`/orders/${result.order.id}?success=true&cod=true`);
         return;
       }
 
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mykart_mock_123",
-        amount: result.amount,
-        currency: result.currency,
-        name: "MyKart",
-        description: "Order Payment",
-        order_id: result.razorpayOrderId,
-        handler: async function (response: any) {
-          try {
-            const verifyPayload = {
-              orderId: result.order.id,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-            };
-            await verifyPayment(token, verifyPayload);
-            await refreshCart();
-            toast.success("Payment successful!");
-            router.push(`/orders/${result.order.id}?success=true`);
-          } catch (error: any) {
-            toast.error(error.message || "Payment verification failed");
-            router.push(`/orders/${result.order.id}?payment=failed`);
-          }
-        },
-        prefill: {
-          name: address.fullName,
-          contact: address.phone,
-        },
-        theme: {
-          color: "#000000",
-        },
-        modal: {
-          ondismiss: function () {
-            setCheckoutLoading(false);
-            toast.error("Payment cancelled");
-            router.push(`/orders/${result.order.id}?payment=cancelled`);
-          },
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on("payment.failed", function (response: any) {
-        toast.error(response.error.description || "Payment failed");
+      // Online payment method (UPI, CARD, NETBANKING, WALLET)
+      try {
+        await verifyPayment(token, {
+          orderId: result.order.id,
+          paymentId: result.onlinePaymentId,
+        });
+        await refreshCart();
+        toast.success("Payment successful!");
+        router.push(`/orders/${result.order.id}?success=true`);
+      } catch (error: any) {
+        toast.error(error.message || "Payment processing failed");
         router.push(`/orders/${result.order.id}?payment=failed`);
-      });
-      rzp.open();
+      }
     } catch (err: any) {
       toast.error(err.message || "Checkout failed");
       setCheckoutLoading(false);
@@ -201,10 +168,6 @@ export function CheckoutClient({
 
   return (
     <>
-      <Script
-        src="https://checkout.razorpay.com/v1/checkout.js"
-        strategy="lazyOnload"
-      />
 
       {/* Progress Stepper Header */}
       <div className="mb-8 border-b border-border/40 pb-6">

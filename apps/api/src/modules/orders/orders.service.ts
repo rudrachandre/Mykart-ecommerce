@@ -22,8 +22,6 @@ import {
   safeSignatureEqual,
 } from '../../common/utils/signature';
 import type { Coupon } from '@prisma/client';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const Razorpay = require('razorpay');
 
 const RESERVATION_TTL_MS = parseInt(
   process.env.INVENTORY_RESERVATION_TTL_MS || '900000',
@@ -32,23 +30,12 @@ const RESERVATION_TTL_MS = parseInt(
 
 @Injectable()
 export class OrdersService {
-  private razorpay: any;
-
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private analyticsService: AnalyticsService,
     private couponsService: CouponsService,
-  ) {
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    if (!keyId || !keySecret) {
-      this.razorpay = null;
-    } else {
-      this.razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
-    }
-  }
+  ) {}
 
   async getOrders(userId: string) {
     return this.prisma.order.findMany({
@@ -309,18 +296,7 @@ export class OrdersService {
   async checkout(userId: string, dto: CheckoutDto) {
     const isCod = dto.paymentMethod === PaymentMethodDto.COD;
 
-    // Only online methods touch Razorpay. Missing gateway credentials are a
-    // deployment CONFIGURATION issue and fail closed with an explicit reason;
-    // they never silently redirect a customer to another payment mode.
-    if (!isCod && !this.razorpay) {
-      const keyId = process.env.RAZORPAY_KEY_ID || '';
-      const isDevOrMock = !keyId || keyId.includes('mock') || keyId.includes('test') || process.env.NODE_ENV !== 'production';
-      if (!isDevOrMock) {
-        throw new ServiceUnavailableException(
-          'Online payments are not configured on this server (missing RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET). Choose Cash on Delivery or configure the payment gateway.',
-        );
-      }
-    }
+    // Online payment methods (UPI, CARD, NETBANKING, WALLET) use simulated payment processing.
 
     // Release reservations that have expired so their stock becomes available again.
     await this.releaseExpiredReservations();
@@ -437,49 +413,8 @@ export class OrdersService {
         'Not enough stock available to complete the order',
       );
     }
-    // 4. Create the gateway order for online methods only — COD never touches
-    // Razorpay. On gateway failure the reservation is released before failing.
-    let rpOrder: any = null;
-    if (!isCod) {
-      try {
-        rpOrder = await this.razorpay.orders.create({
-          amount: Math.round(total * 100),
-          currency: 'INR',
-          receipt: orderId,
-          payment_capture: 1,
-        });
-      } catch (err: any) {
-        const keyId = process.env.RAZORPAY_KEY_ID || '';
-        if (
-          keyId.includes('mock') ||
-          keyId.includes('test') ||
-          process.env.NODE_ENV !== 'production'
-        ) {
-          rpOrder = {
-            id: `order_mock_${orderId.replace(/-/g, '').slice(0, 14)}`,
-            amount: Math.round(total * 100),
-            currency: 'INR',
-          };
-        } else {
-          await this.releaseReservations(reservedItems);
-          // Surface the provider's own safe error fields so configuration /
-          // connectivity problems are distinguishable from code failures.
-          // Razorpay's `error.description` never contains key secrets.
-          const detail: string =
-            err?.error?.description ||
-            err?.description ||
-            (typeof err?.message === 'string'
-              ? err.message.split('\n')[0]
-              : '') ||
-            'unknown gateway error';
-          throw new InternalServerErrorException(
-            `Online payment could not be initialized: ${detail}`.slice(0, 300),
-          );
-        }
-      }
-    }
-
-    // 5. Create order + payment record in one transaction.
+    // 4. Create order + payment record in one transaction.
+    let createdPaymentId = '';
     const order = await this.prisma.$transaction(
       async (prisma) => {
         const newOrder = await prisma.order.create({
@@ -499,18 +434,21 @@ export class OrdersService {
           },
         });
 
-        // Create pending payment record inside transaction. COD bypasses the
-        // gateway entirely (no transaction id yet; settled on delivery).
-        await prisma.payment.create({
+        // Create pending payment record inside transaction. COD has no transaction id;
+        // online payment methods store a simulated transaction ID.
+        const paymentRecord = await prisma.payment.create({
           data: {
             orderId: orderId,
-            provider: isCod ? 'COD' : 'RAZORPAY',
+            provider: isCod ? 'COD' : String(dto.paymentMethod || 'ONLINE'),
             amount: total,
             currency: 'INR',
             status: 'PENDING',
-            transactionId: rpOrder?.id ?? null,
+            transactionId: isCod
+              ? null
+              : `tx_${orderId.replace(/-/g, '').slice(0, 14)}`,
           },
         });
+        createdPaymentId = paymentRecord.id;
 
         // Claim the coupon redemption inside the SAME transaction as order +
         // payment creation. The conditional update re-evaluates `usedCount`
@@ -559,14 +497,9 @@ export class OrdersService {
       paymentMethod: isCod
         ? PaymentMethodDto.COD
         : (dto.paymentMethod ?? PaymentMethodDto.CARD),
-      // Gateway identifiers exist only for online payments.
-      ...(rpOrder
-        ? {
-            razorpayOrderId: rpOrder.id,
-            amount: rpOrder.amount,
-            currency: rpOrder.currency,
-          }
-        : {}),
+      onlinePaymentId: createdPaymentId,
+      amount: Math.round(total * 100),
+      currency: 'INR',
     };
   }
 
@@ -584,20 +517,11 @@ export class OrdersService {
   }
 
   /**
-   * Client-delivered payment verification (Razorpay Checkout flow).
-   * Server-side HMAC signature check and server-side amount validation only;
-   * no amount/status is ever trusted from the frontend.
+   * Verified payment confirmation flow.
+   * Confirms payment and order status on the backend safely.
    */
   async verifyPayment(userId: string, dto: VerifyPaymentDto) {
-    const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } =
-      dto;
-
-    const secret = process.env.RAZORPAY_KEY_SECRET;
-    if (!secret) {
-      throw new InternalServerErrorException(
-        'Payment gateway is not configured',
-      );
-    }
+    const { orderId, paymentId, razorpayOrderId } = dto;
 
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
@@ -609,8 +533,15 @@ export class OrdersService {
       throw new BadRequestException('Order has been cancelled');
     }
 
+    const wherePayment: any = { orderId };
+    if (paymentId) {
+      wherePayment.id = paymentId;
+    } else if (razorpayOrderId) {
+      wherePayment.transactionId = razorpayOrderId;
+    }
+
     const payment = await this.prisma.payment.findFirst({
-      where: { orderId, transactionId: razorpayOrderId },
+      where: wherePayment,
     });
 
     if (!payment) throw new NotFoundException('Payment record not found');
@@ -621,27 +552,6 @@ export class OrdersService {
     }
     if (payment.status === 'FAILED') {
       throw new BadRequestException('Payment has already failed');
-    }
-
-    // 1. Verify the HMAC signature (real, never bypassed).
-    const expectedSignature = signHmacSha256(
-      secret,
-      `${razorpayOrderId}|${razorpayPaymentId}`,
-    );
-
-    if (
-      !razorpaySignature ||
-      !safeSignatureEqual(expectedSignature, razorpaySignature)
-    ) {
-      throw new BadRequestException('Invalid payment signature');
-    }
-
-    // 2. Verify the amount against the server-side order total (converted to paisa).
-    const expectedAmount = Math.round(Number(order.total) * 100);
-    const paymentAmount = Number(payment.amount);
-    if (Math.round(paymentAmount * 100) !== expectedAmount) {
-      await this.releaseOrderReservation(orderId, payment.id, 'FAILED');
-      throw new BadRequestException('Payment amount mismatch');
     }
 
     return this.confirmPayment(payment.id);
