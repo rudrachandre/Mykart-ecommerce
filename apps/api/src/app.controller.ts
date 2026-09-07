@@ -55,87 +55,30 @@ export class AppController {
     });
     const userIds = sellers.map((s) => s.userId).filter(Boolean);
 
-    // 3. Execute atomic transaction deletion
+    // 3. Execute atomic transaction deletion via raw SQL for guaranteed FK handling
+    const prodArray = `ARRAY[${targetProductIds.map((id) => `'${id}'`).join(',')}]::text[]`;
+    const sellArray = `ARRAY[${targetSellerIds.map((id) => `'${id}'`).join(',')}]::text[]`;
+    const userArray = userIds.length > 0 ? `ARRAY[${userIds.map((id) => `'${id}'`).join(',')}]::text[]` : 'ARRAY[]::text[]';
+
     const result = await this.prisma.$transaction(async (tx) => {
-      // Get all variant IDs for target products
-      const variants = await tx.productVariant.findMany({
-        where: { productId: { in: targetProductIds } },
-        select: { id: true },
-      });
-      const variantIds = variants.map((v) => v.id);
-
-      // Delete child entries referencing target products or variants
-      await tx.cartItem.deleteMany({
-        where: {
-          OR: [
-            { productId: { in: targetProductIds } },
-            { variantId: { in: variantIds } },
-            { variant: { productId: { in: targetProductIds } } },
-          ],
-        },
-      });
-
-      await tx.wishlistItem.deleteMany({
-        where: { productId: { in: targetProductIds } },
-      });
-
-      await tx.review.deleteMany({
-        where: { productId: { in: targetProductIds } },
-      });
-
-      await tx.productImage.deleteMany({
-        where: { productId: { in: targetProductIds } },
-      });
-
-      await tx.orderItem.deleteMany({
-        where: {
-          OR: [
-            { productId: { in: targetProductIds } },
-            { variantId: { in: variantIds } },
-            { sellerId: { in: targetSellerIds } },
-            { variant: { productId: { in: targetProductIds } } },
-            { product: { sellerId: { in: targetSellerIds } } },
-          ],
-        },
-      });
-
-      await tx.inventory.deleteMany({
-        where: {
-          OR: [
-            { variantId: { in: variantIds } },
-            { variant: { productId: { in: targetProductIds } } },
-          ],
-        },
-      });
-
-      await tx.productVariant.deleteMany({
-        where: {
-          OR: [
-            { id: { in: variantIds } },
-            { productId: { in: targetProductIds } },
-          ],
-        },
-      });
-
-      // Delete target products
-      const deletedProducts = await tx.product.deleteMany({
-        where: { id: { in: targetProductIds } },
-      });
-
-      // Delete target sellers
-      const deletedSellers = await tx.seller.deleteMany({
-        where: { id: { in: targetSellerIds } },
-      });
-
-      // Delete target users
-      const deletedUsers = await tx.user.deleteMany({
-        where: { id: { in: userIds } },
-      });
+      await tx.$executeRawUnsafe(`DELETE FROM "CartItem" WHERE "productId" = ANY(${prodArray}) OR "variantId" IN (SELECT id FROM "ProductVariant" WHERE "productId" = ANY(${prodArray}));`);
+      await tx.$executeRawUnsafe(`DELETE FROM "WishlistItem" WHERE "productId" = ANY(${prodArray});`);
+      await tx.$executeRawUnsafe(`DELETE FROM "Review" WHERE "productId" = ANY(${prodArray});`);
+      await tx.$executeRawUnsafe(`DELETE FROM "ProductImage" WHERE "productId" = ANY(${prodArray});`);
+      await tx.$executeRawUnsafe(`DELETE FROM "OrderItem" WHERE "productId" = ANY(${prodArray}) OR "sellerId" = ANY(${sellArray}) OR "variantId" IN (SELECT id FROM "ProductVariant" WHERE "productId" = ANY(${prodArray}));`);
+      await tx.$executeRawUnsafe(`DELETE FROM "Inventory" WHERE "variantId" IN (SELECT id FROM "ProductVariant" WHERE "productId" = ANY(${prodArray}));`);
+      await tx.$executeRawUnsafe(`DELETE FROM "ProductVariant" WHERE "productId" = ANY(${prodArray});`);
+      const deletedProductsCount = await tx.$executeRawUnsafe(`DELETE FROM "Product" WHERE id = ANY(${prodArray});`);
+      const deletedSellersCount = await tx.$executeRawUnsafe(`DELETE FROM "Seller" WHERE id = ANY(${sellArray});`);
+      let deletedUsersCount = 0;
+      if (userIds.length > 0) {
+        deletedUsersCount = await tx.$executeRawUnsafe(`DELETE FROM "User" WHERE id = ANY(${userArray});`);
+      }
 
       return {
-        deletedProductsCount: deletedProducts.count,
-        deletedSellersCount: deletedSellers.count,
-        deletedUsersCount: deletedUsers.count,
+        deletedProductsCount,
+        deletedSellersCount,
+        deletedUsersCount,
       };
     });
 
