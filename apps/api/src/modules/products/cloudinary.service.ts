@@ -6,6 +6,12 @@ export class CloudinaryService {
   private configured = false;
 
   constructor() {
+    this.ensureConfigured();
+  }
+
+  private ensureConfigured(): boolean {
+    if (this.configured) return true;
+
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
@@ -17,7 +23,9 @@ export class CloudinaryService {
         api_secret: apiSecret,
       });
       this.configured = true;
+      return true;
     }
+    return false;
   }
 
   async uploadImage(
@@ -38,7 +46,7 @@ export class CloudinaryService {
       throw new BadRequestException('File size exceeds 5MB limit');
     }
 
-    if (!this.configured) {
+    if (!this.ensureConfigured()) {
       throw new BadRequestException('Cloudinary is not configured');
     }
 
@@ -73,7 +81,7 @@ export class CloudinaryService {
   async deleteImage(publicId: string): Promise<void> {
     if (!publicId) return;
 
-    if (!this.configured) {
+    if (!this.ensureConfigured()) {
       return;
     }
 
