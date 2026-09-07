@@ -53,15 +53,23 @@ export class HealthController {
           current_user as "user",
           version() as db_version
       `);
-      
+
       const tables = await this.prisma.$queryRawUnsafe(`
         SELECT table_name 
         FROM information_schema.tables 
         WHERE table_schema = 'public'
       `);
-      
+
       const users = await this.prisma.$queryRawUnsafe(`
         SELECT id, email, role FROM "User"
+      `);
+
+      const reviewCountRes = await this.prisma.$queryRawUnsafe(`
+        SELECT count(*) as count FROM "Review"
+      `);
+
+      const couponCountRes = await this.prisma.$queryRawUnsafe(`
+        SELECT count(*) as count FROM "Coupon"
       `);
 
       return {
@@ -71,7 +79,9 @@ export class HealthController {
         },
         connection: result,
         tables: tables,
-        users: users
+        users: users,
+        reviewCount: reviewCountRes,
+        couponCount: couponCountRes,
       };
     } catch (e) {
       return {
@@ -87,45 +97,49 @@ export class HealthController {
       const fs = require('fs');
       const path = require('path');
       const { execSync } = require('child_process');
-      
+
       let schemaPath = '';
       const candidatePaths = [
         path.resolve(process.cwd(), 'prisma/schema.prisma'),
         path.resolve(process.cwd(), '../prisma/schema.prisma'),
         path.resolve(process.cwd(), '../../prisma/schema.prisma'),
-        '/opt/render/project/src/prisma/schema.prisma'
+        '/opt/render/project/src/prisma/schema.prisma',
       ];
-      
+
       for (const p of candidatePaths) {
         if (fs.existsSync(p)) {
           schemaPath = p;
           break;
         }
       }
-      
+
       if (!schemaPath) {
-        throw new Error('Could not locate schema.prisma file in candidate paths: ' + candidatePaths.join(', '));
+        throw new Error(
+          'Could not locate schema.prisma file in candidate paths: ' +
+            candidatePaths.join(', '),
+        );
       }
-      
-      const migrateOutput = execSync(`npx prisma migrate deploy --schema "${schemaPath}"`, { encoding: 'utf-8' });
-      const seedOutput = execSync('node dist/seed-data.js', { encoding: 'utf-8' });
+
+      const migrateOutput = execSync(
+        `npx prisma migrate deploy --schema "${schemaPath}"`,
+        { encoding: 'utf-8' },
+      );
+      const seedOutput = execSync('node dist/seed-data.js', {
+        encoding: 'utf-8',
+      });
       return {
         status: 'ok',
         schemaPath,
         migrations: migrateOutput,
-        seed: seedOutput
+        seed: seedOutput,
       };
     } catch (e) {
       return {
         status: 'error',
         error: e.message,
         stdout: e.stdout,
-        stderr: e.stderr
+        stderr: e.stderr,
       };
     }
   }
 }
-
-
-
-

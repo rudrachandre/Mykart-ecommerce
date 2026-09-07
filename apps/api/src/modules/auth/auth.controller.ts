@@ -35,7 +35,13 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthCallback(
-    @Req() req: Request & { user?: { user: any; tokens: { accessToken: string; refreshToken: string } } },
+    @Req()
+    req: Request & {
+      user?: {
+        user: any;
+        tokens: { accessToken: string; refreshToken: string };
+      };
+    },
     @Res() res: Response,
   ) {
     const frontendUrl =

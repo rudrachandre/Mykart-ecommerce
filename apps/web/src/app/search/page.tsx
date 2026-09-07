@@ -65,7 +65,7 @@ export default async function SearchPage({
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-8">
       {/* SearchFilters uses useSearchParams(): Next.js requires a Suspense
           boundary around it, otherwise the route deopts to client rendering
           and the subtree can double-mount during hydration in dev. */}

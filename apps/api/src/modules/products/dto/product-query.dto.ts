@@ -66,7 +66,9 @@ export class ProductQueryDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @Transform(({ value }) => (value === 'true' || value === true ? true : undefined))
+  @Transform(({ value }) =>
+    value === 'true' || value === true ? true : undefined,
+  )
   onSale?: boolean;
 
   @ApiPropertyOptional()
@@ -101,7 +103,9 @@ export class ProductQueryDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @Transform(({ value }) => (value === 'true' || value === true ? true : undefined))
+  @Transform(({ value }) =>
+    value === 'true' || value === true ? true : undefined,
+  )
   inStock?: boolean;
 
   @ApiPropertyOptional()

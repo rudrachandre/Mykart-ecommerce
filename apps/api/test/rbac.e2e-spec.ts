@@ -88,8 +88,18 @@ describe('RBAC & ownership security (e2e)', () => {
       });
     };
 
-    await makeSeller('rbac-seller-a@example.com', 'RBAC Store A', 'rbac-store-a', 'A');
-    const productB = await makeSeller('rbac-seller-b@example.com', 'RBAC Store B', 'rbac-store-b', 'B');
+    await makeSeller(
+      'rbac-seller-a@example.com',
+      'RBAC Store A',
+      'rbac-store-a',
+      'A',
+    );
+    const productB = await makeSeller(
+      'rbac-seller-b@example.com',
+      'RBAC Store B',
+      'rbac-store-b',
+      'B',
+    );
     productBId = productB.id;
 
     const makeCustomer = async (email: string, name: string, city: string) =>
@@ -113,8 +123,16 @@ describe('RBAC & ownership security (e2e)', () => {
         },
       });
 
-    const customerA = await makeCustomer('rbac-customer-a@example.com', 'RBAC Customer A', 'A City');
-    const customerB = await makeCustomer('rbac-customer-b@example.com', 'RBAC Customer B', 'B City');
+    const customerA = await makeCustomer(
+      'rbac-customer-a@example.com',
+      'RBAC Customer A',
+      'A City',
+    );
+    const customerB = await makeCustomer(
+      'rbac-customer-b@example.com',
+      'RBAC Customer B',
+      'B City',
+    );
 
     customerBAddressId = (
       await prisma.address.findFirstOrThrow({ where: { userId: customerB.id } })
@@ -247,7 +265,7 @@ describe('RBAC & ownership security (e2e)', () => {
 
     const items = Array.isArray(response.body)
       ? response.body
-      : response.body.items ?? response.body.products ?? [];
+      : (response.body.items ?? response.body.products ?? []);
     const names = JSON.stringify(items);
     expect(names).toContain('RBAC Store A');
     expect(names).not.toContain('RBAC Store B');
@@ -261,7 +279,7 @@ describe('RBAC & ownership security (e2e)', () => {
 
     const items = Array.isArray(response.body)
       ? response.body
-      : response.body.items ?? response.body.products ?? [];
+      : (response.body.items ?? response.body.products ?? []);
     const names = JSON.stringify(items);
     expect(names).toContain('RBAC Store B');
     expect(names).not.toContain('RBAC Store A');
@@ -337,4 +355,3 @@ describe('RBAC & ownership security (e2e)', () => {
       .expect(200);
   });
 });
-

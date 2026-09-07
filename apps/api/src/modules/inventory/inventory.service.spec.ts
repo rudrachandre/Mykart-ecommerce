@@ -277,7 +277,10 @@ describe('InventoryService', () => {
         Promise.resolve({
           id: where.id,
           productId: where.id === 'var-1' ? 'prod-1' : 'prod-2',
-          product: { id: where.id === 'var-1' ? 'prod-1' : 'prod-2', sellerId: 'seller-1' },
+          product: {
+            id: where.id === 'var-1' ? 'prod-1' : 'prod-2',
+            sellerId: 'seller-1',
+          },
           inventory: {
             id: where.id === 'var-1' ? 'inv-1' : 'inv-2',
             quantity: where.id === 'var-1' ? 50 : 30,

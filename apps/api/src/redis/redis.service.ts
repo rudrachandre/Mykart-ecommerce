@@ -1,4 +1,9 @@
-import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+  Logger,
+} from '@nestjs/common';
 import { Redis } from 'ioredis';
 
 @Injectable()
@@ -15,12 +20,14 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       enableOfflineQueue: false,
       retryStrategy() {
         return null; // Stop retrying immediately if Redis is unavailable locally
-      }
+      },
     });
 
     this.client.on('error', (err) => {
       if (!this.isOffline) {
-        this.logger.warn(`Redis connection failed, falling back to in-memory store. Error: ${err.message}`);
+        this.logger.warn(
+          `Redis connection failed, falling back to in-memory store. Error: ${err.message}`,
+        );
         this.isOffline = true;
       }
     });
@@ -52,12 +59,14 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
           return;
         }
       } catch (err: any) {
-        this.logger.warn(`Redis write failed: ${err.message}. Falling back to memory.`);
+        this.logger.warn(
+          `Redis write failed: ${err.message}. Falling back to memory.`,
+        );
         this.isOffline = true;
       }
     }
 
-    const expiresAt = ttlSeconds ? Date.now() + (ttlSeconds * 1000) : undefined;
+    const expiresAt = ttlSeconds ? Date.now() + ttlSeconds * 1000 : undefined;
     this.memoryDb.set(key, { value, expiresAt });
   }
 
@@ -66,7 +75,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       try {
         return await this.client.get(key);
       } catch (err: any) {
-        this.logger.warn(`Redis read failed: ${err.message}. Falling back to memory.`);
+        this.logger.warn(
+          `Redis read failed: ${err.message}. Falling back to memory.`,
+        );
         this.isOffline = true;
       }
     }
@@ -86,7 +97,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         await this.client.del(key);
         return;
       } catch (err: any) {
-        this.logger.warn(`Redis delete failed: ${err.message}. Falling back to memory.`);
+        this.logger.warn(
+          `Redis delete failed: ${err.message}. Falling back to memory.`,
+        );
         this.isOffline = true;
       }
     }

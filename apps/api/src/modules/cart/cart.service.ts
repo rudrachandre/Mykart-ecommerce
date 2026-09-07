@@ -53,7 +53,12 @@ export class CartService {
             items: {
               include: {
                 product: {
-                  select: { id: true, name: true, slug: true, images: { take: 1 } },
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    images: { take: 1 },
+                  },
                 },
                 variant: {
                   select: {

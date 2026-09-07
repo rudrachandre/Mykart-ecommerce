@@ -20,7 +20,12 @@ describe('Product integrity & visibility (e2e)', () => {
     slug: `integrity-product-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
     description: 'desc',
     basePrice: 100,
-    variants: [{ sku: `INT-SKU-${Date.now()}-${Math.floor(Math.random() * 10000)}`, inventory: { quantity: 5 } }],
+    variants: [
+      {
+        sku: `INT-SKU-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        inventory: { quantity: 5 },
+      },
+    ],
     ...overrides,
   });
 
@@ -49,7 +54,12 @@ describe('Product integrity & visibility (e2e)', () => {
       },
     });
     await prisma.seller.create({
-      data: { userId: user.id, storeName: 'Integrity Store', slug: 'integrity-store', status: 'ACTIVE' },
+      data: {
+        userId: user.id,
+        storeName: 'Integrity Store',
+        slug: 'integrity-store',
+        status: 'ACTIVE',
+      },
     });
     const category = await prisma.category.create({
       data: { name: 'Integrity Cat', slug: 'integrity-cat' },
@@ -107,7 +117,13 @@ describe('Product integrity & visibility (e2e)', () => {
     const created = await request(app.getHttpServer())
       .post('/api/v1/products')
       .set('Authorization', `Bearer ${sellerToken}`)
-      .send(makeProductPayload({ categoryId, status: ProductStatus.DRAFT, slug: 'draft-hidden-product' }))
+      .send(
+        makeProductPayload({
+          categoryId,
+          status: ProductStatus.DRAFT,
+          slug: 'draft-hidden-product',
+        }),
+      )
       .expect(201);
 
     await request(app.getHttpServer())
@@ -119,7 +135,13 @@ describe('Product integrity & visibility (e2e)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/products')
       .set('Authorization', `Bearer ${sellerToken}`)
-      .send(makeProductPayload({ categoryId, status: ProductStatus.ACTIVE, slug: 'active-visible-product' }))
+      .send(
+        makeProductPayload({
+          categoryId,
+          status: ProductStatus.ACTIVE,
+          slug: 'active-visible-product',
+        }),
+      )
       .expect(201);
 
     await request(app.getHttpServer())
@@ -132,7 +154,9 @@ describe('Product integrity & visibility (e2e)', () => {
       .get('/api/v1/products?limit=100')
       .expect(200);
 
-    const slugs = JSON.stringify(response.body.items.map((p: { slug: string }) => p.slug));
+    const slugs = JSON.stringify(
+      response.body.items.map((p: { slug: string }) => p.slug),
+    );
     expect(slugs).not.toContain('draft-hidden-product');
     expect(slugs).toContain('active-visible-product');
   });
@@ -150,7 +174,13 @@ describe('Product integrity & visibility (e2e)', () => {
     const created = await request(app.getHttpServer())
       .post('/api/v1/products')
       .set('Authorization', `Bearer ${sellerToken}`)
-      .send(makeProductPayload({ categoryId, salePrice: 80, slug: 'price-guard-product' }))
+      .send(
+        makeProductPayload({
+          categoryId,
+          salePrice: 80,
+          slug: 'price-guard-product',
+        }),
+      )
       .expect(201);
 
     await request(app.getHttpServer())
@@ -201,7 +231,10 @@ describe('Product integrity & visibility (e2e)', () => {
     });
     const login = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
-      .send({ email: 'integrity-customer@example.com', password: 'password123' });
+      .send({
+        email: 'integrity-customer@example.com',
+        password: 'password123',
+      });
 
     await request(app.getHttpServer())
       .post('/api/v1/products')

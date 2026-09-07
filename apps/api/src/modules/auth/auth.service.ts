@@ -9,7 +9,12 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import { Role } from '@prisma/client';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { MailService } from '../../common/mail/mail.service';
@@ -71,7 +76,11 @@ export class AuthService {
     avatar?: string;
   }) {
     const normalizedEmail = googleProfile.email.toLowerCase().trim();
-    const displayName = (googleProfile.name || normalizedEmail.split('@')[0] || 'User').trim();
+    const displayName = (
+      googleProfile.name ||
+      normalizedEmail.split('@')[0] ||
+      'User'
+    ).trim();
 
     // 1. Search by googleId first
     let user = await this.prisma.user.findUnique({

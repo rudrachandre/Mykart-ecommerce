@@ -12,14 +12,15 @@ export class CouponsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateCouponDto) {
-    const existing = await this.prisma.coupon.findUnique({
-      where: { code: dto.code },
+    const normalizedCode = dto.code.trim().toUpperCase();
+    const existing = await this.prisma.coupon.findFirst({
+      where: { code: { equals: normalizedCode, mode: 'insensitive' } },
     });
     if (existing) throw new BadRequestException('Coupon code already exists');
 
     return this.prisma.coupon.create({
       data: {
-        code: dto.code,
+        code: normalizedCode,
         type: dto.type,
         value: dto.value,
         minimumOrder: dto.minimumOrder,
@@ -41,18 +42,24 @@ export class CouponsService {
   /**
    * Single source of truth for coupon eligibility and discount calculation.
    * Used by both the public validate endpoint and checkout so the business
-   * rules (activity window, minimum order, percentage/fixed, maximum cap)
+   * rules (activity window, minimum order, percentage/fixed, maximum cap, usage limits)
    * can never drift apart.
-   *
-   * NOTE: usage limits are intentionally NOT checked here. They are enforced
-   * transactionally at redemption time inside checkout (see OrdersService) so
-   * that parallel redemptions can never exceed the limit.
    */
   async resolveDiscount(
     code: string,
     orderValue: number,
   ): Promise<{ coupon: Coupon; discount: number }> {
-    const coupon = await this.prisma.coupon.findUnique({ where: { code } });
+    if (!code) throw new BadRequestException('Coupon code is required');
+    const trimmed = code.trim();
+
+    let coupon = await this.prisma.coupon.findUnique({
+      where: { code: trimmed },
+    });
+    if (!coupon) {
+      coupon = await this.prisma.coupon.findFirst({
+        where: { code: { equals: trimmed, mode: 'insensitive' } },
+      });
+    }
 
     if (!coupon) throw new NotFoundException('Invalid coupon code');
     if (!coupon.active) throw new BadRequestException('Coupon is inactive');
@@ -62,6 +69,10 @@ export class CouponsService {
       throw new BadRequestException('Coupon is not yet valid');
     if (now > coupon.expiryDate)
       throw new BadRequestException('Coupon has expired');
+
+    if (coupon.usageLimit != null && coupon.usedCount >= coupon.usageLimit) {
+      throw new BadRequestException('Coupon usage limit has been reached');
+    }
 
     if (coupon.minimumOrder && orderValue < Number(coupon.minimumOrder)) {
       throw new BadRequestException(

@@ -54,7 +54,11 @@ export class MailService {
     }
   }
 
-  async sendNotificationEmail(to: string, subject: string, message: string): Promise<void> {
+  async sendNotificationEmail(
+    to: string,
+    subject: string,
+    message: string,
+  ): Promise<void> {
     const apiKey = process.env.RESEND_API_KEY;
     const from = process.env.MAIL_FROM || 'MyKart <onboarding@resend.dev>';
 

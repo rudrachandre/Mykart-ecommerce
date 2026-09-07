@@ -98,7 +98,7 @@ export default function GlobalError({
               >
                 Try Again
               </button>
-              <a
+              <Link
                 href="/"
                 style={{
                   padding: '0.625rem 1.5rem',
@@ -112,7 +112,7 @@ export default function GlobalError({
                 }}
               >
                 Back to Home
-              </a>
+              </Link>
             </div>
           </div>
         </div>

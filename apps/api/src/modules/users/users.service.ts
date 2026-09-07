@@ -1,8 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { User, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { UpdateProfileDto, ChangePasswordDto, CreateAddressDto, UpdateAddressDto } from './dto/user.dtos';
+import {
+  UpdateProfileDto,
+  ChangePasswordDto,
+  CreateAddressDto,
+  UpdateAddressDto,
+} from './dto/user.dtos';
 
 @Injectable()
 export class UsersService {
@@ -73,7 +82,7 @@ export class UsersService {
       data: {
         ...(dto.name && { name: dto.name }),
         ...(dto.avatar && { avatar: dto.avatar }),
-      }
+      },
     });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...result } = user;
@@ -84,10 +93,15 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (!user.passwordHash) {
-      throw new BadRequestException('Password change is not supported for Google OAuth accounts');
+      throw new BadRequestException(
+        'Password change is not supported for Google OAuth accounts',
+      );
     }
 
-    const isValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    const isValid = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
     if (!isValid) throw new BadRequestException('Invalid current password');
 
     const newHash = await bcrypt.hash(dto.newPassword, 10);
@@ -108,7 +122,7 @@ export class UsersService {
     if (dto.isDefault) {
       await this.prisma.address.updateMany({
         where: { userId },
-        data: { isDefault: false }
+        data: { isDefault: false },
       });
     }
 
@@ -116,29 +130,37 @@ export class UsersService {
       data: {
         ...dto,
         userId,
-      }
+      },
     });
   }
 
-  async updateAddress(userId: string, addressId: string, dto: UpdateAddressDto) {
-    const address = await this.prisma.address.findFirst({ where: { id: addressId, userId } });
+  async updateAddress(
+    userId: string,
+    addressId: string,
+    dto: UpdateAddressDto,
+  ) {
+    const address = await this.prisma.address.findFirst({
+      where: { id: addressId, userId },
+    });
     if (!address) throw new NotFoundException('Address not found');
 
     if (dto.isDefault) {
       await this.prisma.address.updateMany({
         where: { userId },
-        data: { isDefault: false }
+        data: { isDefault: false },
       });
     }
 
     return this.prisma.address.update({
       where: { id: addressId },
-      data: dto
+      data: dto,
     });
   }
 
   async deleteAddress(userId: string, addressId: string) {
-    const address = await this.prisma.address.findFirst({ where: { id: addressId, userId } });
+    const address = await this.prisma.address.findFirst({
+      where: { id: addressId, userId },
+    });
     if (!address) throw new NotFoundException('Address not found');
 
     await this.prisma.address.delete({ where: { id: addressId } });

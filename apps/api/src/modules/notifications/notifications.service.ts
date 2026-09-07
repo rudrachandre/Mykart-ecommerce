@@ -51,22 +51,23 @@ export class NotificationsService {
     });
 
     // Send email notification asynchronously, fail-safe
-    this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true },
-    }).then((user) => {
-      if (user?.email) {
-        this.mailService.sendNotificationEmail(
-          user.email,
-          `MyKart: ${title}`,
-          message,
-        ).catch((err) => {
-          console.error('Failed to send notification email', err);
-        });
-      }
-    }).catch((err) => {
-      console.error('Failed to query user email for notification', err);
-    });
+    this.prisma.user
+      .findUnique({
+        where: { id: userId },
+        select: { email: true },
+      })
+      .then((user) => {
+        if (user?.email) {
+          this.mailService
+            .sendNotificationEmail(user.email, `MyKart: ${title}`, message)
+            .catch((err) => {
+              console.error('Failed to send notification email', err);
+            });
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to query user email for notification', err);
+      });
 
     return notification;
   }

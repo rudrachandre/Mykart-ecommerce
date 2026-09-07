@@ -6,7 +6,12 @@ import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
 import { cleanDatabase } from './utils/prisma-cleanup';
 import * as bcrypt from 'bcrypt';
-import { Role, OrderStatus, PaymentStatus, ProductStatus } from '@prisma/client';
+import {
+  Role,
+  OrderStatus,
+  PaymentStatus,
+  ProductStatus,
+} from '@prisma/client';
 
 jest.mock('razorpay', () => {
   return jest.fn().mockImplementation(() => ({
@@ -127,7 +132,10 @@ describe('Order Lifecycle (e2e)', () => {
 
     const loginRes = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
-      .send({ email: 'lifecycle-customer@example.com', password: 'password123' });
+      .send({
+        email: 'lifecycle-customer@example.com',
+        password: 'password123',
+      });
     customerToken = loginRes.body.accessToken;
 
     const sellerLoginRes = await request(app.getHttpServer())
@@ -160,7 +168,10 @@ describe('Order Lifecycle (e2e)', () => {
     }
   });
 
-  async function seedOrder(status: OrderStatus = OrderStatus.PENDING, paymentStatus: PaymentStatus = PaymentStatus.PENDING): Promise<string> {
+  async function seedOrder(
+    status: OrderStatus = OrderStatus.PENDING,
+    paymentStatus: PaymentStatus = PaymentStatus.PENDING,
+  ): Promise<string> {
     const newOrderId = `order-lifecycle-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const createdOrder = await prisma.order.create({
       data: {
@@ -290,7 +301,9 @@ describe('Order Lifecycle (e2e)', () => {
         .set('Authorization', `Bearer ${customerToken}`)
         .send({
           reason: 'Wrong size',
-          items: [{ orderItemId: items[0].id, quantity: 1, reason: 'Size mismatch' }],
+          items: [
+            { orderItemId: items[0].id, quantity: 1, reason: 'Size mismatch' },
+          ],
         });
 
       expect([200, 201]).toContain(res.status);
@@ -322,14 +335,16 @@ describe('Order Lifecycle (e2e)', () => {
     it('cannot view order detail for another seller order', async () => {
       const otherSeller = await prisma.seller.create({
         data: {
-          userId: (await prisma.user.create({
-            data: {
-              email: 'other-seller2@example.com',
-              passwordHash: await bcrypt.hash('password123', 10),
-              name: 'Other Seller',
-              role: Role.SELLER,
-            },
-          })).id,
+          userId: (
+            await prisma.user.create({
+              data: {
+                email: 'other-seller2@example.com',
+                passwordHash: await bcrypt.hash('password123', 10),
+                name: 'Other Seller',
+                role: Role.SELLER,
+              },
+            })
+          ).id,
           storeName: 'Other Store 2',
           slug: 'other-store-2',
         },

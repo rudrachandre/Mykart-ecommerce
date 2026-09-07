@@ -1103,28 +1103,33 @@ async function main() {
 
   // 9. Verified-purchase Reviews
   console.log('Seeding reviews...');
-  const deliveredOrder = await prisma.order.findUnique({
-    where: { id: 'test-order-id-4' }, // Status: DELIVERED
-    include: { items: true },
-  });
-
-  if (deliveredOrder && deliveredOrder.items.length > 0) {
-    const orderItem = deliveredOrder.items[0];
+  const topProducts = await prisma.product.findMany({ take: 6, select: { id: true, name: true } });
+  const reviewSamples = [
+    { rating: 5, title: 'Outstanding Quality!', comment: 'Exceeded my expectations in build quality and performance. Highly recommended!', verified: true },
+    { rating: 5, title: 'Superb Value for Money', comment: 'Delivery was blazing fast and the packaging was top notch. Works flawlessly.', verified: true },
+    { rating: 4, title: 'Very Satisfied', comment: 'Great product overall. Minor cosmetic detail could be improved, but performance is solid.', verified: true },
+    { rating: 5, title: 'Exceptional Experience', comment: 'Authentic item, great customer support, and seamless checkout experience.', verified: true },
+    { rating: 4, title: 'Good purchase', comment: 'Works as described in the specs. Would purchase from this store again.', verified: false },
+    { rating: 5, title: 'Five stars all the way', comment: 'Best in its category. Will definitely recommend to friends and family.', verified: true },
+  ];
+  for (let i = 0; i < topProducts.length; i++) {
+    const sample = reviewSamples[i % reviewSamples.length];
+    const prod = topProducts[i];
     const existingReview = await prisma.review.findFirst({
       where: {
         userId: customerUser.id,
-        productId: orderItem.productId,
+        productId: prod.id,
       },
     });
     if (!existingReview) {
       await prisma.review.create({
         data: {
           userId: customerUser.id,
-          productId: orderItem.productId,
-          rating: 5,
-          title: 'Outstanding Performance!',
-          comment: 'I am highly impressed with the performance and battery life. Exceeded my expectations.',
-          verifiedPurchase: true,
+          productId: prod.id,
+          rating: sample.rating,
+          title: sample.title,
+          comment: sample.comment,
+          verifiedPurchase: sample.verified,
           status: 'APPROVED',
         },
       });

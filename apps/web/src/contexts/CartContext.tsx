@@ -91,6 +91,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateItem = async (itemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      return removeItem(itemId);
+    }
+
     const token = Cookies.get('accessToken');
     if (!token) return;
 

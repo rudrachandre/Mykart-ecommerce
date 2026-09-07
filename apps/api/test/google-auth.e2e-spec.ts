@@ -28,11 +28,20 @@ describe('AuthService - Google OAuth', () => {
       providers: [
         AuthService,
         { provide: PrismaService, useValue: prismaService },
-        { provide: RedisService, useValue: { set: jest.fn(), get: jest.fn(), del: jest.fn() } },
-        { provide: JwtService, useValue: { sign: jest.fn().mockReturnValue('mock_access_token') } },
+        {
+          provide: RedisService,
+          useValue: { set: jest.fn(), get: jest.fn(), del: jest.fn() },
+        },
+        {
+          provide: JwtService,
+          useValue: { sign: jest.fn().mockReturnValue('mock_access_token') },
+        },
         { provide: UsersService, useValue: { findByEmail: jest.fn() } },
         { provide: AnalyticsService, useValue: { logAction: jest.fn() } },
-        { provide: MailService, useValue: { sendPasswordResetEmail: jest.fn() } },
+        {
+          provide: MailService,
+          useValue: { sendPasswordResetEmail: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -41,7 +50,12 @@ describe('AuthService - Google OAuth', () => {
 
   it('creates new CUSTOMER user when google user is not found', async () => {
     prismaService.user.findUnique.mockResolvedValue(null);
-    const mockUser = { id: 'u-1', email: 'new@google.com', role: Role.CUSTOMER, googleId: 'g-123' };
+    const mockUser = {
+      id: 'u-1',
+      email: 'new@google.com',
+      role: Role.CUSTOMER,
+      googleId: 'g-123',
+    };
     prismaService.user.create.mockResolvedValue(mockUser);
 
     const result = await authService.validateGoogleUser({
@@ -67,10 +81,21 @@ describe('AuthService - Google OAuth', () => {
 
   it('links existing email user with googleId without changing existing role', async () => {
     prismaService.user.findUnique.mockResolvedValue(null);
-    const existingUser = { id: 'u-existing', email: 'existing@mykart.com', role: Role.SELLER, avatar: null };
-    (authService as any).usersService.findByEmail.mockResolvedValue(existingUser);
-    
-    const updatedUser = { ...existingUser, googleId: 'g-456', emailVerified: true };
+    const existingUser = {
+      id: 'u-existing',
+      email: 'existing@mykart.com',
+      role: Role.SELLER,
+      avatar: null,
+    };
+    (authService as any).usersService.findByEmail.mockResolvedValue(
+      existingUser,
+    );
+
+    const updatedUser = {
+      ...existingUser,
+      googleId: 'g-456',
+      emailVerified: true,
+    };
     prismaService.user.update.mockResolvedValue(updatedUser);
 
     const result = await authService.validateGoogleUser({

@@ -21,7 +21,7 @@ const cover: Record<string, string> = {
   'laptops-computers':
     'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=1200&auto=format&fit=crop',
   fashion:
-    'https://images.unsplash.com/photo-1489987707025-afc232f7bdaf?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1200&auto=format&fit=crop',
   'home-kitchen':
     'https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=1200&auto=format&fit=crop',
   beauty:

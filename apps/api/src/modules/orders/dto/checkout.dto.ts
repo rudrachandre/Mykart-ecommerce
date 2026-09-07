@@ -37,7 +37,8 @@ export class AddressDto {
   addressLine1: string;
 
   @IsString()
-  addressLine2: string;
+  @IsOptional()
+  addressLine2?: string;
 
   @IsString()
   @IsNotEmpty()

@@ -19,6 +19,7 @@ export class PrismaService
       max: 40,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 30000,
+      ssl: { rejectUnauthorized: false },
     });
     const adapter = new PrismaPg(pool);
     super({ adapter });

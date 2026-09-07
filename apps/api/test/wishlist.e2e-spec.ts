@@ -121,7 +121,7 @@ describe('WishlistController (e2e)', () => {
 
     it('should retrieve the user wishlist', async () => {
       // Pre-add an item
-      const wishlist = await prisma.wishlist.create({
+      await prisma.wishlist.create({
         data: {
           userId: customerId,
           items: {

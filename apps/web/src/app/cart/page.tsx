@@ -187,8 +187,16 @@ export default function CartPage() {
                     <div className="flex items-center border border-border bg-background rounded-md h-9">
                       <button
                         className="w-9 h-full flex items-center justify-center hover:bg-muted disabled:opacity-40 transition-colors"
-                        onClick={() => handleUpdate(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1 || mutatingId === item.id}
+                        onClick={() => {
+                          if (item.quantity <= 1) {
+                            handleRemove(item.id);
+                          } else {
+                            handleUpdate(item.id, item.quantity - 1);
+                          }
+                        }}
+                        disabled={mutatingId === item.id}
+                        title={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
+                        aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
                       >
                         <Minus className="h-3.5 w-3.5" />
                       </button>

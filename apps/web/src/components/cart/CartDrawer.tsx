@@ -154,8 +154,15 @@ export function CartDrawer() {
                             <div className="flex items-center border rounded-md">
                               <button 
                                 className="p-1 hover:bg-muted disabled:opacity-50 transition-colors"
-                                onClick={() => updateItem(item.id, item.quantity - 1)}
-                                disabled={item.quantity <= 1}
+                                onClick={() => {
+                                  if (item.quantity <= 1) {
+                                    removeItem(item.id);
+                                  } else {
+                                    updateItem(item.id, item.quantity - 1);
+                                  }
+                                }}
+                                title={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
+                                aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
                               >
                                 <Minus className="h-3 w-3" />
                               </button>

@@ -29,7 +29,9 @@ export class CloudinaryService {
     }
 
     if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException('Invalid file type. Only images are allowed.');
+      throw new BadRequestException(
+        'Invalid file type. Only images are allowed.',
+      );
     }
 
     if (file.size > 5 * 1024 * 1024) {

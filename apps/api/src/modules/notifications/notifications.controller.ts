@@ -24,7 +24,11 @@ export class NotificationsController {
   ) {
     const p = page ? parseInt(page, 10) : 1;
     const l = limit ? parseInt(limit, 10) : 20;
-    return this.notificationsService.getUserNotifications(req.user.userId, p, l);
+    return this.notificationsService.getUserNotifications(
+      req.user.userId,
+      p,
+      l,
+    );
   }
 
   @Patch(':id/read')

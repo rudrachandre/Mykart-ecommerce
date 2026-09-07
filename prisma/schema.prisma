@@ -150,6 +150,9 @@ model Product {
   @@index([categoryId])
   @@index([sellerId])
   @@index([brandId])
+  @@index([status, categoryId])
+  @@index([status, createdAt])
+  @@index([status, averageRating])
 }
 
 model ProductImage {
@@ -272,6 +275,7 @@ model Order {
 
   @@index([userId])
   @@index([status])
+  @@index([userId, createdAt])
 }
 
 model OrderItem {
@@ -367,6 +371,7 @@ model Review {
   createdAt        DateTime @default(now())
 
   @@index([productId])
+  @@index([productId, status])
 }
 
 model Coupon {

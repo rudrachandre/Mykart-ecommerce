@@ -17,43 +17,223 @@ export class AnalyticsService {
     private readonly redisService: RedisService,
   ) {}
 
-  private getDatesFromRange(range: string = '30days', startDateStr?: string, endDateStr?: string) {
+  private getDatesFromRange(
+    range: string = '30days',
+    startDateStr?: string,
+    endDateStr?: string,
+  ) {
     const now = new Date();
     let currentStart: Date;
-    let currentEnd: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    let currentEnd: Date = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999,
+    );
     let prevStart: Date;
     let prevEnd: Date;
 
     if (range === 'today') {
-      currentStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-      prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0, 0);
-      prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
+      currentStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
+      prevStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 1,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 1,
+        23,
+        59,
+        59,
+        999,
+      );
     } else if (range === 'yesterday') {
-      currentStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0, 0);
-      currentEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
-      prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 0, 0, 0, 0);
-      prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2, 23, 59, 59, 999);
+      currentStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 1,
+        0,
+        0,
+        0,
+        0,
+      );
+      currentEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 1,
+        23,
+        59,
+        59,
+        999,
+      );
+      prevStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 2,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 2,
+        23,
+        59,
+        59,
+        999,
+      );
     } else if (range === '7days') {
-      currentStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
-      prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 13, 0, 0, 0, 0);
-      prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7, 23, 59, 59, 999);
+      currentStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 6,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 13,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 7,
+        23,
+        59,
+        59,
+        999,
+      );
     } else if (range === '15days') {
-      currentStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 14, 0, 0, 0, 0);
-      prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
-      prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 15, 23, 59, 59, 999);
+      currentStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 14,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 29,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 15,
+        23,
+        59,
+        59,
+        999,
+      );
     } else if (range === '90days') {
-      currentStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 89, 0, 0, 0, 0);
-      prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 179, 0, 0, 0, 0);
-      prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90, 23, 59, 59, 999);
+      currentStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 89,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 179,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 90,
+        23,
+        59,
+        59,
+        999,
+      );
     } else if (range === 'thisMonth') {
       currentStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-      prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+      prevStart = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1,
+        0,
+        0,
+        0,
+        0,
+      );
       prevEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
     } else if (range === 'lastMonth') {
-      currentStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-      currentEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-      prevStart = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
-      prevEnd = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999);
+      currentStart = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1,
+        0,
+        0,
+        0,
+        0,
+      );
+      currentEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        0,
+        23,
+        59,
+        59,
+        999,
+      );
+      prevStart = new Date(
+        now.getFullYear(),
+        now.getMonth() - 2,
+        1,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevEnd = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      );
     } else if (range === 'custom' && startDateStr && endDateStr) {
       currentStart = new Date(startDateStr);
       currentStart.setHours(0, 0, 0, 0);
@@ -64,9 +244,33 @@ export class AnalyticsService {
       prevEnd = new Date(currentStart.getTime() - 1);
     } else {
       // 30days default
-      currentStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
-      prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 59, 0, 0, 0, 0);
-      prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 23, 59, 59, 999);
+      currentStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 29,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 59,
+        0,
+        0,
+        0,
+        0,
+      );
+      prevEnd = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 30,
+        23,
+        59,
+        59,
+        999,
+      );
     }
 
     return { currentStart, currentEnd, prevStart, prevEnd };
@@ -94,47 +298,47 @@ export class AnalyticsService {
       }
     } catch {}
 
-    const { currentStart, currentEnd, prevStart, prevEnd } = this.getDatesFromRange(
-      range,
-      query.startDate,
-      query.endDate,
-    );
+    const { currentStart, currentEnd, prevStart, prevEnd } =
+      this.getDatesFromRange(range, query.startDate, query.endDate);
 
     // 1. Fetch Current & Previous Orders with items, products, brands, categories
-    const [currentOrders, prevOrders, currentRefunds, prevRefunds] = await Promise.all([
-      this.prisma.order.findMany({
-        where: { createdAt: { gte: currentStart, lte: currentEnd } },
-        include: {
-          payments: true,
-          items: {
-            include: {
-              product: {
-                include: {
-                  category: { include: { parent: true } },
-                  brand: true,
+    const [currentOrders, prevOrders, currentRefunds, prevRefunds] =
+      await Promise.all([
+        this.prisma.order.findMany({
+          where: { createdAt: { gte: currentStart, lte: currentEnd } },
+          include: {
+            payments: true,
+            items: {
+              include: {
+                product: {
+                  include: {
+                    category: { include: { parent: true } },
+                    brand: true,
+                  },
                 },
               },
             },
           },
-        },
-      }),
-      this.prisma.order.findMany({
-        where: { createdAt: { gte: prevStart, lte: prevEnd } },
-        include: {
-          payments: true,
-          items: true,
-        },
-      }),
-      this.prisma.refund.findMany({
-        where: { createdAt: { gte: currentStart, lte: currentEnd } },
-      }),
-      this.prisma.refund.findMany({
-        where: { createdAt: { gte: prevStart, lte: prevEnd } },
-      }),
-    ]);
+        }),
+        this.prisma.order.findMany({
+          where: { createdAt: { gte: prevStart, lte: prevEnd } },
+          include: {
+            payments: true,
+            items: true,
+          },
+        }),
+        this.prisma.refund.findMany({
+          where: { createdAt: { gte: currentStart, lte: currentEnd } },
+        }),
+        this.prisma.refund.findMany({
+          where: { createdAt: { gte: prevStart, lte: prevEnd } },
+        }),
+      ]);
 
     // Filter QUALIFYING orders (exclude CANCELLED orders across ALL calculations)
-    const validCurrentOrders = currentOrders.filter((o) => o.status !== 'CANCELLED');
+    const validCurrentOrders = currentOrders.filter(
+      (o) => o.status !== 'CANCELLED',
+    );
     const validPrevOrders = prevOrders.filter((o) => o.status !== 'CANCELLED');
 
     // Filter STRICTLY CHARGED orders (Payment.status === 'COMPLETED')
@@ -147,27 +351,49 @@ export class AnalyticsService {
 
     // Financial Metrics for Current Period
     // 1. Net Charged Revenue = Sum of Order totals with COMPLETED payments minus Refunds
-    const currentChargedTotal = chargedCurrentOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
-    const currentRefundsAmount = currentRefunds.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const currentChargedTotal = chargedCurrentOrders.reduce(
+      (sum, o) => sum + Number(o.total || 0),
+      0,
+    );
+    const currentRefundsAmount = currentRefunds.reduce(
+      (sum, r) => sum + Number(r.amount || 0),
+      0,
+    );
     const currentNetRevenue = currentChargedTotal - currentRefundsAmount;
 
     // 2. Gross Booked Revenue = Total value of all non-cancelled orders regardless of payment status
-    const currentGrossBookedRevenue = validCurrentOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const currentGrossBookedRevenue = validCurrentOrders.reduce(
+      (sum, o) => sum + Number(o.total || 0),
+      0,
+    );
 
     // 3. Gross Merchandise Sales (GMS) = Sum of item prices x quantity for all non-cancelled order items
     const currentGrossMerchandiseSales = validCurrentOrders.reduce(
-      (sum, o) => sum + o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
+      (sum, o) =>
+        sum +
+        o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
       0,
     );
 
     // Tax, Shipping, & Subtotal Reconciliation for Charged Orders
-    const currentTax = chargedCurrentOrders.reduce((sum, o) => sum + Number(o.tax || 0), 0);
-    const currentShipping = chargedCurrentOrders.reduce((sum, o) => sum + Number(o.shippingFee || 0), 0);
-    const currentChargedMerchandiseSubtotal = chargedCurrentOrders.reduce(
-      (sum, o) => sum + o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
+    const currentTax = chargedCurrentOrders.reduce(
+      (sum, o) => sum + Number(o.tax || 0),
       0,
     );
-    const currentDiscounts = validCurrentOrders.reduce((sum, o) => sum + Number(o.discount || 0), 0);
+    const currentShipping = chargedCurrentOrders.reduce(
+      (sum, o) => sum + Number(o.shippingFee || 0),
+      0,
+    );
+    const currentChargedMerchandiseSubtotal = chargedCurrentOrders.reduce(
+      (sum, o) =>
+        sum +
+        o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
+      0,
+    );
+    const currentDiscounts = validCurrentOrders.reduce(
+      (sum, o) => sum + Number(o.discount || 0),
+      0,
+    );
 
     // Volume Metrics for Current Period
     const currentOrdersCount = validCurrentOrders.length;
@@ -179,17 +405,36 @@ export class AnalyticsService {
     const currentUniqueProductsSold = new Set(
       validCurrentOrders.flatMap((o) => o.items.map((i) => i.productId)),
     ).size;
-    const currentUniqueCustomers = new Set(validCurrentOrders.map((o) => o.userId)).size;
-    const currentAOV = currentChargedOrdersCount > 0 ? currentNetRevenue / currentChargedOrdersCount : 0;
-    const currentBookedAOV = currentOrdersCount > 0 ? currentGrossBookedRevenue / currentOrdersCount : 0;
+    const currentUniqueCustomers = new Set(
+      validCurrentOrders.map((o) => o.userId),
+    ).size;
+    const currentAOV =
+      currentChargedOrdersCount > 0
+        ? currentNetRevenue / currentChargedOrdersCount
+        : 0;
+    const currentBookedAOV =
+      currentOrdersCount > 0
+        ? currentGrossBookedRevenue / currentOrdersCount
+        : 0;
 
     // Financial & Volume Metrics for Previous Period
-    const prevChargedTotal = chargedPrevOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
-    const prevRefundsAmount = prevRefunds.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const prevChargedTotal = chargedPrevOrders.reduce(
+      (sum, o) => sum + Number(o.total || 0),
+      0,
+    );
+    const prevRefundsAmount = prevRefunds.reduce(
+      (sum, r) => sum + Number(r.amount || 0),
+      0,
+    );
     const prevNetRevenue = prevChargedTotal - prevRefundsAmount;
-    const prevGrossBookedRevenue = validPrevOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const prevGrossBookedRevenue = validPrevOrders.reduce(
+      (sum, o) => sum + Number(o.total || 0),
+      0,
+    );
     const prevGrossMerchandiseSales = validPrevOrders.reduce(
-      (sum, o) => sum + o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
+      (sum, o) =>
+        sum +
+        o.items.reduce((s, item) => s + Number(item.price) * item.quantity, 0),
       0,
     );
     const prevOrdersCount = validPrevOrders.length;
@@ -198,8 +443,10 @@ export class AnalyticsService {
       (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
       0,
     );
-    const prevUniqueCustomers = new Set(validPrevOrders.map((o) => o.userId)).size;
-    const prevAOV = prevChargedOrdersCount > 0 ? prevNetRevenue / prevChargedOrdersCount : 0;
+    const prevUniqueCustomers = new Set(validPrevOrders.map((o) => o.userId))
+      .size;
+    const prevAOV =
+      prevChargedOrdersCount > 0 ? prevNetRevenue / prevChargedOrdersCount : 0;
 
     const kpis = {
       netRevenue: {
@@ -210,12 +457,18 @@ export class AnalyticsService {
       grossBookedRevenue: {
         value: currentGrossBookedRevenue,
         prevValue: prevGrossBookedRevenue,
-        ...this.calcPctChange(currentGrossBookedRevenue, prevGrossBookedRevenue),
+        ...this.calcPctChange(
+          currentGrossBookedRevenue,
+          prevGrossBookedRevenue,
+        ),
       },
       grossMerchandiseSales: {
         value: currentGrossMerchandiseSales,
         prevValue: prevGrossMerchandiseSales,
-        ...this.calcPctChange(currentGrossMerchandiseSales, prevGrossMerchandiseSales),
+        ...this.calcPctChange(
+          currentGrossMerchandiseSales,
+          prevGrossMerchandiseSales,
+        ),
       },
       orders: {
         value: currentOrdersCount,
@@ -271,13 +524,27 @@ export class AnalyticsService {
     // 2. Build Daily Trends Map for Current Period
     const trendMap: Record<
       string,
-      { date: string; revenue: number; bookedRevenue: number; merchandiseSales: number; orders: number; cancelledOrders: number }
+      {
+        date: string;
+        revenue: number;
+        bookedRevenue: number;
+        merchandiseSales: number;
+        orders: number;
+        cancelledOrders: number;
+      }
     > = {};
 
     const tempDate = new Date(currentStart);
     while (tempDate <= currentEnd) {
       const dateStr = tempDate.toISOString().split('T')[0];
-      trendMap[dateStr] = { date: dateStr, revenue: 0, bookedRevenue: 0, merchandiseSales: 0, orders: 0, cancelledOrders: 0 };
+      trendMap[dateStr] = {
+        date: dateStr,
+        revenue: 0,
+        bookedRevenue: 0,
+        merchandiseSales: 0,
+        orders: 0,
+        cancelledOrders: 0,
+      };
       tempDate.setDate(tempDate.getDate() + 1);
     }
 
@@ -287,18 +554,24 @@ export class AnalyticsService {
         if (o.status === 'CANCELLED') {
           trendMap[dateStr].cancelledOrders += 1;
         } else {
-          const isCharged = o.payments && o.payments.some((p) => p.status === 'COMPLETED');
+          const isCharged =
+            o.payments && o.payments.some((p) => p.status === 'COMPLETED');
           if (isCharged) {
             trendMap[dateStr].revenue += Number(o.total || 0);
           }
           trendMap[dateStr].bookedRevenue += Number(o.total || 0);
-          trendMap[dateStr].merchandiseSales += o.items.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
+          trendMap[dateStr].merchandiseSales += o.items.reduce(
+            (s, i) => s + Number(i.price) * i.quantity,
+            0,
+          );
           trendMap[dateStr].orders += 1;
         }
       }
     });
 
-    const trends = Object.values(trendMap).sort((a, b) => a.date.localeCompare(b.date));
+    const trends = Object.values(trendMap).sort((a, b) =>
+      a.date.localeCompare(b.date),
+    );
 
     // 3. Category Sales Breakdown (STRICTLY FROM QUALIFYING VALID ORDERS)
     // If validCurrentOrders has items, use those; else if range has no orders, use all valid orders in DB for catalog distribution
@@ -325,11 +598,17 @@ export class AnalyticsService {
       itemsForBreakdown = allValidOrders.flatMap((o) => o.items);
     }
 
-    const categoryMap: Record<string, { name: string; revenue: number; itemsSold: number }> = {};
+    const categoryMap: Record<
+      string,
+      { name: string; revenue: number; itemsSold: number }
+    > = {};
     let totalCategoryRevenue = 0;
 
     itemsForBreakdown.forEach((item: any) => {
-      const parentCat = item.product?.category?.parent?.name || item.product?.category?.name || 'Electronics';
+      const parentCat =
+        item.product?.category?.parent?.name ||
+        item.product?.category?.name ||
+        'Electronics';
       if (!categoryMap[parentCat]) {
         categoryMap[parentCat] = { name: parentCat, revenue: 0, itemsSold: 0 };
       }
@@ -342,17 +621,30 @@ export class AnalyticsService {
     const categoryBreakdown = Object.values(categoryMap)
       .map((c) => ({
         ...c,
-        sharePct: totalCategoryRevenue > 0 ? Math.round((c.revenue / totalCategoryRevenue) * 1000) / 10 : 0,
+        sharePct:
+          totalCategoryRevenue > 0
+            ? Math.round((c.revenue / totalCategoryRevenue) * 1000) / 10
+            : 0,
       }))
       .sort((a, b) => b.revenue - a.revenue);
 
     // 4. Top Products & Top Brands (STRICTLY FROM QUALIFYING VALID ORDERS)
     const productMap: Record<
       string,
-      { id: string; name: string; brandName: string; categoryName: string; quantity: number; revenue: number }
+      {
+        id: string;
+        name: string;
+        brandName: string;
+        categoryName: string;
+        quantity: number;
+        revenue: number;
+      }
     > = {};
 
-    const brandMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
+    const brandMap: Record<
+      string,
+      { name: string; quantity: number; revenue: number }
+    > = {};
 
     itemsForBreakdown.forEach((item: any) => {
       const pId = item.productId;
@@ -430,7 +722,9 @@ export class AnalyticsService {
   async getDashboardStats() {
     const overview = await this.getAnalyticsOverview({ range: '30days' });
     const totalUsers = await this.prisma.user.count();
-    const totalCustomers = await this.prisma.user.count({ where: { role: 'CUSTOMER' } });
+    const totalCustomers = await this.prisma.user.count({
+      where: { role: 'CUSTOMER' },
+    });
     const totalSellers = await this.prisma.seller.count();
     const totalProducts = await this.prisma.product.count();
 
@@ -475,17 +769,94 @@ export class AnalyticsService {
       if (pStock === 0) outOfStockCount += 1;
     });
 
+    const [
+      totalReturns,
+      approvedReturns,
+      rejectedReturns,
+      totalReplacements,
+      totalReviews,
+      reviewsAggregate,
+      reportedReviewsCount,
+      pendingModerationCount,
+      allCoupons,
+    ] = await Promise.all([
+      this.prisma.return.count().catch(() => 0),
+      this.prisma.return
+        .count({ where: { status: 'APPROVED' } })
+        .catch(() => 0),
+      this.prisma.return
+        .count({ where: { status: 'REJECTED' } })
+        .catch(() => 0),
+      this.prisma.replacement.count().catch(() => 0),
+      this.prisma.review.count().catch(() => 0),
+      this.prisma.review
+        .aggregate({ _avg: { rating: true } })
+        .catch(() => ({ _avg: { rating: null } })),
+      this.prisma.review.count({ where: { reported: true } }).catch(() => 0),
+      this.prisma.review.count({ where: { status: 'PENDING' } }).catch(() => 0),
+      this.prisma.coupon.findMany({ orderBy: { code: 'asc' } }).catch((err) => {
+        console.error('[AnalyticsService] error querying coupons:', err);
+        return [];
+      }),
+    ]);
+
+    const totalCoupons = allCoupons.length;
+    const now = new Date();
+    let couponsUsedCount = 0;
+    let activeCoupons = 0;
+    allCoupons.forEach((c: any) => {
+      couponsUsedCount += c.usedCount || 0;
+      const isDateValid =
+        (!c.startDate || new Date(c.startDate) <= now) &&
+        (!c.expiryDate || new Date(c.expiryDate) >= now);
+      const isUsageValid =
+        c.usageLimit === null ||
+        c.usageLimit === undefined ||
+        (c.usedCount || 0) < c.usageLimit;
+      if (c.active && isDateValid && isUsageValid) {
+        activeCoupons += 1;
+      }
+    });
+
+    const avgRating = Number((reviewsAggregate?._avg?.rating || 0).toFixed(1));
+
+    const [allOrdersCount, allOrdersRevenue, recentOrders, recentProducts, recentCustomers] = await Promise.all([
+      this.prisma.order.count().catch(() => 0),
+      this.prisma.order.aggregate({
+        where: { status: { not: 'CANCELLED' } },
+        _sum: { total: true },
+      }).catch(() => ({ _sum: { total: null } })),
+      this.prisma.order.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { id: true, name: true, email: true } } },
+      }).catch(() => []),
+      this.prisma.product.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, slug: true, basePrice: true, salePrice: true, createdAt: true },
+      }).catch(() => []),
+      this.prisma.user.findMany({
+        where: { role: 'CUSTOMER' },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, name: true, email: true, createdAt: true },
+      }).catch(() => []),
+    ]);
+
+    const totalRevenueValue = Number(allOrdersRevenue._sum.total || overview.kpis.netRevenue.value || 0);
+
     return {
       totalUsers,
       totalCustomers,
       totalSellers,
       newCustomers: totalCustomers,
-      totalOrders: overview.kpis.orders.value,
+      totalOrders: allOrdersCount > 0 ? allOrdersCount : overview.kpis.orders.value,
       ordersToday: overview.kpis.orders.value,
       ordersLast7Days: overview.kpis.orders.value,
       ordersLast30Days: overview.kpis.orders.value,
       orderDistribution: overview.orderStatusDistribution,
-      totalRevenue: overview.kpis.netRevenue.value,
+      totalRevenue: totalRevenueValue,
       revenueToday: overview.kpis.netRevenue.value,
       revenueLast7Days: overview.kpis.netRevenue.value,
       revenueLast30Days: overview.kpis.netRevenue.value,
@@ -501,17 +872,23 @@ export class AnalyticsService {
       paymentDistribution: {},
       totalRefunds: overview.kpis.refunds.count,
       totalRefundAmount: overview.kpis.refunds.value,
-      totalReturns: 0,
-      approvedReturns: 0,
-      rejectedReturns: 0,
-      totalReplacements: 0,
-      totalReviews: 0,
-      avgRating: 0,
-      reportedReviewsCount: 0,
-      pendingModerationCount: 0,
-      totalCoupons: 0,
-      activeCoupons: 0,
-      couponsUsedCount: 0,
+      totalReturns,
+      approvedReturns,
+      rejectedReturns,
+      totalReplacements,
+      totalReviews,
+      avgRating,
+      reportedReviewsCount,
+      pendingModerationCount,
+      totalCoupons,
+      activeCoupons,
+      couponsUsedCount,
+      trends: overview.trends,
+      topProducts: overview.topProducts,
+      categoryBreakdown: overview.categoryBreakdown,
+      recentOrders,
+      recentProducts,
+      recentCustomers,
     };
   }
 
@@ -521,12 +898,23 @@ export class AnalyticsService {
       trends: overview.trends,
       customerGrowth: [],
       topProducts: overview.topProducts,
-      topCategories: overview.categoryBreakdown.map((c: any) => ({ name: c.name, count: c.itemsSold })),
-      topSellers: overview.topBrands.map((b: any) => ({ storeName: b.name, revenue: b.revenue })),
+      topCategories: overview.categoryBreakdown.map((c: any) => ({
+        name: c.name,
+        count: c.itemsSold,
+      })),
+      topSellers: overview.topBrands.map((b: any) => ({
+        storeName: b.name,
+        revenue: b.revenue,
+      })),
     };
   }
 
-  async getAuditLogs(skip: number = 0, take: number = 20, action?: string, userId?: string) {
+  async getAuditLogs(
+    skip: number = 0,
+    take: number = 20,
+    action?: string,
+    userId?: string,
+  ) {
     const where: any = {};
     if (action) where.action = action;
     if (userId) where.userId = userId;
@@ -537,7 +925,9 @@ export class AnalyticsService {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { id: true, name: true, email: true, role: true } } },
+        include: {
+          user: { select: { id: true, name: true, email: true, role: true } },
+        },
       }),
       this.prisma.auditLog.count({ where }),
     ]);

@@ -25,7 +25,6 @@ import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpdateSellerStatusDto } from './dto/update-seller-status.dto';
 import { UpdateProductStatusDto } from './dto/update-product-status.dto';
 import { RefundProcessDto } from '../orders/dto/refund-process.dto';
-import { AnalyticsService } from '../analytics/analytics.service';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)

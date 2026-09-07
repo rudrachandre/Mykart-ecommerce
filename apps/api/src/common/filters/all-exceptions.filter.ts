@@ -25,9 +25,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const message =
       exception instanceof Error
         ? exception.message
-        : typeof exception === 'object' && exception !== null && 'message' in exception
-        ? (exception as any).message
-        : 'Internal server error';
+        : typeof exception === 'object' &&
+            exception !== null &&
+            'message' in exception
+          ? (exception as any).message
+          : 'Internal server error';
 
     const stack = exception instanceof Error ? exception.stack : undefined;
 

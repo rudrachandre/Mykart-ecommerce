@@ -381,10 +381,10 @@ export default function AdminCouponsPage() {
                   </td>
                   <td className="px-6 py-4 space-y-1 text-xs">
                     {coupon.minimumOrder && (
-                      <p className="text-muted-foreground">Min Order: ₹{parseFloat(coupon.minimumOrder)}</p>
+                      <p className="text-muted-foreground">Min Order: ₹{parseFloat(coupon.minimumOrder).toFixed(2)}</p>
                     )}
                     {coupon.maximumDiscount && (
-                      <p className="text-muted-foreground">Max Discount: ₹{parseFloat(coupon.maximumDiscount)}</p>
+                      <p className="text-muted-foreground">Max Discount: ₹{parseFloat(coupon.maximumDiscount).toFixed(2)}</p>
                     )}
                     {!coupon.minimumOrder && !coupon.maximumDiscount && <span>—</span>}
                   </td>

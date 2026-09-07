@@ -4,7 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
-var meilisearchSearchMock: jest.Mock;
+let meilisearchSearchMock: jest.Mock;
 
 jest.mock('meilisearch', () => {
   meilisearchSearchMock = jest.fn().mockResolvedValue({

@@ -161,8 +161,13 @@ export class SearchService implements OnModuleInit {
         include: { children: true },
       });
       if (resolvedCat && resolvedCat.children.length > 0) {
-        const catSlugs = [resolvedCat.slug, ...resolvedCat.children.map((c) => c.slug)];
-        const catFilterStr = catSlugs.map((s) => `category.slug = "${s}"`).join(' OR ');
+        const catSlugs = [
+          resolvedCat.slug,
+          ...resolvedCat.children.map((c) => c.slug),
+        ];
+        const catFilterStr = catSlugs
+          .map((s) => `category.slug = "${s}"`)
+          .join(' OR ');
         filter.push(`(${catFilterStr})`);
       } else {
         filter.push(`category.slug = "${category}"`);
@@ -240,7 +245,10 @@ export class SearchService implements OnModuleInit {
         include: { children: true },
       });
       if (resolvedCat) {
-        const categoryIds = [resolvedCat.id, ...resolvedCat.children.map((c) => c.id)];
+        const categoryIds = [
+          resolvedCat.id,
+          ...resolvedCat.children.map((c) => c.id),
+        ];
         where.categoryId = { in: categoryIds };
       } else {
         where.category = { slug: category };

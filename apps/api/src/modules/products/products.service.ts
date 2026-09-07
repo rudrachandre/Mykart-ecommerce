@@ -97,41 +97,41 @@ export class ProductsService {
     let product;
     try {
       product = await this.prisma.product.create({
-      data: {
-        ...productData,
-        sellerId,
-        images: images
-          ? {
-              create: images.map((img, i) => ({
-                url: img.url,
-                alt: img.alt,
-                sortOrder: img.sortOrder ?? i,
-              })),
-            }
-          : undefined,
-        variants: {
-          create: variants.map((v) => ({
-            sku: v.sku,
-            color: v.color,
-            size: v.size,
-            price: v.price,
-            inventory: {
-              create: {
-                quantity: v.inventory.quantity,
+        data: {
+          ...productData,
+          sellerId,
+          images: images
+            ? {
+                create: images.map((img, i) => ({
+                  url: img.url,
+                  alt: img.alt,
+                  sortOrder: img.sortOrder ?? i,
+                })),
+              }
+            : undefined,
+          variants: {
+            create: variants.map((v) => ({
+              sku: v.sku,
+              color: v.color,
+              size: v.size,
+              price: v.price,
+              inventory: {
+                create: {
+                  quantity: v.inventory.quantity,
+                },
               },
-            },
-          })),
-        },
-      },
-      include: {
-        images: true,
-        variants: {
-          include: {
-            inventory: true,
+            })),
           },
         },
-      },
-    });
+        include: {
+          images: true,
+          variants: {
+            include: {
+              inventory: true,
+            },
+          },
+        },
+      });
     } catch (error) {
       // Unique violations (slug race or duplicate variant SKUs) must surface
       // as 409, not an unhandled 500.
@@ -147,7 +147,11 @@ export class ProductsService {
     }
 
     this.searchSyncQueue
-      .add('upsert-product', { productId: product.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
+      .add(
+        'upsert-product',
+        { productId: product.id },
+        { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+      )
       .catch((err) => {
         console.error('Failed to enqueue upsert-product job', err);
       });
@@ -177,7 +181,6 @@ export class ProductsService {
       status: ProductStatus.ACTIVE,
     };
 
-
     if (categorySlug) {
       // Resolve category + all children so filtering by a parent slug (e.g. "electronics")
       // also returns products that belong to its sub-categories (e.g. "laptops", "smartphones").
@@ -186,7 +189,10 @@ export class ProductsService {
         include: { children: true },
       });
       if (resolvedCat) {
-        const categoryIds = [resolvedCat.id, ...resolvedCat.children.map((c) => c.id)];
+        const categoryIds = [
+          resolvedCat.id,
+          ...resolvedCat.children.map((c) => c.id),
+        ];
         where.categoryId = { in: categoryIds };
       } else {
         // Unknown slug — return empty result set
@@ -195,7 +201,10 @@ export class ProductsService {
     }
 
     if (brandSlug) {
-      const brandSlugs = brandSlug.split(',').map((s) => s.trim()).filter(Boolean);
+      const brandSlugs = brandSlug
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
       if (brandSlugs.length === 1) {
         where.brand = { slug: brandSlugs[0] };
       } else if (brandSlugs.length > 1) {
@@ -203,7 +212,12 @@ export class ProductsService {
       }
     }
 
-    if (onSale || minDiscount != null || dealType === 'TODAYS_DEALS' || dealType === 'LIGHTNING') {
+    if (
+      onSale ||
+      minDiscount != null ||
+      dealType === 'TODAYS_DEALS' ||
+      dealType === 'LIGHTNING'
+    ) {
       where.salePrice = { not: null };
     }
 
@@ -395,120 +409,142 @@ export class ProductsService {
     // that was ever carted/ordered impossible to edit (P2039 -> 500).
     // Instead: update matching variants by id/sku, create new ones, and
     // delete only variants removed from the payload AND unreferenced.
-    const updatedProduct = await this.prisma.$transaction(async (tx) => {
-      if (variants) {
-        const incoming = variants as Array<{
-          id?: string;
-          sku: string;
-          color?: string;
-          size?: string;
-          price?: number | null;
-          inventory?: { quantity?: number } | null;
-        }>;
-        const existing = await tx.productVariant.findMany({
-          where: { productId: id },
-          select: { id: true, sku: true },
-        });
-        for (const v of incoming) {
-          const match =
-            (v.id && existing.find((e) => e.id === v.id)) ||
-            existing.find((e) => e.sku === v.sku);
-          if (match) {
-            await tx.productVariant.update({
-              where: { id: match.id },
-              data: {
-                sku: v.sku,
-                color: v.color ?? null,
-                size: v.size ?? null,
-                price: v.price ?? null,
-                ...(v.inventory && {
-                  inventory: {
-                    upsert: {
-                      where: { variantId: match.id },
-                      update: { quantity: v.inventory.quantity ?? 0 },
-                      create: { quantity: v.inventory.quantity ?? 0 },
+    const updatedProduct = (await this.prisma
+      .$transaction(
+        async (tx) => {
+          if (variants) {
+            const incoming = variants as Array<{
+              id?: string;
+              sku: string;
+              color?: string;
+              size?: string;
+              price?: number | null;
+              inventory?: { quantity?: number } | null;
+            }>;
+            const existing = await tx.productVariant.findMany({
+              where: { productId: id },
+              select: { id: true, sku: true },
+            });
+            for (const v of incoming) {
+              const match =
+                (v.id && existing.find((e) => e.id === v.id)) ||
+                existing.find((e) => e.sku === v.sku);
+              if (match) {
+                await tx.productVariant.update({
+                  where: { id: match.id },
+                  data: {
+                    sku: v.sku,
+                    color: v.color ?? null,
+                    size: v.size ?? null,
+                    price: v.price ?? null,
+                    ...(v.inventory && {
+                      inventory: {
+                        upsert: {
+                          where: { variantId: match.id },
+                          update: { quantity: v.inventory.quantity ?? 0 },
+                          create: { quantity: v.inventory.quantity ?? 0 },
+                        },
+                      },
+                    }),
+                  },
+                });
+              } else {
+                await tx.productVariant.create({
+                  data: {
+                    productId: id,
+                    sku: v.sku,
+                    color: v.color ?? null,
+                    size: v.size ?? null,
+                    price: v.price ?? null,
+                    inventory: {
+                      create: { quantity: v.inventory?.quantity ?? 0 },
                     },
                   },
-                }),
-              },
-            });
-          } else {
-            await tx.productVariant.create({
-              data: {
-                productId: id,
-                sku: v.sku,
-                color: v.color ?? null,
-                size: v.size ?? null,
-                price: v.price ?? null,
-                inventory: {
-                  create: { quantity: v.inventory?.quantity ?? 0 },
+                });
+              }
+            }
+            // Remove only payload-dropped variants that no cart/order still references.
+            const incomingIds = incoming.map((v) => v.id).filter(Boolean);
+            const incomingSkus = new Set(incoming.map((v) => v.sku));
+            const removed = existing
+              .filter(
+                (e) => !incomingSkus.has(e.sku) && !incomingIds.includes(e.id),
+              )
+              .map((e) => e.id);
+            if (removed.length > 0) {
+              await tx.productVariant.deleteMany({
+                where: {
+                  productId: id,
+                  id: { in: removed },
+                  cartItems: { none: {} },
+                  orderItems: { none: {} },
                 },
-              },
-            });
+              });
+            }
           }
-        }
-        // Remove only payload-dropped variants that no cart/order still references.
-        const incomingIds = incoming.map((v) => v.id).filter(Boolean);
-        const incomingSkus = new Set(incoming.map((v) => v.sku));
-        const removed = existing
-          .filter((e) => !incomingSkus.has(e.sku) && !incomingIds.includes(e.id))
-          .map((e) => e.id);
-        if (removed.length > 0) {
-          await tx.productVariant.deleteMany({
-            where: {
-              productId: id,
-              id: { in: removed },
-              cartItems: { none: {} },
-              orderItems: { none: {} },
+
+          return tx.product.update({
+            where: { id },
+            data: {
+              ...productData,
+              ...(images && {
+                images: {
+                  deleteMany: {},
+                  create: images.map((img: any, i: number) => ({
+                    url: img.url,
+                    alt: img.alt,
+                    sortOrder: img.sortOrder ?? i,
+                  })),
+                },
+              }),
+            },
+            include: {
+              variants: { include: { inventory: true } },
+              images: true,
             },
           });
-        }
-      }
-
-      return tx.product.update({
-        where: { id },
-        data: {
-          ...productData,
-          ...(images && {
-            images: {
-              deleteMany: {},
-              create: images.map((img: any, i: number) => ({
-                url: img.url,
-                alt: img.alt,
-                sortOrder: img.sortOrder ?? i,
-              })),
-            },
-          }),
         },
-        include: { variants: { include: { inventory: true } }, images: true },
-      });
-    }, {
-      // Remote Postgres (Neon) round-trips are slow: the 5s default transaction
-      // timeout expired mid-commit (P2028 -> 500) on real admin edits. Use the
-      // same generous budget as the checkout transaction.
-      maxWait: 15000,
-      timeout: 30000,
-    }).catch((error) => {
-      // Unique violations (duplicate variant SKUs) must surface as 409.
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ConflictException('Product slug or variant SKU already exists');
-      }
-      throw error;
-    }) as Awaited<ReturnType<typeof this.prisma.product.update>>;
+        {
+          // Remote Postgres (Neon) round-trips are slow: the 5s default transaction
+          // timeout expired mid-commit (P2028 -> 500) on real admin edits. Use the
+          // same generous budget as the checkout transaction.
+          maxWait: 15000,
+          timeout: 30000,
+        },
+      )
+      .catch((error) => {
+        // Unique violations (duplicate variant SKUs) must surface as 409.
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException(
+            'Product slug or variant SKU already exists',
+          );
+        }
+        throw error;
+      })) as Awaited<ReturnType<typeof this.prisma.product.update>>;
 
     const oldPrice = Number(product.salePrice ?? product.basePrice);
-    const newPrice = Number(updatedProduct.salePrice ?? updatedProduct.basePrice);
+    const newPrice = Number(
+      updatedProduct.salePrice ?? updatedProduct.basePrice,
+    );
 
     if (newPrice < oldPrice) {
       const wishlists = await this.prisma.wishlistItem.findMany({
         where: { productId: id },
         include: { wishlist: { select: { userId: true } } },
       });
-      const formattedOldPrice = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(oldPrice);
-      const formattedNewPrice = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(newPrice);
+      const formattedOldPrice = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0,
+      }).format(oldPrice);
+      const formattedNewPrice = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0,
+      }).format(newPrice);
 
       for (const w of wishlists) {
         await this.notificationsService.createNotification(
@@ -521,7 +557,11 @@ export class ProductsService {
     }
 
     this.searchSyncQueue
-      .add('upsert-product', { productId: updatedProduct.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
+      .add(
+        'upsert-product',
+        { productId: updatedProduct.id },
+        { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+      )
       .catch((err) => {
         console.error('Failed to enqueue upsert-product job', err);
       });
@@ -545,7 +585,11 @@ export class ProductsService {
     });
 
     this.searchSyncQueue
-      .add('delete-product', { productId: id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
+      .add(
+        'delete-product',
+        { productId: id },
+        { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+      )
       .catch((err) => {
         console.error('Failed to enqueue delete-product job', err);
       });
@@ -563,7 +607,9 @@ export class ProductsService {
     if (user.role !== Role.ADMIN) {
       const sellerId = await this.getSellerId(user.userId);
       if (product.sellerId !== sellerId) {
-        throw new ForbiddenException('You can only upload images to your own products');
+        throw new ForbiddenException(
+          'You can only upload images to your own products',
+        );
       }
     }
 
@@ -587,7 +633,11 @@ export class ProductsService {
     });
 
     this.searchSyncQueue
-      .add('upsert-product', { productId: product.id }, { attempts: 3, backoff: { type: 'exponential', delay: 1000 } })
+      .add(
+        'upsert-product',
+        { productId: product.id },
+        { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+      )
       .catch((err) => {
         console.error('Failed to enqueue upsert-product job', err);
       });
@@ -604,7 +654,9 @@ export class ProductsService {
     if (user.role !== Role.ADMIN) {
       const sellerId = await this.getSellerId(user.userId);
       if (product.sellerId !== sellerId) {
-        throw new ForbiddenException('You can only delete images from your own products');
+        throw new ForbiddenException(
+          'You can only delete images from your own products',
+        );
       }
     }
 
@@ -644,7 +696,9 @@ export class ProductsService {
     if (user.role !== Role.ADMIN) {
       const sellerId = await this.getSellerId(user.userId);
       if (product.sellerId !== sellerId) {
-        throw new ForbiddenException('You can only update images on your own products');
+        throw new ForbiddenException(
+          'You can only update images on your own products',
+        );
       }
     }
 

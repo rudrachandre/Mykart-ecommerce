@@ -16,9 +16,7 @@ describe('ReviewsController (e2e)', () => {
   let adminToken: string;
 
   let customerId: string;
-  let otherCustomerId: string;
   let productId: string;
-  let reviewId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -114,7 +112,7 @@ describe('ReviewsController (e2e)', () => {
     });
 
     // 5. Create a delivered order for the first customer
-    const order = await prisma.order.create({
+    await prisma.order.create({
       data: {
         userId: customerId,
         status: OrderStatus.DELIVERED,
@@ -167,7 +165,11 @@ describe('ReviewsController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/api/v1/reviews')
         .set('Authorization', `Bearer ${otherCustomerToken}`)
-        .send({ productId, rating: 4, comment: 'Looks good but I did not buy it' })
+        .send({
+          productId,
+          rating: 4,
+          comment: 'Looks good but I did not buy it',
+        })
         .expect(400);
     });
 
@@ -175,7 +177,12 @@ describe('ReviewsController (e2e)', () => {
       const res = await request(app.getHttpServer())
         .post('/api/v1/reviews')
         .set('Authorization', `Bearer ${customerToken}`)
-        .send({ productId, rating: 5, title: 'Excellent', comment: 'Super fast laptop!' })
+        .send({
+          productId,
+          rating: 5,
+          title: 'Excellent',
+          comment: 'Super fast laptop!',
+        })
         .expect(201);
 
       expect(res.body).toHaveProperty('id');
@@ -213,9 +220,27 @@ describe('ReviewsController (e2e)', () => {
       // Seed some reviews
       await prisma.review.createMany({
         data: [
-          { userId: customerId, productId, rating: 5, comment: 'R1', status: 'APPROVED' },
-          { userId: customerId, productId, rating: 4, comment: 'R2', status: 'APPROVED' },
-          { userId: customerId, productId, rating: 3, comment: 'R3', status: 'APPROVED' },
+          {
+            userId: customerId,
+            productId,
+            rating: 5,
+            comment: 'R1',
+            status: 'APPROVED',
+          },
+          {
+            userId: customerId,
+            productId,
+            rating: 4,
+            comment: 'R2',
+            status: 'APPROVED',
+          },
+          {
+            userId: customerId,
+            productId,
+            rating: 3,
+            comment: 'R3',
+            status: 'APPROVED',
+          },
         ],
       });
     });

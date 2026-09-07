@@ -6,7 +6,12 @@ import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
 import { cleanDatabase } from './utils/prisma-cleanup';
 import * as bcrypt from 'bcrypt';
-import { Role, ProductStatus, OrderStatus, PaymentStatus } from '@prisma/client';
+import {
+  Role,
+  ProductStatus,
+  OrderStatus,
+  PaymentStatus,
+} from '@prisma/client';
 
 jest.mock('razorpay', () => {
   return jest.fn().mockImplementation(() => ({
@@ -89,7 +94,9 @@ describe('InventoryController (e2e)', () => {
             {
               sku: 'INV-SKU',
               price: 50,
-              inventory: { create: { quantity: 100, reserved: 0, lowStockThreshold: 10 } },
+              inventory: {
+                create: { quantity: 100, reserved: 0, lowStockThreshold: 10 },
+              },
             },
           ],
         },
@@ -158,14 +165,16 @@ describe('InventoryController (e2e)', () => {
     it('seller cannot adjust another sellers inventory', async () => {
       const otherSeller = await prisma.seller.create({
         data: {
-          userId: (await prisma.user.create({
-            data: {
-              email: 'other-inv-seller@example.com',
-              passwordHash: await bcrypt.hash('password123', 10),
-              name: 'Other Seller',
-              role: Role.SELLER,
-            },
-          })).id,
+          userId: (
+            await prisma.user.create({
+              data: {
+                email: 'other-inv-seller@example.com',
+                passwordHash: await bcrypt.hash('password123', 10),
+                name: 'Other Seller',
+                role: Role.SELLER,
+              },
+            })
+          ).id,
           storeName: 'Other Store',
           slug: 'other-store',
         },
@@ -185,7 +194,9 @@ describe('InventoryController (e2e)', () => {
               {
                 sku: 'OTHER-INV-SKU',
                 price: 50,
-                inventory: { create: { quantity: 100, reserved: 0, lowStockThreshold: 10 } },
+                inventory: {
+                  create: { quantity: 100, reserved: 0, lowStockThreshold: 10 },
+                },
               },
             ],
           },
@@ -233,14 +244,16 @@ describe('InventoryController (e2e)', () => {
     it('seller cannot view another sellers transaction history', async () => {
       const otherSeller = await prisma.seller.create({
         data: {
-          userId: (await prisma.user.create({
-            data: {
-              email: 'other-inv-seller2@example.com',
-              passwordHash: await bcrypt.hash('password123', 10),
-              name: 'Other Seller 2',
-              role: Role.SELLER,
-            },
-          })).id,
+          userId: (
+            await prisma.user.create({
+              data: {
+                email: 'other-inv-seller2@example.com',
+                passwordHash: await bcrypt.hash('password123', 10),
+                name: 'Other Seller 2',
+                role: Role.SELLER,
+              },
+            })
+          ).id,
           storeName: 'Other Store 2',
           slug: 'other-store-2',
         },
@@ -260,7 +273,9 @@ describe('InventoryController (e2e)', () => {
               {
                 sku: 'OTHER-INV-SKU-2',
                 price: 50,
-                inventory: { create: { quantity: 100, reserved: 0, lowStockThreshold: 10 } },
+                inventory: {
+                  create: { quantity: 100, reserved: 0, lowStockThreshold: 10 },
+                },
               },
             ],
           },
@@ -317,7 +332,10 @@ describe('InventoryController (e2e)', () => {
 
       const customerLoginRes = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
-        .send({ email: 'inventory-customer@example.com', password: 'password123' });
+        .send({
+          email: 'inventory-customer@example.com',
+          password: 'password123',
+        });
       const customerToken = customerLoginRes.body.accessToken;
 
       const res = await request(app.getHttpServer())

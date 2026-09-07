@@ -12,7 +12,8 @@ jest.mock('cloudinary', () => {
   const mockUploadStream = jest.fn((options: any, callback: any) => ({
     end: jest.fn((buffer: Buffer) => {
       callback(null, {
-        secure_url: 'https://res.cloudinary.com/test/image/upload/v1/mykart/products/test/test.png',
+        secure_url:
+          'https://res.cloudinary.com/test/image/upload/v1/mykart/products/test/test.png',
         public_id: 'mykart/products/test/test',
       });
     }),
@@ -47,7 +48,9 @@ describe('ProductsController - Images (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     app.setGlobalPrefix('api/v1');
     prisma = app.get(PrismaService);
     await app.init();

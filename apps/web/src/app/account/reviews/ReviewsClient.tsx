@@ -96,7 +96,7 @@ export default function ReviewsClient({ initialReviews, token }: { initialReview
                 {review.comment && <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>}
 
                 <p className="text-xs text-muted-foreground pt-1">
-                  Reviewed on {new Date(review.createdAt || Date.now()).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  Reviewed on {review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently'}
                 </p>
               </div>
             </div>

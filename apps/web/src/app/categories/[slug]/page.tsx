@@ -10,12 +10,23 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const category = await getCategoryBySlug(resolvedParams.slug).catch(() => null);
   
   if (!category) {
-    return { title: 'Category Not Found | MyKart' };
+    return { title: 'Category Not Found' };
   }
 
+  const desc = category.description || `Browse ${category.name} on MyKart`;
+
   return {
-    title: `${category.name} | MyKart`,
-    description: category.description,
+    title: category.name,
+    description: desc,
+    openGraph: {
+      title: `${category.name} | MyKart`,
+      description: desc,
+    },
+    twitter: {
+      card: 'summary',
+      title: `${category.name} | MyKart`,
+      description: desc,
+    },
   };
 }
 

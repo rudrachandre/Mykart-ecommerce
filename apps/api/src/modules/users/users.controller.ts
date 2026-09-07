@@ -1,11 +1,25 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-import { UpdateProfileDto, ChangePasswordDto, CreateAddressDto, UpdateAddressDto } from './dto/user.dtos';
+import {
+  UpdateProfileDto,
+  ChangePasswordDto,
+  CreateAddressDto,
+  UpdateAddressDto,
+} from './dto/user.dtos';
 
 @Controller('users')
 export class UsersController {
@@ -19,13 +33,19 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Put('me')
-  async updateProfile(@CurrentUser() user: { userId: string }, @Body() dto: UpdateProfileDto) {
+  async updateProfile(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: UpdateProfileDto,
+  ) {
     return this.usersService.updateProfile(user.userId, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('me/password')
-  async changePassword(@CurrentUser() user: { userId: string }, @Body() dto: ChangePasswordDto) {
+  async changePassword(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: ChangePasswordDto,
+  ) {
     return this.usersService.changePassword(user.userId, dto);
   }
 
@@ -37,16 +57,19 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post('me/addresses')
-  async createAddress(@CurrentUser() user: { userId: string }, @Body() dto: CreateAddressDto) {
+  async createAddress(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CreateAddressDto,
+  ) {
     return this.usersService.createAddress(user.userId, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put('me/addresses/:id')
   async updateAddress(
-    @CurrentUser() user: { userId: string }, 
-    @Param('id') id: string, 
-    @Body() dto: UpdateAddressDto
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+    @Body() dto: UpdateAddressDto,
   ) {
     return this.usersService.updateAddress(user.userId, id, dto);
   }
@@ -54,8 +77,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Delete('me/addresses/:id')
   async deleteAddress(
-    @CurrentUser() user: { userId: string }, 
-    @Param('id') id: string
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
   ) {
     return this.usersService.deleteAddress(user.userId, id);
   }

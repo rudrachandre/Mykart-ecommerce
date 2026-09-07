@@ -111,7 +111,13 @@ export class InventoryService {
     }
 
     const quantityChange = quantity - variant.inventory.quantity;
-    return this.adjustStock(variantId, user, quantityChange, 'ADJUSTMENT', reason);
+    return this.adjustStock(
+      variantId,
+      user,
+      quantityChange,
+      'ADJUSTMENT',
+      reason,
+    );
   }
 
   async getLowStockItems(
@@ -266,7 +272,8 @@ export class InventoryService {
       return Promise.all(
         updates.map((update) => {
           const quantityChange =
-            update.quantity - variantMap.get(update.variantId)!.inventory!.quantity;
+            update.quantity -
+            variantMap.get(update.variantId)!.inventory!.quantity;
           return this.adjustStock(
             update.variantId,
             user,
@@ -387,7 +394,7 @@ export class InventoryService {
     const available = updated.quantity - updated.reserved;
 
     // Back-in-stock alert for wishlist users
-    const wasOutOfStock = (currentQuantity - currentReserved) <= 0;
+    const wasOutOfStock = currentQuantity - currentReserved <= 0;
     const isNowInStock = available > 0;
 
     if (wasOutOfStock && isNowInStock) {

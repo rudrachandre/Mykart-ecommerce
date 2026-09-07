@@ -37,9 +37,17 @@ export class ReviewsController {
       const p = page ? parseInt(page, 10) : 1;
       const l = limit ? parseInt(limit, 10) : 10;
       const res = await this.reviewsService.getProductReviews(productId, p, l);
-      return res || { items: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
+      return (
+        res || {
+          items: [],
+          meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+        }
+      );
     } catch {
-      return { items: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
+      return {
+        items: [],
+        meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      };
     }
   }
 
@@ -88,10 +96,7 @@ export class ReviewsController {
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions(PERMISSIONS.REVIEW_MODERATE)
-  moderateReview(
-    @Param('id') id: string,
-    @Body('status') status: string,
-  ) {
+  moderateReview(@Param('id') id: string, @Body('status') status: string) {
     return this.reviewsService.moderateReview(id, status);
   }
 }

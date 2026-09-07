@@ -1,5 +1,9 @@
 import { ForbiddenException } from '@nestjs/common';
-import { PERMISSIONS, permissionsForRole, ROLE_PERMISSIONS } from './permissions';
+import {
+  PERMISSIONS,
+  permissionsForRole,
+  ROLE_PERMISSIONS,
+} from './permissions';
 import { PermissionsGuard } from './permissions.guard';
 
 const makeContext = (user: { role: string } | undefined) =>
@@ -48,9 +52,9 @@ describe('Permissions model & guard', () => {
 
   it('guard denies when a required permission is missing', () => {
     const guard = new PermissionsGuard(makeReflector([PERMISSIONS.USER_READ]));
-    expect(() =>
-      guard.canActivate(makeContext({ role: 'SELLER' })),
-    ).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(makeContext({ role: 'SELLER' }))).toThrow(
+      ForbiddenException,
+    );
   });
 
   it('guard allows when all required permissions are granted', () => {

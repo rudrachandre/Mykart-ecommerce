@@ -20,8 +20,27 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "MyKart - Premium Electronics",
-  description: "The best place to buy premium electronics.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://mykart-ecommerce-web.vercel.app'),
+  title: {
+    default: "MyKart - Premium E-Commerce & Electronics",
+    template: "%s | MyKart",
+  },
+  description: "Browse and buy high-quality electronics, smartphones, fashion, and everyday essentials on MyKart.",
+  openGraph: {
+    type: "website",
+    siteName: "MyKart",
+    title: "MyKart - Premium E-Commerce & Electronics",
+    description: "Browse and buy high-quality electronics, smartphones, fashion, and everyday essentials on MyKart.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MyKart - Premium E-Commerce & Electronics",
+    description: "Browse and buy high-quality electronics, smartphones, fashion, and everyday essentials on MyKart.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

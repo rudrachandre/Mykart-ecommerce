@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -25,7 +30,9 @@ export class ReviewsService {
     });
 
     if (!orderItem) {
-      throw new BadRequestException('You can only review products you have purchased.');
+      throw new BadRequestException(
+        'You can only review products you have purchased.',
+      );
     }
 
     const verifiedPurchase = true;
@@ -81,19 +88,23 @@ export class ReviewsService {
       const p = Number.isNaN(page) || page < 1 ? 1 : page;
       const l = Number.isNaN(limit) || limit < 1 ? 10 : limit;
 
-      const product = await this.prisma.product.findFirst({
-        where: {
-          OR: [{ id: productIdOrSlug }, { slug: productIdOrSlug }],
-        },
-        select: { id: true },
-      }).catch(() => null);
+      const product = await this.prisma.product
+        .findFirst({
+          where: {
+            OR: [{ id: productIdOrSlug }, { slug: productIdOrSlug }],
+          },
+          select: { id: true },
+        })
+        .catch(() => null);
 
       const targetId = product ? product.id : productIdOrSlug;
 
-      const items = await this.prisma.review.findMany({
-        where: { productId: targetId },
-        take: l,
-      }).catch(() => []);
+      const items = await this.prisma.review
+        .findMany({
+          where: { productId: targetId },
+          take: l,
+        })
+        .catch(() => []);
 
       return {
         items: items || [],
@@ -120,7 +131,9 @@ export class ReviewsService {
     if (!review) throw new NotFoundException('Review not found');
 
     if (review.userId !== userId && role !== 'ADMIN' && role !== 'SUPPORT') {
-      throw new ForbiddenException('You are not authorized to delete this review');
+      throw new ForbiddenException(
+        'You are not authorized to delete this review',
+      );
     }
 
     const productId = review.productId;

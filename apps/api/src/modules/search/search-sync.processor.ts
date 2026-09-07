@@ -91,7 +91,9 @@ export class SearchSyncProcessor extends WorkerHost {
         size: v.size,
         price: v.price ? Number(v.price) : null,
       })),
-      onSale: product.salePrice ? Number(product.salePrice) < Number(product.basePrice) : false,
+      onSale: product.salePrice
+        ? Number(product.salePrice) < Number(product.basePrice)
+        : false,
     };
 
     await this.client.index('products').addDocuments([document]);

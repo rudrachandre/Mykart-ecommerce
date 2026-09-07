@@ -1,3 +1,5 @@
+import Cookies from 'js-cookie';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 if (!API_URL && process.env.NODE_ENV === 'production') {
   console.warn('[api] NEXT_PUBLIC_API_URL is not set — falling back to localhost');
@@ -10,7 +12,7 @@ async function fetchWithAuth(url: string, token?: string, options: RequestInit =
 
   let activeToken = token;
   if (!activeToken && typeof window !== 'undefined') {
-    activeToken = localStorage.getItem('token') || undefined;
+    activeToken = Cookies.get('accessToken') || localStorage.getItem('token') || undefined;
   }
 
   if (activeToken) {
@@ -69,44 +71,7 @@ export async function getAnalyticsOverview(
 }
 
 export async function getDashboardStats(token?: string) {
-  return fetchWithAuth(`${BASE_URL}/api/v1/analytics/dashboard`, token).catch(() => ({
-    totalUsers: 1,
-    totalCustomers: 1,
-    totalSellers: 1,
-    newCustomers: 1,
-    totalOrders: 0,
-    ordersToday: 0,
-    ordersLast7Days: 0,
-    ordersLast30Days: 0,
-    orderDistribution: {},
-    totalRevenue: 0,
-    revenueToday: 0,
-    revenueLast7Days: 0,
-    revenueLast30Days: 0,
-    avgOrderValue: 0,
-    sellerDistribution: {},
-    totalProducts: 40,
-    activeProducts: 40,
-    outOfStockCount: 0,
-    availableStock: 100,
-    reservedStock: 0,
-    lowStockCount: 0,
-    totalInventoryValue: 0,
-    paymentDistribution: {},
-    totalRefunds: 0,
-    totalRefundAmount: 0,
-    totalReturns: 0,
-    approvedReturns: 0,
-    rejectedReturns: 0,
-    totalReplacements: 0,
-    totalReviews: 0,
-    avgRating: 0,
-    reportedReviewsCount: 0,
-    pendingModerationCount: 0,
-    totalCoupons: 0,
-    activeCoupons: 0,
-    couponsUsedCount: 0,
-  }));
+  return fetchWithAuth(`${BASE_URL}/api/v1/analytics/dashboard`, token);
 }
 
 export async function getAuditLogs(
