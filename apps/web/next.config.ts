@@ -26,10 +26,14 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // /account/orders is a dead route — orders live at /orders
       {
-        source: '/account/orders',
-        destination: '/orders',
+        source: '/orders',
+        destination: '/account/orders',
+        permanent: true,
+      },
+      {
+        source: '/orders/:id',
+        destination: '/account/orders/:id',
         permanent: true,
       },
     ];
