@@ -1,76 +1,132 @@
-# System Architecture & Technical Design
+# MyKart — Modular Monolith Architecture & Technical Design
 
-## 1. System Flow & Data Pipelines
+## 1. High-Level Architecture Diagram
 
 MyKart follows a multi-tier client-server architecture built on a high-throughput **Modular Monolith**:
 
 ```text
-+-----------------------------------------------------------------------+
-|                             USER CLIENTS                              |
-|           Desktop (1440x900)  |  Mobile (390x844 / 412x915)           |
-+-----------------------------------------------------------------------+
-                                   |  (HTTPS / REST / JSON)
-                                   v
-+-----------------------------------------------------------------------+
-|                    FRONTEND APP (Next.js 16 App Router)               |
-|      React 19 Server Components, Client State Sync, Tailwind UI      |
-+-----------------------------------------------------------------------+
-                                   |  (REST API / JWT Auth)
-                                   v
-+-----------------------------------------------------------------------+
-|                    BACKEND REST API (NestJS 10 Monolith)              |
-|   Auth Guard  |  RBAC Guard  |  Validation Pipe  |  Module Controllers |
-+-----------------------------------------------------------------------+
-       |                  |                  |                  |
-       v                  v                  v                  v
-+--------------+   +--------------+   +--------------+   +--------------+
-| Neon Postgres|   | Redis Cache  |   | Meilisearch  |   | Integrations |
-| (Prisma ORM) |   | (Tokens/TTL) |   | (Search Engine)| |(Cloudinary/  |
-| Primary Data |   | Sessions     |   | Fuzzy Index  |   | Razorpay/    |
-| Source       |   | Rate Limits  |   | Auto-complete|   | Resend)      |
-+--------------+   +--------------+   +--------------+   +--------------+
+Frontend Layer (Next.js 16 Web Application)
+       │
+       ▼  (HTTPS / REST API / JSON)
+Backend API Layer (NestJS 10 REST API Server)
+       │
+       ▼
+Application Modules (Auth, Products, Cart, Orders, Inventory, Seller, Admin)
+       │
+       ▼
+Persistence & Infrastructure Layer
+ ├── PostgreSQL (Neon Serverless Database via Prisma ORM 7)
+ ├── Redis (Token invalidation, rate limiting, stock reservation TTL)
+ ├── Meilisearch (Typo-tolerant full-text search engine)
+ └── Cloudinary CDN (Image upload & media management)
 ```
 
 ---
 
-## 2. Architectural Paradigm: Why Modular Monolith?
+## 2. Architectural Paradigm: Modular Monolith
 
 > **"Microservices are intentionally not used."**
 
-MyKart is intentionally designed as a **Modular Monolith** in NestJS and Next.js 16 rather than distributed microservices for several core engineering reasons:
-1. **Data Consistency & Transactions**: E-commerce transactions require strict ACID atomicity across Cart, Orders, Stock Reservations, and Payments. A modular monolith enables single-database transactional integrity via Prisma transactions (`$transaction`), avoiding complex distributed saga patterns or eventual consistency anomalies.
-2. **Simplified Deployment & Reduced Latency**: Zero inter-service network overhead or gRPC complexity. All domain modules (Catalog, Orders, Auth, Users, Inventory) run in a unified, highly efficient NestJS runtime deployed on Render.
-3. **Domain-Driven Module Boundaries**: Each domain module (`modules/auth`, `modules/products`, `modules/orders`, `modules/inventory`, `modules/seller`, `modules/admin`) maintains isolated logic, controllers, and services, allowing clean future extraction into separate microservices if required by hyper-scale demands.
+MyKart is intentionally engineered as a clean **Modular Monolith** rather than distributed microservices for key architectural reasons:
+
+1. **ACID Transactional Integrity**: E-commerce operations (cart checkout, stock deduction, order generation) require atomic single-database transactions (`$transaction` in Prisma) to eliminate race conditions and overselling.
+2. **Zero Inter-Service Latency**: In-process communication across modules avoids HTTP/gRPC network overhead, serialization costs, and distributed tracing complexity.
+3. **Operational Simplicity**: Simplifies CI/CD deployment to Vercel and Render without orchestrating Kubernetes clusters, service meshes, or distributed saga pattern engines.
+4. **Strict Domain Boundaries**: Each domain module maintains isolated services, DTOs, and controllers, allowing clean future extraction into separate microservices if required by scale.
 
 ---
 
-## 3. External Integrations
+## 3. Backend Module Breakdown
 
-- **Google OAuth 2.0 (PKCE)**: Federated user authentication via Google Accounts.
-- **Razorpay Payments**: Payment gateway integration supporting cards, UPI, net banking, and COD fallback.
-- **Cloudinary CDN**: Automated image upload, optimization, and responsive web formatting.
-- **Resend**: Transactional email notification delivery for order placement, shipment tracking, and account updates.
+The NestJS backend (`apps/api/src/modules`) consists of 14 modular domains:
+
+| Module | Responsibility & Scope |
+| :--- | :--- |
+| **`auth`** | Registration, login, Google OAuth 2.0 PKCE, dual JWT access/refresh token rotation, token family revocation. |
+| **`users`** | User profile updates, delivery address book CRUD, role assignments. |
+| **`products`** | Catalog listing, slug lookup, variant mapping, category/brand relations, rating calculations. |
+| **`categories`** | Hierarchical category parent-child tree management. |
+| **`brands`** | Authentic brand directory management. |
+| **`search`** | Meilisearch background index sync, full-text fuzzy search execution, facet filtering. |
+| **`cart`** | User cart persistence, item quantity adjustments, total calculations. |
+| **`orders`** | Multi-step checkout execution, order state lifecycle engine (`PENDING` → `PROCESSING` → `SHIPPED` → `DELIVERED`). |
+| **`inventory`** | Variant stock tracking, low-stock threshold monitoring, Redis stock reservation TTL locks. |
+| **`seller`** | Seller store onboarding, seller product CRUD, seller stock inventory, seller order fulfillment. |
+| **`admin`** | Executive GMV analytics, seller verification approvals, global user RBAC management. |
+| **`analytics`** | Aggregated marketplace performance statistics (revenue, order counts, customer counts). |
+| **`coupons`** | Promotional coupon validation, fixed/percentage discount calculations. |
+| **`reviews`** | Customer product review submissions, rating aggregations, moderation status. |
+| **`wishlist`** | Saved item wishlist management per customer. |
+| **`notifications`**| Account and order update alerts. |
 
 ---
 
-## 4. Key Architectural Subsystems
+## 4. Frontend Route Organization
 
-### Authentication & Authorization (RBAC)
-- **JWT Dual-Token Architecture**: Short-lived Access Tokens (15 minutes) issued in memory/header for stateless API requests; long-lived Refresh Tokens (7 days) persisted in HttpOnly, SameSite, Secure cookies.
-- **Role-Based Access Control (RBAC)**: NestJS `@Roles('CUSTOMER', 'SELLER', 'ADMIN')` decorators enforced globally via `PermissionsGuard`.
+The Next.js 16 App Router (`apps/web/src/app`) organizes pages into 3 major user portal domains:
 
-### Database Layer & Prisma ORM
-- Hosted on **Neon Serverless PostgreSQL**.
-- Models: `User`, `Account`, `Session`, `Seller`, `Product`, `Category`, `Brand`, `ProductVariant`, `Inventory`, `Order`, `OrderItem`, `Review`, `Wishlist`, `Coupon`, `Notification`.
+### Customer Portal
+- `/` — Homepage featuring hero deal carousels, featured categories, and top-rated items.
+- `/products`, `/products/[slug]` — Product catalog browsing, filtering, and detail page (PDP).
+- `/categories`, `/categories/[slug]` — Category navigation & category product listings.
+- `/brands`, `/brands/[slug]` — Brand catalog listings.
+- `/search` — Full-text search results page with dual-range price & discount sliders.
+- `/cart` — Itemized cart management with quantity controls and coupon input.
+- `/checkout` — Address selection, payment method options (COD/UPI/Card), and order summary.
+- `/account/*` — Customer portal: Orders history, Wishlist, Addresses, Profile, Notifications.
 
-### Inventory Source of Truth & Concurrency Control
-- Stock is tracked per `ProductVariant` inside the `Inventory` table.
-- Stock reservations use an automated TTL window (`INVENTORY_RESERVATION_TTL_MS = 900000` / 15 mins) backed by Redis locks to prevent double-booking during active checkout flows.
+### Seller Center (`/seller/*`)
+- `/seller` — Seller dashboard overview & metrics.
+- `/seller/products`, `/seller/products/new`, `/seller/products/[slug]/edit` — Product management.
+- `/seller/inventory` — Variant stock level management.
+- `/seller/orders`, `/seller/orders/[id]` — Seller order fulfillment updates.
+- `/seller/coupons` — Seller promotional coupon manager.
+- `/seller/onboard` — Seller application onboarding flow.
 
-### Search Engine Integration
-- **Meilisearch**: Provides sub-10ms fuzzy text search, autocomplete suggestions, dynamic price filtering, category facets, and brand filter options.
+### Admin Control Panel (`/admin/*`)
+- `/admin` — Executive dashboard overview (GMV, active users, total orders, active coupons).
+- `/admin/analytics` — Detailed performance & revenue analytics.
+- `/admin/sellers`, `/admin/sellers/[id]` — Seller verification & store approval controls.
+- `/admin/users` — User list & role modification controls.
+- `/admin/categories`, `/admin/brands` — Global category tree and brand catalog management.
+- `/admin/products`, `/admin/orders`, `/admin/inventory` — Global marketplace governance.
 
-### Observability & Security Boundaries
-- Global NestJS `HttpExceptionFilter` sanitizes error tracebacks in production.
-- Rate limiting implemented via Redis sliding window counter.
-- Server-side resource ownership validation prevents IDOR attacks across endpoints.
+---
+
+## 5. End-to-End Data Flows
+
+### A. Authentication Data Flow
+```text
+User Submits Credentials / Google OAuth -> Auth Controller -> Passport Strategy
+ -> Validate Credentials -> Generate 15-min Access Token (JSON) + 7-day Refresh Token
+ -> Store Argon2 Refresh Token Hash in DB -> Set HttpOnly, Secure Cookie -> Return Payload
+```
+
+### B. Product Discovery Data Flow
+```text
+User Enters Search Query / Filter -> Next.js Product Catalog Component
+ -> REST API GET /api/v1/search (or /api/v1/products) -> Search Service / Meilisearch
+ -> Returns Filtered Products + Facet Counts -> Render Product Grid
+```
+
+### C. Cart & Checkout Data Flow
+```text
+User Clicks 'Add to Cart' -> Cart Context / REST API POST /api/v1/cart/items -> DB Sync
+ -> User Navigates /checkout -> POST /api/v1/orders -> Validate Stock & Apply Reservation Lock (Redis TTL)
+ -> Process Simulated Payment -> Execute Prisma $transaction (Create Order, Deduct Inventory, Clear Cart)
+ -> Return Order Confirmation -> Render Order Success Page
+```
+
+### D. Seller Operations Data Flow
+```text
+Seller Updates Stock Count -> Seller Inventory Component -> PUT /api/v1/seller/inventory
+ -> PermissionsGuard (Validates SELLER role + IDOR Store Ownership)
+ -> InventoryService -> Update Variant Stock -> Audit Log -> Return Updated Inventory
+```
+
+### E. Admin Operations Data Flow
+```text
+Admin Views Dashboard -> Admin Analytics Component -> GET /api/v1/admin/analytics
+ -> PermissionsGuard (Validates ADMIN role) -> AnalyticsService
+ -> Aggregate Orders, Revenue, Coupons, Users -> Return Verified Performance Matrix
+```

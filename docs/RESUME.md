@@ -1,39 +1,32 @@
 # MyKart — Resume Portfolio Artifacts
 
-This document contains 3 resume-ready descriptions of the **MyKart** project for software engineering, full-stack, and backend developer resumes.
+This document contains 4 recruiter-ready project descriptions of **MyKart** tailored for resume formats and interview intros.
 
 ---
 
-## Version 1: Full-Stack Focused (Recommended)
+## Version A: One-Line Project Description
 
-**MyKart — Full-Stack Multi-Vendor E-Commerce Marketplace**  
-*Next.js 16 (App Router), TypeScript, NestJS, PostgreSQL, Prisma ORM, Redis, Meilisearch, Tailwind CSS*
-- Architected and built a production-grade multi-vendor e-commerce marketplace supporting **Customer**, **Seller**, and **Admin** portals across **109 active catalog products**, **8 parent categories**, and **46 authentic brands**.
-- Implemented federated **Google OAuth 2.0** and email/password authentication using short-lived JWT access tokens and HttpOnly refresh token cookie rotation stored with Argon2 hashing.
-- Developed an ultra-fast search and discovery pipeline powered by **Meilisearch** (<10ms fuzzy text search) and dynamic dual-range slider filters for price and discount metrics.
-- Engineered automated inventory reservation windows using **Redis TTL locks** to prevent double-booking during high-concurrency checkout flows.
-- Established strict security standards with Role-Based Access Control (RBAC), server-side IDOR ownership checks, rate limiting, and zero committed secrets.
-- Validated performance and visual stability via **Playwright E2E automation** across 27 routes in Desktop (1440x900) and Mobile (390x844, 412x915) viewports with **0 console errors, 0 broken images, and 0 layout overflows**.
+> Built and deployed a production-grade full-stack e-commerce marketplace (Next.js 16, NestJS 10, PostgreSQL, Prisma, Redis, Meilisearch) featuring a Modular Monolith architecture, dual JWT auth with HttpOnly cookie rotation, role-based workflows for Customers, Sellers, and Admins, sub-10ms search, and 100% Playwright E2E test coverage across desktop and mobile viewports.
 
 ---
 
-## Version 2: Software Engineering & Systems Focused
+## Version B: 2-Line Resume Version
 
-**MyKart — E-Commerce Systems Engine**  
-*NestJS, PostgreSQL (Neon), Prisma ORM, Redis, Jest, Playwright, Vercel, Render*
-- Designed a **Modular Monolith** NestJS REST API servicing multi-role marketplace domain modules (Auth, Catalog, Cart, Orders, Inventory, Admin).
-- Modeled 15 relational database tables in PostgreSQL via **Prisma ORM**, incorporating transactional integrity (`$transaction`) for order placements and inventory adjustments.
-- Engineered an automated unit and integration test suite using **Jest** (**24/24 tests passed**) covering permission guards and inventory transactional operations.
-- Deployed a CI/CD pipeline hosting Next.js frontend on **Vercel** and NestJS API on **Render**, backed by serverless **Neon PostgreSQL**.
+> **MyKart — Full-Stack Multi-Vendor E-Commerce Marketplace** *(Next.js 16, NestJS, TypeScript, PostgreSQL, Prisma, Redis, Meilisearch)*
+> Engineered a production-deployed e-commerce marketplace featuring Customer, Seller, and Admin portals across 110 catalog items, implementing dual JWT refresh-token rotation, RBAC, IDOR protection, Redis stock reservation TTL locks, Meilisearch fuzzy search, and automated Playwright E2E testing.
 
 ---
 
-## Version 3: ATS-Friendly Concise Version
+## Version C: 3–4 Bullet Resume Version (Recommended for SWE Applications)
 
-**Full-Stack E-Commerce Project | MyKart**  
-`Next.js 16 | NestJS | TypeScript | PostgreSQL | Prisma | Redis | Meilisearch | Tailwind CSS`
-- Built a multi-vendor e-commerce web application with Customer, Seller, and Admin role workflows.
-- Integrated Google OAuth 2.0 and JWT HttpOnly refresh token rotation for secure user authentication.
-- Implemented real-time fuzzy search with Meilisearch, dual-range filter sliders, and instant checkout flows.
-- Modeled PostgreSQL database schema using Prisma ORM and added Redis in-memory token caching.
-- Achieved 100% E2E test pass rate across Desktop and Mobile viewports using Playwright.
+**MyKart — Full-Stack Multi-Vendor E-Commerce Marketplace** | `Next.js 16 (App Router) | NestJS 10 | PostgreSQL (Neon) | Prisma ORM | Redis | Meilisearch | TypeScript`
+- **Architected a Modular Monolith REST API** servicing Customer, Seller, and Admin portals across 110 authentic catalog items, 8 parent categories, and 46 brands, avoiding microservice network overhead while ensuring ACID database transactions.
+- **Implemented Enterprise Security**: Integrated Google OAuth 2.0 and credential authentication utilizing 15-minute JWT access tokens and 7-day HttpOnly refresh token rotation with token-family reuse detection, server-side IDOR ownership validation, and RBAC guards.
+- **Engineered Sub-10ms Search & Inventory Locks**: Integrated Meilisearch for typo-tolerant full-text search with dynamic dual-range slider filters, and implemented Redis TTL locks (`15-min window`) to prevent stock overbooking during checkout.
+- **Validated Production Reliability**: Maintained a 100% test pass rate across Jest backend unit tests and automated Playwright E2E multi-viewport regressions (Desktop 1440x900, Mobile 390x844/412x915) with 0 console errors and 0 layout overflows.
+
+---
+
+## Version D: Technical Interview Pitch Version (Elevator Intro)
+
+> "MyKart is a full-stack multi-vendor e-commerce marketplace built using Next.js 16 App Router and NestJS 10. I specifically chose a Modular Monolith architecture to guarantee ACID transactional consistency across cart checkouts and inventory deductions without the complexity and latency of distributed sagas. The platform features secure dual-token JWT authentication with HttpOnly cookie rotation, server-side IDOR protection, role-based controls for Customers, Sellers, and Admins, sub-10ms Meilisearch fuzzy search, Redis TTL stock reservation locks, and complete Playwright E2E browser automation across desktop and mobile form factors."

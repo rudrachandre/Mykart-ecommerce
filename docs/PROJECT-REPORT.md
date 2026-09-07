@@ -1,142 +1,155 @@
-# MyKart — Production E-Commerce Marketplace Technical Report
+# MyKart — Technical Portfolio Project Report
 
 ---
 
 ## 1. Abstract
-MyKart is an enterprise-grade multi-vendor e-commerce marketplace built using Next.js 16 (App Router), NestJS 10, PostgreSQL (Neon), Prisma ORM, and Redis. The platform provides a rich online shopping ecosystem for customers while offering dedicated management portals for sellers and system administrators. The system emphasizes transactional consistency, low-latency fuzzy search via Meilisearch, role-based authorization, and modern user interface design.
+**MyKart** is a production-grade multi-vendor e-commerce marketplace built using Next.js 16 (App Router), NestJS 10, PostgreSQL (Neon), Prisma ORM 7, and Redis. The platform delivers an enterprise shopping experience for customers while offering operational management portals for sellers and system administrators. Engineered as a clean **Modular Monolith**, the system emphasizes ACID transactional consistency, sub-10ms fuzzy search via Meilisearch, dual JWT access/refresh-token rotation, role-based authorization (RBAC), and 100% responsive user interface design across desktop and mobile viewports.
 
 ---
 
 ## 2. Problem Statement
-Traditional e-commerce web applications often suffer from fragmented architectures, slow search experiences, weak mobile responsiveness, and vulnerable authentication flows. Developing a production-ready marketplace requires balancing complex inventory concurrency, multi-role security (Customer, Seller, Admin), real-time search indexing, and resilient payment gateway integrations without introducing unnecessary microservice operational overhead.
+Traditional e-commerce web applications often suffer from fragmented architectures, high search latency, weak mobile responsiveness, and vulnerable authentication mechanisms. Building an enterprise marketplace requires balancing complex inventory concurrency, multi-role security boundaries (Customer, Seller, Admin), real-time search indexing, and resilient payment workflows without introducing the operational overhead and eventual-consistency risks of distributed microservices.
 
 ---
 
 ## 3. Objectives
-- Architect a high-throughput **Modular Monolith** backend using NestJS and Prisma ORM.
-- Develop a modern, responsive single-page frontend using Next.js 16 App Router and Tailwind CSS.
-- Implement federated **Google OAuth 2.0** alongside credential authentication using dual JWT access/refresh token rotation stored in HttpOnly cookies.
-- Build sub-10ms full-text fuzzy search and faceted filter controls powered by Meilisearch.
-- Create role-specific operational dashboards for Customer Account Management, Seller Inventory Control, and Admin Marketplace Governance.
-- Ensure 100% layout consistency across desktop (1440x900) and mobile (390x844, 412x915) form factors.
+- **Architect a High-Performance Modular Monolith**: Design a domain-bounded NestJS backend API connected via Prisma ORM to PostgreSQL.
+- **Deliver a Responsive Frontend**: Build a modern, accessible user interface in Next.js 16 App Router and Tailwind CSS.
+- **Implement Enterprise Authentication & RBAC**: Combine federated Google OAuth 2.0 and credential sign-in with short-lived JWT access tokens and HttpOnly, Secure refresh-token cookie rotation.
+- **Enable Sub-10ms Search & Discovery**: Deploy Meilisearch for typo-tolerant full-text search, autocomplete suggestions, and dynamic facet filtering.
+- **Build Multi-Role Operational Portals**: Establish dedicated suites for Customer Account Management, Seller Inventory Control, and Admin Marketplace Governance.
+- **Guarantee Zero Visual & Layout Regressions**: Validate 100% layout integrity across desktop (1440x900) and mobile (390x844, 412x915) screen resolutions.
 
 ---
 
-## 4. Proposed Solution
-MyKart addresses these challenges by combining Next.js Server Components with a domain-driven NestJS API. The application uses PostgreSQL for relational data storage, Redis for fast token validation and stock reservation locks, and Meilisearch for real-time product indexing. Role-Based Access Control (RBAC) guards enforce permission boundaries at the API layer, while server-side resource checks prevent Insecure Direct Object References (IDOR).
+## 4. System Architecture
+
+MyKart implements a tier-separated Modular Monolith architecture:
+
+```text
++-----------------------------------------------------------------------+
+|                             USER CLIENTS                              |
+|           Desktop (1440x900)  |  Mobile (390x844 / 412x915)           |
++-----------------------------------------------------------------------+
+                                   |  (HTTPS / REST / JSON)
+                                   v
++-----------------------------------------------------------------------+
+|                    FRONTEND APP (Next.js 16 App Router)               |
+|      React 19 Server Components, Client State Sync, Tailwind UI      |
++-----------------------------------------------------------------------+
+                                   |  (REST API / JWT Auth)
+                                   v
++-----------------------------------------------------------------------+
+|                    BACKEND REST API (NestJS 10 Monolith)              |
+|   Auth Guard  |  RBAC Guard  |  Validation Pipe  |  Module Controllers |
++-----------------------------------------------------------------------+
+       |                  |                  |                  |
+       v                  v                  v                  v
++--------------+   +--------------+   +--------------+   +--------------+
+| Neon Postgres|   | Redis Cache  |   | Meilisearch  |   | Integrations |
+| (Prisma ORM) |   | (Tokens/TTL) |   | (Search Engine)| | (Cloudinary/ |
+| Primary Data |   | Lock Window  |   | Fuzzy Index  |   |  Resend)     |
++--------------+   +--------------+   +--------------+   +--------------+
+```
+
+### Architectural Rationale: Why Modular Monolith?
+> **"Microservices are intentionally not used."**
+
+1. **ACID Transactional Atomicity**: E-commerce checkout requires atomic operations spanning Cart state clearing, Inventory reservation deduction, Order line item creation, and Payment verification. Single-database `$transaction` blocks in Prisma ensure strict ACID guarantees without complex distributed saga patterns.
+2. **Zero Network Latency Between Modules**: In-process invocation across domain modules eliminates inter-service HTTP/gRPC latency and network failure modes.
+3. **Clean Module Boundaries**: Functionality is divided into domain modules (`auth`, `users`, `products`, `cart`, `orders`, `inventory`, `seller`, `admin`, `analytics`, `coupons`, `reviews`, `wishlist`, `notifications`), maintaining strict encapsulation for future scaling.
 
 ---
 
-## 5. System Architecture
-MyKart uses a tier-separated architecture:
-- **Presentation Layer**: Next.js 16 App Router, React 19, Tailwind CSS, Lucide Icons, Shadcn UI.
-- **Application Layer**: NestJS 10 REST API, Class-Validator DTOs, Passport Authentication Strategies.
-- **Persistence Layer**: Neon Serverless PostgreSQL, Prisma ORM 7.
-- **Cache & Infrastructure**: Redis (Rate limiting & reservation TTL), Meilisearch (Fuzzy search engine), Cloudinary (CDN Asset Storage).
+## 5. Technology Stack
+
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS, Lucide Icons, Shadcn UI
+- **Backend API**: NestJS 10, TypeScript (Strict Mode), Class-Validator, Passport Strategies
+- **Database & Persistence**: Serverless PostgreSQL (Neon), Prisma ORM 7
+- **Caching & Lock Engine**: Redis 7 (Token invalidation, rate limiting, stock reservation TTL)
+- **Search & Services**: Meilisearch, Cloudinary CDN, Resend
+- **Testing Frameworks**: Jest, Playwright E2E
 
 ---
 
-## 6. Technology Stack
-- **Languages**: TypeScript (Strict Mode)
-- **Frontend**: Next.js 16, React 19, Tailwind CSS
-- **Backend**: NestJS 10, RxJS, Passport
-- **Database & Cache**: PostgreSQL 16 (Neon), Prisma 7, Redis 7
-- **Search & Services**: Meilisearch, Cloudinary, Razorpay, Resend
-- **Testing**: Jest, Playwright
+## 6. Database Schema Design
+
+The database schema (`prisma/schema.prisma`) models 16 relational entities:
+- `User` & `Account`: Core user credentials, roles (`CUSTOMER`, `SELLER`, `ADMIN`), OAuth linkages, and refresh token hashes.
+- `Seller`: Seller business details, store name, slug, verification status.
+- `Product`, `Category`, `Brand`, `ProductVariant`: Catalog taxonomy hierarchy and variant stock associations.
+- `Inventory` & `InventoryTransaction`: Stock levels, reservation timestamps, and audit ledger.
+- `Order` & `OrderItem`: Order state transitions (`PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`), price tracking, shipping metadata.
+- `Review`, `Wishlist`, `Coupon`, `Notification`: Customer feedback, wishlist items, discount coupons, and transactional alerts.
 
 ---
 
-## 7. Major Modules
-1. **Auth Module**: Registration, Login, Google OAuth, Refresh Token Rotation.
-2. **Product Module**: Product catalog CRUD, variant handling, image mapping, rating calculation.
-3. **Category & Brand Module**: Hierarchical category tree management and authentic brand registration.
-4. **Cart Module**: Persistent user cart, item quantity updates, total calculation.
-5. **Checkout & Order Module**: Multi-step checkout, coupon redemption, payment selection (COD/UPI/Card), order state engine.
-6. **Inventory Module**: Stock reservation windows, low-stock threshold monitoring, variant stock updates.
-7. **Seller Module**: Seller store onboarding, seller product listing, fulfillment updates.
-8. **Admin Module**: Executive analytics (GMV, total orders), user management, seller approval controls.
+## 7. Major System Modules
+
+1. **Auth Module**: Registration, login, Google OAuth 2.0, dual JWT rotation, refresh token family revocation.
+2. **Product & Catalog Module**: Catalog listing, variant handling, image mapping, brand taxonomy, rating aggregations.
+3. **Search & Discovery Module**: Meilisearch background index sync, typo-tolerant full-text query processing, dynamic dual-range price & discount sliders.
+4. **Cart Module**: Client-side state persistence synchronized to server database records upon login.
+5. **Checkout & Orders Module**: Multi-step checkout, stock check validations, coupon redemption, shipping address selection, order state management.
+6. **Inventory Module**: Variant stock tracking, low-stock threshold alerts, Redis TTL reservation locks (`INVENTORY_RESERVATION_TTL_MS = 900000`).
+7. **Seller Module**: Seller store onboarding, catalog management, inventory adjustments, order fulfillment.
+8. **Admin Module**: Executive GMV analytics, seller verification approvals, global user role management, catalog governance.
 
 ---
 
-## 8. Authentication & Authorization
-- **Dual-Token Flow**: 15-minute Bearer Access Tokens for API requests; 7-day HttpOnly, Secure, SameSite refresh token cookies.
-- **Argon2 Password Hashing**: Passwords stored using Argon2 cryptographic hashing.
-- **RBAC**: `@Roles()` decorator + `PermissionsGuard` enforcing Customer, Seller, and Admin boundaries.
+## 8. Authentication & Security Specifications
+
+- **Dual-Token Architecture**: Short-lived (15 min) JWT Access Tokens passed via headers; long-lived (7 day) Refresh Tokens stored in HttpOnly, Secure, SameSite cookies.
+- **Token Rotation & Reuse Protection**: Refreshing access tokens invalidates the previous refresh token. Detecting reuse immediately revokes the token family.
+- **Server-Side Ownership Verification (IDOR Protection)**: Sensitive endpoints explicitly verify server-side resource ownership against caller JWT claims.
+- **Role-Based Access Control (RBAC)**: Custom `@Roles()` decorators and NestJS `PermissionsGuard` enforce Customer, Seller, and Admin access boundaries.
+- **Zero Exposed Secrets**: All sensitive keys strictly managed through environment variables and excluded from version control (`.gitignore`).
 
 ---
 
-## 9. Database Architecture
-The database schema (`prisma/schema.prisma`) includes 15 models: `User`, `Account`, `Session`, `Seller`, `Product`, `Category`, `Brand`, `ProductVariant`, `Inventory`, `InventoryTransaction`, `Order`, `OrderItem`, `Review`, `Wishlist`, `Coupon`, `Notification`. Relational foreign keys and indexes guarantee strict data integrity.
+## 9. Testing & Quality Assurance
+
+- **Backend Unit & Integration Tests**: 24 Jest unit tests covering `PermissionsGuard`, `AppController`, and `InventoryService` (stock reservations, low-stock alerts, inventory adjustments).
+- **Playwright E2E Multi-Viewport Suite**: Automated browser regression testing across 27 routes in Desktop (`1440x900`) and Mobile (`390x844`, `412x915`) viewports.
+- **Quality Metrics**: 0 Console errors, 0 failed network requests, 0 broken images, 0 horizontal layout overflows.
 
 ---
 
-## 10. Search Architecture
-Meilisearch indexes product names, descriptions, category slugs, and brand names in background sync tasks. Search queries execute in <10ms with typo tolerance and dynamic facet matching.
+## 10. Deployment Architecture
+
+- **Frontend Web App**: Deployed on **Vercel** (`https://mykart-ecommerce-web.vercel.app`) with serverless edge rendering.
+- **Backend API Server**: Deployed on **Render** (`https://mykart-ecommerce.onrender.com`) as a Node.js web service.
+- **Database**: Hosted on **Neon Serverless PostgreSQL**.
 
 ---
 
-## 11. Cart & Checkout Architecture
-Cart states persist in local storage for guest sessions and sync seamlessly to database records upon user login. Checkout executes stock check validations before transitioning orders into `PENDING` state.
+## 11. Engineering Challenges & Solutions
+
+- **Challenge**: Mobile filter usability for overlapping price and discount ranges.
+  *Solution*: Engineered custom `DualRangeSlider` component using stacked range inputs with CSS clip highlights and built-in 300ms debouncing.
+- **Challenge**: Stock overbooking during concurrent checkout flows.
+  *Solution*: Implemented automated Redis TTL reservation locks during checkout initiation, holding stock temporarily until order completion or timeout expiry.
+- **Challenge**: Preventing unauthorized role escalation during seller onboarding.
+  *Solution*: Hardened `SellersService.onboardSeller()` to explicitly preserve existing `ADMIN` role assignments, guaranteeing Admin users can onboard sellers without role demotion.
 
 ---
 
-## 12. Inventory Architecture
-Inventory is tracked at the variant level (`ProductVariant`). Checkout holds temporary stock reservations backed by Redis key TTL (`INVENTORY_RESERVATION_TTL_MS = 900000`) to prevent overselling during checkout spikes.
+## 12. Results & Verified Baseline
+
+- **110 Authentic Catalog Products** across **8 Parent Categories** and **46 Verified Brands**.
+- **100% Build & Test Pass Rate** across API build, Web build, Jest unit tests, and Playwright E2E suites.
+- **Production Credentials & Demo Access**: Available for Customer, Seller, and Admin roles without data modification.
 
 ---
 
-## 13. Seller System
-Sellers gain access to a dedicated dashboard (`/seller`) to manage store metadata, monitor stock counts, fulfill customer orders, create store promotional coupons, and view buyer reviews.
+## 13. Future Scope
+
+- Webhook integration for external payment provider settlement callbacks.
+- Personalization engine for AI-assisted product recommendations based on search history.
+- Multi-currency localization support for international checkout flows.
 
 ---
 
-## 14. Admin System
-Administrators access global marketplace metrics (`/admin`), manage platform users, approve seller onboarding applications, maintain categories and brands, and review administrative audit logs.
+## 14. Conclusion
 
----
-
-## 15. Security
-- IDOR defense via server-side user ownership checks.
-- Rate limiting via `@nestjs/throttler` and Redis.
-- Zero committed secrets (enforced via `.gitignore`).
-- Parameterized SQL queries via Prisma ORM preventing SQL injection.
-
----
-
-## 16. Testing
-- **Unit Tests**: 24 Jest tests validating core API services and guards.
-- **E2E Tests**: Playwright browser suite validating 27 routes across Desktop (1440x900) and Mobile (390x844, 412x915) viewports.
-
----
-
-## 17. Deployment
-- **Frontend**: Vercel Serverless Platform (`https://mykart-ecommerce-web.vercel.app`)
-- **Backend API**: Render Web Service (`https://mykart-ecommerce.onrender.com`)
-- **Database**: Neon Serverless PostgreSQL
-
----
-
-## 18. Challenges & Solutions
-- *Challenge*: Overlapping range sliders for price & discount filters on mobile viewports.
-  *Solution*: Created custom `DualRangeSlider` component using stacked `<input type="range">` elements with CSS highlight clips and 300ms debouncing.
-- *Challenge*: Maintaining consistent catalog brand identities across re-seed cycles.
-  *Solution*: Synchronized `seed-data.ts` and `admin.service.ts` inline catalog arrays, backed by automated verification scripts.
-
----
-
-## 19. Results
-- **109 Active Products** across **8 Parent Categories** and **46 Authentic Brands**.
-- **0 Console Errors**, **0 Broken Images**, **0 Horizontal Overflows**.
-- **100% E2E & Unit Test Pass Rate**.
-
----
-
-## 20. Future Scope
-- Integration of Webhooks for real-time payment gateway settlement callbacks.
-- AI-driven product recommendation engine based on user browsing history.
-- Multi-currency localization support for international buyers.
-
----
-
-## 21. Conclusion
-MyKart demonstrates that modern e-commerce applications can achieve exceptional speed, enterprise security, and seamless developer workflows by combining Next.js 16 Server Components with a NestJS Modular Monolith architecture.
+MyKart demonstrates that full-stack e-commerce applications can achieve high throughput, enterprise security, and excellent developer ergonomics by combining Next.js 16 Server Components with a NestJS Modular Monolith architecture.

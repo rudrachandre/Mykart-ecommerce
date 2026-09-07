@@ -1,35 +1,43 @@
-# MyKart — Visual UI Screenshots & Walkthrough Guide
+# MyKart — Visual Interface & Portfolio Screenshot Guide
 
-This directory holds visual screenshots and interface walkthrough documentation for the **MyKart** e-commerce marketplace.
+This directory holds visual UI screenshot references and walkthrough documentation for **MyKart**.
 
 ---
 
-## 🖼️ User Interface Sections
+## 🖼️ Top 10 Core Recruiter Screenshot Views
 
-### 1. Homepage & Discovery
-- **Hero Banner & Flash Deals**: High-impact deals carousel highlighting trending products and active discount sales.
-- **Top Categories Grid**: Visual navigation cards for Electronics, Mobiles, Laptops, Fashion, Home & Kitchen, Grocery, Beauty, and Sports.
+### 1. Homepage & Hero Discovery
+- **Hero Carousel & Flash Sales**: Prominent banner carousel showcasing active discount deals, top brands, and flash sale items.
+- **Top Categories Grid**: Visual category cards for Electronics, Mobiles, Laptops, Fashion, Home & Kitchen, Grocery, Beauty, and Sports.
 
-### 2. Product Search & Filter Controls
-- **Live Search Modal**: Real-time autocomplete suggestions popup with product thumbnails and pricing.
-- **Filter Sidebar**: Dual-range price and discount sliders, brand selector with search, and rating filters.
+### 2. Product Search & Faceted Filter Controls
+- **Live Search Modal**: Instant autocomplete popup with product thumbnails, pricing, and ratings powered by Meilisearch.
+- **Faceted Filter Sidebar**: Dual-range price & discount sliders, brand selector with instant search, rating filters, and category tree navigation.
 
 ### 3. Product Detail Page (PDP)
-- **Product Presentation**: High-resolution gallery, variant selectors (Color/Size), stock availability badge, and verified customer reviews.
+- **Product Presentation**: High-resolution image gallery, variant selectors (Color/Size), live stock availability badge, and verified customer reviews.
 
-### 4. Cart & Checkout Flow
-- **Cart Manager**: Itemized order list, price savings breakdown, coupon code application.
-- **Payment Method UI**: Cash on Delivery (COD), UPI (QR/VPA), Credit/Debit Card options.
+### 4. Itemized Cart Manager
+- **Cart Interface**: Dynamic quantity controls, subtotal breakdown, savings calculation, coupon redemption input, and checkout redirect.
 
-### 5. Customer Account Portal
-- **Order History**: Visual status badges (Pending, Processing, Shipped, Delivered), item tracking timeline, delivery address book, notification inbox.
+### 5. Multi-Step Checkout Experience
+- **Checkout Flow**: Saved delivery address selection, order item summary, GST-inclusive tax breakdown, and payment selection UI (COD, UPI, Credit Card).
 
-### 6. Seller Center (`/seller`)
-- **Seller Dashboard**: Real-time stock alerts, product management table, low-stock warnings, seller order fulfillment controls.
+### 6. Customer Account Suite (`/account`)
+- **Order History Timeline**: Visual status badges (`PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`), delivery tracking timeline, saved addresses, wishlist items, and notification inbox.
 
-### 7. Admin Control Panel (`/admin`)
-- **Executive Metrics**: Gross Merchandise Value (GMV), active user metrics, seller verification approvals, global category and brand governance.
+### 7. Seller Center (`/seller`)
+- **Seller Management Dashboard**: Store metrics overview, product catalog table, inventory variant stock manager, low-stock threshold alerts, and customer order fulfillment controls.
+
+### 8. Admin Control Panel (`/admin`)
+- **Executive Governance Portal**: Marketplace GMV statistics, seller verification approvals, global user RBAC management, category & brand catalog administration.
+
+### 9. Executive Marketplace Analytics
+- **Performance Analytics**: Gross Merchandise Value (GMV), 30-day historical order trends, top-selling category distributions, customer vs seller user counts, active promotional coupon performance.
+
+### 10. Mobile Responsive Usability
+- **Multi-Viewport Consistency**: Verified responsive layout rendering across 390x844 (iPhone 14/15) and 412x915 (Pixel 7/8) viewports with zero horizontal overflow.
 
 ---
 
-*Note: Automated E2E verification confirmed 0 broken images, 0 console errors, and 0 layout overflows across Desktop (1440x900) and Mobile (390x844, 412x915) viewports.*
+*Note: All views are verified against the production deployment (`https://mykart-ecommerce-web.vercel.app`) with 0 console errors, 0 broken images, and 0 layout overflows.*
