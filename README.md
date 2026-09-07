@@ -129,13 +129,15 @@ Persistence & Infrastructure Layer
 
 ## 🔑 7. Demo Access / Quick Evaluation
 
-Evaluators and interviewers can explore the live storefront using the pre-configured demo customer account:
+Evaluators and interviewers can explore the live deployment across all three user roles using the pre-configured, live-verified demo accounts:
 
-| Portal | URL Path | Demo Account Credentials | Evaluation Scope |
+| Portal | URL Path | Demo Credentials | Evaluation Scope |
 | :--- | :--- | :--- | :--- |
-| **Customer Storefront** | `/login` | Email: `customer@mykart.test`<br>Password: `MyKart@123` | Catalog browsing, Wishlist, Cart management, Coupon redemption, Simulated Checkout, Order History & Timeline |
+| **Customer Storefront** | `/login` | Email: `customer@mykart.test`<br>Password: `MyKart@123` | Catalog browsing, live search, wishlist, cart management, coupon redemption, simulated checkout (COD/UPI/Card/Netbanking/Wallet), order history & tracking timeline |
+| **Seller Center** | `/login` → `/seller` | Email: `seller@mykart.test`<br>Password: `MyKart@123` | Seller dashboard, product CRUD management, Cloudinary image uploads, stock inventory controls, seller order fulfillment |
+| **Admin Control Panel** | `/login` → `/admin` | Email: `admin@mykart.test`<br>Password: `MyKart@123` | Executive GMV analytics, product moderation, seller verification approvals, user RBAC role management, coupon governance, on-demand catalog/history seeding |
 
-> **Note**: Public demo access is designated for customer flow evaluation. Admin and seller portals require authenticated role permissions.
+> **Note**: These dedicated demo credentials are intentionally configured for interviewer testing and technical evaluation. No private or personal credentials are exposed.
 
 ---
 

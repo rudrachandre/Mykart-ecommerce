@@ -27,7 +27,7 @@ NestJS 10 REST API Server (Backend Monolith)
 Persistence & Infrastructure
  ├── PostgreSQL (Neon Serverless Database via Prisma ORM 7)
  ├── Redis 7 (Token invalidation, rate limiting, stock reservation TTL)
- ├── Meilisearch (Typo-tolerant full-text search engine)
+ ├── Meilisearch (Typo-tolerant search engine with PostgreSQL fallback)
  └── Cloudinary CDN (Image upload & media management)
 ```
 
@@ -39,7 +39,7 @@ Persistence & Infrastructure
 - **Backend API**: NestJS 10, TypeScript (Strict Mode), Class-Validator, Guards, Interceptors
 - **Database & Persistence**: Serverless PostgreSQL (Neon), Prisma ORM 7
 - **Caching & Locks**: Redis 7 (Token revocation, rate limiting, stock reservation TTL)
-- **Search Engine**: Meilisearch (Sub-10ms fuzzy full-text search & faceted filtering)
+- **Search Engine**: Meilisearch (Sub-10ms fuzzy full-text search & faceted filtering with PostgreSQL fallback)
 - **Media CDN**: Cloudinary
 - **Notifications**: Resend (Transactional emails)
 - **Testing**: Jest (Unit/Integration) & Playwright (E2E Multi-Viewport)
