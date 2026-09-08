@@ -4,7 +4,7 @@ This directory holds visual UI screenshot references and walkthrough documentati
 
 ---
 
-## 🖼️ Top 10 Core Application Screenshot Views
+## 🖼️ Top 11 Core Application Screenshot Views
 
 ### 1. Homepage & Hero Discovery
 Prominent banner carousel showcasing active discount deals, top brands, and curated category grids.
@@ -69,7 +69,14 @@ Executive governance portal showing live marketplace GMV statistics, active plat
 
 ---
 
-### 10. Mobile Responsive Usability
+### 10. Executive Analytics & Commerce Intelligence (`/admin/analytics`)
+Comprehensive business intelligence dashboard rendering Net Charged Revenue, Gross Merchandise Sales (GMS), Units Sold, AOV, Daily Order Activity trends, Category Revenue Breakdown, Top Brands, and Top Performing Products.
+
+![Admin Analytics Desktop](./admin-analytics-desktop.png)
+
+---
+
+### 11. Mobile Responsive Usability
 Verified responsive layout rendering across mobile viewports (390x844) with zero horizontal overflow and optimized touch interactions.
 
 ![Mobile Homepage](./homepage-mobile.png)
@@ -77,4 +84,5 @@ Verified responsive layout rendering across mobile viewports (390x844) with zero
 ---
 
 *Note: All views are verified against the production deployment (`https://mykart-ecommerce-web.vercel.app`) with 0 console errors, 0 broken images, and 0 layout overflows.*
+
 
