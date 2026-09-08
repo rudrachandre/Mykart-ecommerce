@@ -21,11 +21,6 @@ MyKart implements an enterprise-grade security model designed to defend against 
 - **Token Family Reuse Detection**: If an invalidated or previously used refresh token is presented, the system detects potential token theft and immediately revokes the entire token family (`User.refreshTokenHash = null`), forcing re-authentication to protect user accounts.
 - **Session Revocation**: Logging out (`POST /api/v1/auth/logout`) explicitly clears auth cookies and nullifies the database refresh token hash.
 
-### Google OAuth 2.0 Integration
-- Uses PKCE (Proof Key for Code Exchange) flow over secure HTTPS endpoints.
-- Validates OAuth `state` tokens to prevent Cross-Site Request Forgery (CSRF).
-- Links authenticated Google profile emails with existing marketplace accounts securely.
-
 ---
 
 ## 🛡️ 2. Role-Based Access Control (RBAC) & Authorization Boundaries

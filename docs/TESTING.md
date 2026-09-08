@@ -49,7 +49,7 @@ Automated Playwright testing validates real browser user journeys across Desktop
 3. **Mobile Viewport B (Pixel 7/8)**: `412 x 915`
 
 ### Critical Functional Flow Coverage:
-1. **Authentication & Session Persistence**: Email/password login, Google OAuth callbacks, access token rotation, logout cookie clearing.
+1. **Authentication & Session Persistence**: Email/password login, access token rotation, logout cookie clearing.
 2. **Authorization & RBAC Bounds**: Verifies access restrictions across Customer, Seller (`/seller`), and Admin (`/admin`) portals.
 3. **Product Discovery & Search**: Typo-tolerant Meilisearch fuzzy queries, dual-range price & discount sliders, category navigation.
 4. **Cart & Checkout**: Item addition, quantity state isolation, coupon application, address selection, order placement.

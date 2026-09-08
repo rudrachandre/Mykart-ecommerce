@@ -50,7 +50,7 @@ MyKart solves these challenges by combining Next.js 16 Server Components with a 
 ## 🔥 3. Feature Breakdown
 
 ### 🛒 Customer Experience
-- **Authentication**: Email/password sign-in and federated Google OAuth 2.0 PKCE integration.
+- **Authentication**: Email/password sign-in with JWT access/refresh token rotation.
 - **Product Discovery & Search**: Typo-tolerant live search, autocomplete modal, dual-range price & discount sliders, brand selector with instant search.
 - **Cart & Checkout**: Persistent cart state, dynamic quantity controls, coupon redemption, shipping address selection, simulated checkout verification (COD, UPI, Card, Netbanking, Wallet).
 - **Account Suite**: Order status timeline (`PENDING` → `PROCESSING` → `SHIPPED` → `DELIVERED`), interactive wishlist, delivery address book, notification alerts, profile management.

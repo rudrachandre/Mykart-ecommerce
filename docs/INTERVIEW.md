@@ -53,8 +53,8 @@ Microservices introduce immense operational complexity—distributed tracing, gR
 ## 🔐 3. Authentication & Security
 
 ### Authentication Flow
-1. User submits credentials or completes Google OAuth 2.0 PKCE flow.
-2. NestJS Auth Module validates identity via Argon2/Bcrypt password check or OAuth token verification.
+1. User submits credentials.
+2. NestJS Auth Module validates identity via Bcrypt password check.
 3. Issues a 15-minute JWT Access Token in JSON response for `Authorization: Bearer` headers.
 4. Issues a 7-day Refresh Token in an **HttpOnly, Secure, SameSite=Lax/Strict** cookie.
 5. Saves the Argon2 hash of the active refresh token in `User.refreshTokenHash`.

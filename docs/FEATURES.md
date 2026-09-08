@@ -7,8 +7,7 @@ MyKart features three distinct user portals: **Customer Portal**, **Seller Cente
 ## 🛍️ 1. Customer Features
 
 ### Authentication & Account Security
-- **Email/Password Sign-In & Registration**: Password hashed with Argon2, client-side & server-side validation.
-- **Google OAuth 2.0 Integration**: One-click Google Sign-In with automated account linking.
+- **Email/Password Sign-In & Registration**: Password hashed with Bcrypt, client-side & server-side validation.
 - **Session Management**: JWT access token in-memory and HttpOnly refresh token cookie rotation.
 - **Customer Profile & Address Book**: Save multiple delivery addresses with default selection.
 

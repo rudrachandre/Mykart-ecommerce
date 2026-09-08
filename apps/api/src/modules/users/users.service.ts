@@ -94,7 +94,7 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
     if (!user.passwordHash) {
       throw new BadRequestException(
-        'Password change is not supported for Google OAuth accounts',
+        'No password set for this account',
       );
     }
 

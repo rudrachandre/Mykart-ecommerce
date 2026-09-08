@@ -41,11 +41,6 @@ MEILI_MASTER_KEY="<your_meili_master_key>"
 # Authentication Secrets
 AUTH_SECRET="<random_32_character_secret_key>"
 
-# Google OAuth 2.0
-GOOGLE_CLIENT_ID="<your_google_client_id>.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="<your_google_client_secret>"
-GOOGLE_CALLBACK_URL="https://mykart-ecommerce.onrender.com/api/v1/auth/google/callback"
-
 # Cloudinary Storage
 CLOUDINARY_CLOUD_NAME="<your_cloudinary_cloud_name>"
 CLOUDINARY_API_KEY="<your_cloudinary_api_key>"
@@ -56,7 +51,6 @@ CLOUDINARY_API_SECRET="<your_cloudinary_api_secret>"
 ```env
 NEXT_PUBLIC_API_URL="https://mykart-ecommerce.onrender.com/api/v1"
 NEXT_PUBLIC_APP_URL="https://mykart-ecommerce-web.vercel.app"
-NEXT_PUBLIC_GOOGLE_CLIENT_ID="<your_google_client_id>.apps.googleusercontent.com"
 ```
 
 ---

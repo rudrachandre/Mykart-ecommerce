@@ -42,8 +42,6 @@ Refresh tokens are handled via HttpOnly, Secure cookies named `refreshToken`.
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/v1/auth/register` | Register new customer account | Public |
 | `POST` | `/api/v1/auth/login` | Authenticate account (returns access token & sets HttpOnly refresh cookie) | Public |
-| `GET` | `/api/v1/auth/google` | Initiate Google OAuth 2.0 PKCE flow | Public |
-| `GET` | `/api/v1/auth/google/callback` | Google OAuth callback handler | Public |
 | `POST` | `/api/v1/auth/refresh` | Rotate access token using valid refresh token cookie | Cookie |
 | `POST` | `/api/v1/auth/logout` | Invalidate refresh token and clear auth cookies | Authenticated |
 

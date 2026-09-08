@@ -42,7 +42,7 @@ The NestJS backend (`apps/api/src/modules`) consists of 14 modular domains:
 
 | Module | Responsibility & Scope |
 | :--- | :--- |
-| **`auth`** | Registration, login, Google OAuth 2.0 PKCE, dual JWT access/refresh token rotation, token family revocation. |
+| **`auth`** | Registration, login, dual JWT access/refresh token rotation, token family revocation. |
 | **`users`** | User profile updates, delivery address book CRUD, role assignments. |
 | **`products`** | Catalog listing, slug lookup, variant mapping, category/brand relations, rating calculations. |
 | **`categories`** | Hierarchical category parent-child tree management. |
@@ -97,7 +97,7 @@ The Next.js 16 App Router (`apps/web/src/app`) organizes pages into 3 major user
 
 ### A. Authentication Data Flow
 ```text
-User Submits Credentials / Google OAuth -> Auth Controller -> Passport Strategy
+User Submits Credentials -> Auth Controller -> Passport Strategy
  -> Validate Credentials -> Generate 15-min Access Token (JSON) + 7-day Refresh Token
  -> Store Argon2 Refresh Token Hash in DB -> Set HttpOnly, Secure Cookie -> Return Payload
 ```

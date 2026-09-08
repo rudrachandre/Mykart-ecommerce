@@ -21,7 +21,7 @@ MyKart/
 │   │   ├── src/
 │   │   │   ├── app/            # App Router pages (/products, /cart, /checkout, /seller, /admin)
 │   │   │   ├── components/     # React Components
-│   │   │   │   ├── auth/       # Auth modals & Google OAuth buttons
+│   │   │   │   ├── auth/       # Auth forms & credentials sign-in
 │   │   │   │   ├── catalog/    # FilterSidebar, DualRangeSlider, ProductCard, SearchBar
 │   │   │   │   ├── checkout/   # COD/UPI/Card payment forms
 │   │   │   │   ├── layout/     # Navbar, Footer, CategoryDrawer
@@ -40,7 +40,7 @@ MyKart/
 │   │   │   ├── redis/          # Redis Cache Module
 │   │   │   ├── seed-data.ts    # Seed script for 109 catalog items & 46 brands
 │   │   │   └── modules/        # Domain Feature Modules
-│   │   │       ├── auth/       # Google OAuth & Local JWT Auth
+│   │   │       ├── auth/       # Local JWT Auth & Session Management
 │   │   │       ├── users/      # User management & RBAC
 │   │   │       ├── products/   # Catalog CRUD & Search indexing
 │   │   │       ├── categories/ # Category management

@@ -15,7 +15,7 @@ Traditional e-commerce web applications often suffer from fragmented architectur
 ## 3. Objectives
 - **Architect a High-Performance Modular Monolith**: Design a domain-bounded NestJS backend API connected via Prisma ORM to PostgreSQL.
 - **Deliver a Responsive Frontend**: Build a modern, accessible user interface in Next.js 16 App Router and Tailwind CSS.
-- **Implement Enterprise Authentication & RBAC**: Combine federated Google OAuth 2.0 and credential sign-in with short-lived JWT access tokens and HttpOnly, Secure refresh-token cookie rotation.
+- **Implement Enterprise Authentication & RBAC**: Credential sign-in with short-lived JWT access tokens and HttpOnly, Secure refresh-token cookie rotation.
 - **Enable Sub-10ms Search & Discovery**: Deploy Meilisearch for typo-tolerant full-text search, autocomplete suggestions, and dynamic facet filtering, backed by a seamless PostgreSQL search fallback.
 - **Build Multi-Role Operational Portals**: Establish dedicated suites for Customer Account Management, Seller Inventory Control, and Admin Marketplace Governance.
 - **Guarantee Zero Visual & Layout Regressions**: Validate 100% layout integrity across desktop (1440x900) and mobile (390x844, 412x915) screen resolutions.
@@ -86,7 +86,7 @@ The database schema (`prisma/schema.prisma`) models 16 relational entities:
 
 ## 7. Major System Modules
 
-1. **Auth Module**: Registration, login, Google OAuth 2.0, dual JWT rotation, refresh token family revocation.
+1. **Auth Module**: Registration, login, dual JWT rotation, refresh token family revocation.
 2. **Product & Catalog Module**: Catalog listing, variant handling, image mapping, brand taxonomy, rating aggregations.
 3. **Search & Discovery Module**: Meilisearch background index sync, typo-tolerant full-text query processing, dynamic dual-range price & discount sliders.
 4. **Cart Module**: Client-side state persistence synchronized to server database records upon login.
