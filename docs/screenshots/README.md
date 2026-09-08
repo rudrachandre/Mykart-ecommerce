@@ -1,43 +1,80 @@
 # MyKart — Visual Interface & Portfolio Screenshot Guide
 
-This directory holds visual UI screenshot references and walkthrough documentation for **MyKart**.
+This directory holds visual UI screenshot references and walkthrough documentation for **MyKart**, captured directly from the live production deployment ([https://mykart-ecommerce-web.vercel.app](https://mykart-ecommerce-web.vercel.app)).
 
 ---
 
-## 🖼️ Top 10 Core Recruiter Screenshot Views
+## 🖼️ Top 10 Core Application Screenshot Views
 
 ### 1. Homepage & Hero Discovery
-- **Hero Carousel & Flash Sales**: Prominent banner carousel showcasing active discount deals, top brands, and flash sale items.
-- **Top Categories Grid**: Visual category cards for Electronics, Mobiles, Laptops, Fashion, Home & Kitchen, Grocery, Beauty, and Sports.
+Prominent banner carousel showcasing active discount deals, top brands, and curated category grids.
+
+![Homepage Desktop](./homepage-desktop.png)
+
+---
 
 ### 2. Product Search & Faceted Filter Controls
-- **Live Search Modal**: Instant autocomplete popup with product thumbnails, pricing, and ratings powered by Meilisearch.
-- **Faceted Filter Sidebar**: Dual-range price & discount sliders, brand selector with instant search, rating filters, and category tree navigation.
+Faceted filter sidebar featuring dual-range price & discount sliders, brand selector with instant search, rating filters, and category tree navigation.
 
-### 3. Product Detail Page (PDP)
-- **Product Presentation**: High-resolution image gallery, variant selectors (Color/Size), live stock availability badge, and verified customer reviews.
+![Search Filters Desktop](./search-filters-desktop.png)
 
-### 4. Itemized Cart Manager
-- **Cart Interface**: Dynamic quantity controls, subtotal breakdown, savings calculation, coupon redemption input, and checkout redirect.
+---
 
-### 5. Multi-Step Checkout Experience
-- **Checkout Flow**: Saved delivery address selection, order item summary, GST-inclusive tax breakdown, and payment selection UI (COD, UPI, Credit Card).
+### 3. Live Search Autocomplete Suggestions
+Instant search autocomplete dropdown with product thumbnails, pricing, and category suggestions powered by Meilisearch.
 
-### 6. Customer Account Suite (`/account`)
-- **Order History Timeline**: Visual status badges (`PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`), delivery tracking timeline, saved addresses, wishlist items, and notification inbox.
+![Search Autocomplete Desktop](./search-autocomplete-desktop.png)
 
-### 7. Seller Center (`/seller`)
-- **Seller Management Dashboard**: Store metrics overview, product catalog table, inventory variant stock manager, low-stock threshold alerts, and customer order fulfillment controls.
+---
 
-### 8. Admin Control Panel (`/admin`)
-- **Executive Governance Portal**: Marketplace GMV statistics, seller verification approvals, global user RBAC management, category & brand catalog administration.
+### 4. Product Detail Page (PDP)
+High-resolution image presentation, variant selectors (Color/Size), stock availability badges, pricing details, and customer reviews.
 
-### 9. Executive Marketplace Analytics
-- **Performance Analytics**: Gross Merchandise Value (GMV), 30-day historical order trends, top-selling category distributions, customer vs seller user counts, active promotional coupon performance.
+![Product Detail Desktop](./product-detail-desktop.png)
+
+---
+
+### 5. Itemized Cart Manager
+Dynamic quantity controls, real-time price calculations, coupon redemption input, and checkout redirect.
+
+![Cart Desktop](./cart-desktop.png)
+
+---
+
+### 6. Multi-Step Checkout Experience
+Saved delivery address selection, order item summary with GST tax breakdown, and payment selection UI (COD, UPI, Credit Card, Netbanking, Wallets).
+
+![Checkout Desktop](./checkout-desktop.png)
+
+---
+
+### 7. Customer Account Suite (`/account`)
+Customer dashboard displaying order statistics, recent order history timelines (`PENDING` → `PROCESSING` → `SHIPPED` → `DELIVERED`), saved delivery address book, wishlist, and notification alerts.
+
+![Customer Account Suite](./account-orders-desktop.png)
+
+---
+
+### 8. Seller Center (`/seller`)
+Seller management dashboard featuring store revenue metrics, sales volume, active product inventory, low-stock threshold alerts, and customer order fulfillment controls.
+
+![Seller Dashboard](./seller-dashboard-desktop.png)
+
+---
+
+### 9. Admin Control Panel (`/admin`)
+Executive governance portal showing live marketplace GMV statistics, active platform coupon statistics, order status distribution, and quick management controls.
+
+![Admin Control Panel](./admin-panel-desktop.png)
+
+---
 
 ### 10. Mobile Responsive Usability
-- **Multi-Viewport Consistency**: Verified responsive layout rendering across 390x844 (iPhone 14/15) and 412x915 (Pixel 7/8) viewports with zero horizontal overflow.
+Verified responsive layout rendering across mobile viewports (390x844) with zero horizontal overflow and optimized touch interactions.
+
+![Mobile Homepage](./homepage-mobile.png)
 
 ---
 
 *Note: All views are verified against the production deployment (`https://mykart-ecommerce-web.vercel.app`) with 0 console errors, 0 broken images, and 0 layout overflows.*
+
