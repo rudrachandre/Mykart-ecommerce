@@ -735,7 +735,7 @@ async function main() {
 
   // Map other fakes to match categories/brands safely
   const imageFallbackMap: Record<string, string> = {
-    laptops: 'https://images.unsplash.com/photo-1496181130204-755241544e35?w=800',
+    laptops: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800',
     smartphones: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
     tablets: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800',
     smartwatches: 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=800',
@@ -760,7 +760,7 @@ async function main() {
     skincare: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800',
     haircare: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800',
     makeup: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800',
-    grooming: 'https://images.unsplash.com/photo-1621607511815-68424fec745f?w=800',
+    grooming: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800',
     fragrances: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800',
     'fitness-equipment': 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800',
     'sports-shoes': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800',
@@ -772,7 +772,7 @@ async function main() {
     fiction: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800',
     'self-help': 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800',
     academic: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800',
-    snacks: 'https://images.unsplash.com/photo-1599490659223-eb5222decbaf?w=800',
+    snacks: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=800',
     beverages: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800',
     'packaged-foods': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800',
     'household-essentials': 'https://images.unsplash.com/photo-1583947581924-860bda6a26df?w=800',

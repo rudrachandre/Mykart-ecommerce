@@ -4,6 +4,7 @@ import { getProfile } from '@/lib/api/users';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
+import { ProductImage } from '@/components/ui/ProductImage';
 import { Package, ShoppingCart, Store, ArrowRight, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react';
 import * as motion from 'framer-motion/client';
 
@@ -142,10 +143,20 @@ export default async function SellerDashboardPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {recentProducts.map((p: any) => (
-                  <div key={p.id} className="border border-border/40 p-4 hover:shadow-lg transition-shadow bg-card">
-                    <p className="text-xs text-foreground/50 mb-1">{p.status}</p>
-                    <p className="font-medium truncate mb-2">{p.name}</p>
-                    <p className="text-lg mb-4">₹{parseFloat(p.basePrice).toFixed(2)}</p>
+                  <div key={p.id} className="border border-border/40 p-4 hover:shadow-lg transition-shadow bg-card flex flex-col justify-between">
+                    <div>
+                      <div className="relative w-full h-36 mb-3 rounded-lg overflow-hidden bg-muted/30">
+                        <ProductImage
+                          src={p.images?.[0]?.url || p.imageUrl}
+                          alt={p.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <p className="text-xs text-foreground/50 mb-1">{p.status}</p>
+                      <p className="font-medium truncate mb-1">{p.name}</p>
+                      <p className="text-base font-semibold mb-3">₹{parseFloat(p.basePrice).toFixed(2)}</p>
+                    </div>
                     <Link href={`/seller/products/${p.slug}/edit`}>
                       <Button variant="outline" className="w-full text-xs h-8">Edit Product</Button>
                     </Link>

@@ -157,12 +157,12 @@ export default async function ProductDetailPage({
       </div>
       
       {/* Product Reviews */}
-      <div id="reviews" className="mt-24 pt-12 border-t border-border/50">
+      <div id="reviews" className="mt-10 pt-8 border-t border-border/50">
         <ProductReviews productId={product.id} productSlug={product.slug} />
       </div>
 
       {/* Related Products */}
-      <div className="mt-24 pt-12 border-t border-border/50">
+      <div className="mt-12 pt-8 border-t border-border/50">
         <h2 className="text-2xl font-bold tracking-tight mb-8">Related Products</h2>
         <ProductGrid products={relatedProducts} meta={undefined} searchParams={{}} />
       </div>
