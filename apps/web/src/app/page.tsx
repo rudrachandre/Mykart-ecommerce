@@ -1,5 +1,5 @@
 import { getProducts, getCategories } from '@/lib/api/catalog';
-import { ProductGrid } from '@/components/catalog/ProductGrid';
+import { TrendingProductsSection } from '@/components/catalog/TrendingProductsSection';
 import { HeroBanner } from '@/components/marketing/hero-banner';
 import { CategoryShortcuts } from '@/components/marketing/CategoryShortcuts';
 import { FeaturedCategories } from '@/components/marketing/featured-categories';
@@ -65,7 +65,7 @@ export default async function Home() {
           </p>
         </div>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <ProductGrid products={(trending as any).items ?? []} />
+        <TrendingProductsSection initialProducts={(trending as any).items ?? []} />
       </section>
 
       {/* 6. DealsBanner */}

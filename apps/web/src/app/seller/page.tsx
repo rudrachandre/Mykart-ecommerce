@@ -147,7 +147,7 @@ export default async function SellerDashboardPage() {
                     <div>
                       <div className="relative w-full h-36 mb-3 rounded-lg overflow-hidden bg-muted/30">
                         <ProductImage
-                          src={p.images?.[0]?.url || p.imageUrl}
+                          src={p.images?.[0]?.url || p.imageUrl || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800'}
                           alt={p.name}
                           fill
                           className="object-cover"

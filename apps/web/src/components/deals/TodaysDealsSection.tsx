@@ -51,6 +51,9 @@ export function TodaysDealsSection({ initialProducts = [] }: TodaysDealsSectionP
   useEffect(() => {
     checkScroll();
     window.addEventListener('resize', checkScroll);
+    if (!initialProducts || initialProducts.length === 0) {
+      handleTabChange(DEAL_TABS[0]);
+    }
     return () => window.removeEventListener('resize', checkScroll);
   }, []);
 
