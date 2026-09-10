@@ -7,9 +7,9 @@ const BASE_URL = API_URL || 'https://mykart-ecommerce.onrender.com';
 
 /** 25-second timeout for all server-side catalog fetches.
  *  Prevents Vercel SSR from timing out on cold-starting Render instances. */
-function serverFetchOpts(revalidate: number): RequestInit {
+function serverFetchOpts(_revalidate: number): RequestInit {
   return {
-    next: { revalidate },
+    cache: 'no-store',
     signal: AbortSignal.timeout(25000),
   };
 }
