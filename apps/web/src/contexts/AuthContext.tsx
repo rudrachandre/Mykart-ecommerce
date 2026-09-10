@@ -32,7 +32,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
   inProgressRefreshPromise = (async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mykart-ecommerce.onrender.com';
       const response = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mykart-ecommerce.onrender.com';
       let response = await fetch(`${apiUrl}/api/v1/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mykart-ecommerce.onrender.com';
       await fetch(`${apiUrl}/api/v1/auth/logout`, {
         method: 'POST',
         credentials: 'include',

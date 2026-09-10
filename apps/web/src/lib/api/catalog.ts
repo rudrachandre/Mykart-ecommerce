@@ -3,7 +3,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 if (!API_URL && process.env.NODE_ENV === 'production') {
   console.warn('[catalog] NEXT_PUBLIC_API_URL is not set — falling back to localhost');
 }
-const BASE_URL = API_URL || 'http://localhost:3001';
+const BASE_URL = API_URL || 'https://mykart-ecommerce.onrender.com';
 
 /** 25-second timeout for all server-side catalog fetches.
  *  Prevents Vercel SSR from timing out on cold-starting Render instances. */

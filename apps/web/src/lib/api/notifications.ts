@@ -2,7 +2,7 @@ const API_URL_ENV = process.env.NEXT_PUBLIC_API_URL;
 if (!API_URL_ENV && process.env.NODE_ENV === 'production') {
   console.warn('[api] NEXT_PUBLIC_API_URL is not set — falling back to localhost');
 }
-const BASE_URL = API_URL_ENV || 'http://localhost:3001';
+const BASE_URL = API_URL_ENV || 'https://mykart-ecommerce.onrender.com';
 const API_URL = `${BASE_URL}/api/v1`;
 
 export async function getNotifications(token: string) {

@@ -67,7 +67,7 @@ export function TodaysDealsSection({ initialProducts = [] }: TodaysDealsSectionP
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://mykart-ecommerce.onrender.com';
       const params = new URLSearchParams();
       params.append('limit', '8');
 

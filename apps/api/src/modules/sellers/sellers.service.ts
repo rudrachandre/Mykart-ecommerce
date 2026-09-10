@@ -187,6 +187,7 @@ export class SellersService {
       where: { sellerId: seller.id },
       include: {
         category: { select: { name: true } },
+        images: true,
         variants: { include: { inventory: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -277,6 +278,7 @@ export class SellersService {
       where: { sellerId: seller.id },
       include: {
         category: { select: { id: true, name: true } },
+        images: true,
         variants: { include: { inventory: true } },
       },
       orderBy: { createdAt: 'desc' },
