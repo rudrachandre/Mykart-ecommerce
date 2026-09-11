@@ -208,4 +208,63 @@ describe('OrdersController (e2e)', () => {
     expect(cart.body.items.length).toBe(1);
     expect(cart.body.items[0].quantity).toBe(2);
   });
+
+  describe('Invoice Access BOLA Authorization', () => {
+    it('GET /api/v1/orders/:id/invoice - allows owner to fetch invoice', async () => {
+      const order = await prisma.order.create({
+        data: {
+          userId,
+          status: 'PENDING',
+          subtotal: 100,
+          shippingFee: 0,
+          tax: 0,
+          discount: 0,
+          total: 100,
+          paymentStatus: 'UNPAID',
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get(`/api/v1/orders/${order.id}/invoice`)
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.id).toBe(order.id);
+    });
+
+    it('GET /api/v1/orders/:id/invoice - blocks another customer from retrieving invoice (404/BOLA protection)', async () => {
+      const otherUser = await prisma.user.create({
+        data: {
+          email: `other-invoice-${Date.now()}@example.com`,
+          name: 'Other User',
+          passwordHash: 'hash',
+          role: 'CUSTOMER',
+        },
+      });
+
+      const order = await prisma.order.create({
+        data: {
+          userId: otherUser.id,
+          status: 'PENDING',
+          subtotal: 100,
+          shippingFee: 0,
+          tax: 0,
+          discount: 0,
+          total: 100,
+          paymentStatus: 'UNPAID',
+        },
+      });
+
+      await request(app.getHttpServer())
+        .get(`/api/v1/orders/${order.id}/invoice`)
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(404);
+    });
+
+    it('GET /api/v1/orders/:id/invoice - blocks unauthenticated request (401)', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/orders/some-order-id/invoice')
+        .expect(401);
+    });
+  });
 });

@@ -67,7 +67,7 @@ export class OrdersController {
   }
 
   @Get(':id/invoice')
-  getInvoice(@CurrentUser() user: { userId: string }, @Param('id') id: string) {
-    return this.ordersService.getInvoice(id, user.userId);
+  getInvoice(@CurrentUser() user: { userId: string; role?: string }, @Param('id') id: string) {
+    return this.ordersService.getInvoice(id, user?.userId, user?.role);
   }
 }

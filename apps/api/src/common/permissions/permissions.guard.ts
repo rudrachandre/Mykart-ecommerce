@@ -41,7 +41,7 @@ export class PermissionsGuard implements CanActivate {
       return true;
     } catch (err) {
       if (err instanceof ForbiddenException) throw err;
-      return true;
+      return false;
     }
   }
 }

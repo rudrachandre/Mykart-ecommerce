@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   InternalServerErrorException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -10,7 +11,7 @@ import { CheckoutDto, PaymentMethodDto } from './dto/checkout.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { ReturnRequestDto } from './dto/return-request.dto';
 import { ReplacementRequestDto } from './dto/replacement-request.dto';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Role } from '@prisma/client';
 import * as crypto from 'crypto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AnalyticsService } from '../analytics/analytics.service';
@@ -75,9 +76,14 @@ export class OrdersService {
     return order;
   }
 
-  async getInvoice(orderId: string, userId?: string) {
+  async getInvoice(orderId: string, userId?: string, userRole?: string) {
     const where: any = { id: orderId };
-    if (userId) {
+    const isAdminOrSupport = userRole === Role.ADMIN || userRole === 'SUPPORT';
+
+    if (!isAdminOrSupport) {
+      if (!userId) {
+        throw new ForbiddenException('User authentication required for invoice retrieval');
+      }
       where.userId = userId;
     }
 
@@ -374,50 +380,31 @@ export class OrdersService {
 
     const orderId = crypto.randomUUID();
 
-    // 4. Reserve inventory (guarded so available stock can never go negative).
-    //    Every reserved line uses `quantity: { gte: item.quantity }`, which is
-    //    atomic at the database level and prevents overselling under concurrency.
-    let reservationOk = true;
-    const reservedItems: any[] = [];
-    for (const item of orderItemsData) {
-      const updated = await this.prisma.inventory.updateMany({
-        where: {
-          variantId: item.variantId,
-          quantity: { gte: item.quantity },
-        },
-        data: {
-          quantity: { decrement: item.quantity },
-          reserved: { increment: item.quantity },
-        },
-      });
-
-      if (updated.count === 0) {
-        reservationOk = false;
-        break;
-      }
-      reservedItems.push(item);
-    }
-
-    // Roll back partial reservations if any line could not be reserved.
-    if (!reservationOk) {
-      for (const item of reservedItems) {
-        await this.prisma.inventory.updateMany({
-          where: { variantId: item.variantId },
-          data: {
-            quantity: { increment: item.quantity },
-            reserved: { decrement: item.quantity },
-          },
-        });
-      }
-      throw new BadRequestException(
-        'Not enough stock available to complete the order',
-      );
-    }
-    // 4. Create order + payment record in one transaction.
+    // 4. Create order, reserve inventory, payment record, coupon claim, and cart update in ONE atomic transaction.
     let createdPaymentId = '';
     const order = await this.prisma.$transaction(
-      async (prisma) => {
-        const newOrder = await prisma.order.create({
+      async (tx) => {
+        // Atomic DB-level inventory reservation inside transaction
+        for (const item of orderItemsData) {
+          const updated = await tx.inventory.updateMany({
+            where: {
+              variantId: item.variantId,
+              quantity: { gte: item.quantity },
+            },
+            data: {
+              quantity: { decrement: item.quantity },
+              reserved: { increment: item.quantity },
+            },
+          });
+
+          if (updated.count === 0) {
+            throw new BadRequestException(
+              'Not enough stock available to complete the order',
+            );
+          }
+        }
+
+        const newOrder = await tx.order.create({
           data: {
             id: orderId,
             userId,
@@ -436,7 +423,7 @@ export class OrdersService {
 
         // Create pending payment record inside transaction. COD has no transaction id;
         // online payment methods store a simulated transaction ID.
-        const paymentRecord = await prisma.payment.create({
+        const paymentRecord = await tx.payment.create({
           data: {
             orderId: orderId,
             provider: isCod ? 'COD' : String(dto.paymentMethod || 'ONLINE'),
@@ -456,7 +443,7 @@ export class OrdersService {
         // never push usedCount past usageLimit: the losing transaction gets
         // 0 affected rows, throws, and its order/payment roll back entirely.
         if (appliedCoupon) {
-          const claimed = await prisma.coupon.updateMany({
+          const claimed = await tx.coupon.updateMany({
             where:
               appliedCoupon.usageLimit == null
                 ? { id: appliedCoupon.id }
@@ -479,7 +466,7 @@ export class OrdersService {
         // until payment is verified so that cancelled or failed payment attempts
         // do not result in an empty cart.
         if (isCod) {
-          await prisma.cartItem.deleteMany({
+          await tx.cartItem.deleteMany({
             where: { id: { in: purchasedCartItemIds }, cartId: cart.id },
           });
         }

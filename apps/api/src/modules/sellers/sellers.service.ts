@@ -422,6 +422,10 @@ export class SellersService {
       throw new NotFoundException('Return request not found');
     }
 
+    if (returnRecord.status === 'APPROVED') {
+      throw new BadRequestException('Return request has already been approved');
+    }
+
     const updated = await this.prisma.$transaction(async (prisma) => {
       const updatedReturn = await prisma.return.update({
         where: { id: returnId },
@@ -438,6 +442,17 @@ export class SellersService {
       );
 
       for (const item of sellerItems) {
+        // Increment physical quantity available in stock for returned item
+        await prisma.inventory.updateMany({
+          where: {
+            variantId: item.variantId,
+          },
+          data: {
+            quantity: { increment: item.quantity },
+          },
+        });
+
+        // Safely decrement reserved stock if reserved stock was still present
         await prisma.inventory.updateMany({
           where: {
             variantId: item.variantId,
@@ -445,7 +460,6 @@ export class SellersService {
           },
           data: {
             reserved: { decrement: item.quantity },
-            quantity: { increment: item.quantity },
           },
         });
       }
