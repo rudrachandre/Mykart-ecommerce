@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { AuthService } from '../auth/auth.service';
 import {
   Prisma,
   Role,
@@ -22,6 +23,7 @@ export class AdminService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly analytics: AnalyticsService,
+    private readonly authService: AuthService,
   ) {}
 
   async onModuleInit() {
@@ -324,8 +326,9 @@ export class AdminService implements OnModuleInit {
       select: { id: true, name: true, email: true, role: true },
     });
 
-    // NOTE: access tokens carry the role claim (Module 13 JWT design), so the
-    // new role propagates on the next token refresh (~10 min TTL). Accepted.
+    // Revoke all refresh token sessions so user cannot refresh access tokens with old role
+    await this.authService.logoutAll(targetUserId);
+
     await this.analytics.logAction(adminUserId, 'USER_ROLE_CHANGED', user.id, {
       from: user.role,
       to: role,

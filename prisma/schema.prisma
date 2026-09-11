@@ -45,6 +45,7 @@ model User {
   name          String
   email         String   @unique
   passwordHash  String?
+  googleId      String?  @unique
   role          Role     @default(CUSTOMER)
   avatar        String?
   emailVerified Boolean  @default(false)
@@ -233,6 +234,7 @@ model CartItem {
   quantity  Int            @default(1)
   price     Decimal        @db.Decimal(10, 2)
 
+  @@unique([cartId, variantId])
   @@index([cartId])
 }
 
@@ -250,6 +252,7 @@ model WishlistItem {
   productId  String
   product    Product  @relation(fields: [productId], references: [id])
 
+  @@unique([wishlistId, productId])
   @@index([wishlistId])
 }
 
@@ -369,6 +372,7 @@ model Review {
   status           String   @default("APPROVED") // APPROVED, PENDING, SPAM
   createdAt        DateTime @default(now())
 
+  @@unique([userId, productId])
   @@index([productId])
   @@index([productId, status])
 }

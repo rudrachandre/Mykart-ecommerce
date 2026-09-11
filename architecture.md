@@ -56,7 +56,7 @@ Persistence & Infrastructure
 
 ## 5. End-to-End Core Data Flows
 
-1. **Authentication Flow**: Credential/OAuth login → NestJS Auth Strategy → Issue 15-min JWT Access Token + 7-day HttpOnly Refresh Cookie → Hash stored in DB → Return payload.
+1. **Authentication Flow**: Credential login (Email & Password) → NestJS Auth Strategy → Issue 15-min JWT Access Token + 7-day HttpOnly Refresh Cookie → Hash stored in DB → Return payload.
 2. **Search & Discovery Flow**: Query → REST API GET /api/v1/search → Meilisearch Fuzzy Index → Return Results + Facet Counts.
 3. **Checkout & Order Lifecycle Flow**: Checkout -> Stock reservation (Redis TTL) -> Process Simulated Payment -> Execute Prisma `$transaction` (Create Order, Deduct Stock, Clear Cart) -> Transition Order status (`PENDING` -> `PROCESSING` -> `SHIPPED` -> `DELIVERED`).
 4. **Seller Operations Flow**: Seller updates stock/status -> PermissionsGuard (SELLER role + IDOR ownership check) -> Update DB -> Audit log.

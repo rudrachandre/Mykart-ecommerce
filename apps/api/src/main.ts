@@ -46,7 +46,7 @@ async function bootstrap() {
           ...process.env.CORS_ORIGIN.split(',').map((s) => s.trim()),
         );
       }
-      if (allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+      if (allowed.includes(origin)) {
         return callback(null, true);
       }
       return callback(null, false);

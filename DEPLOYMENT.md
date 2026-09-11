@@ -8,8 +8,7 @@ It ensures portability and independence from specific cloud vendors.
 - **Local Setup**: Relies on Next.js/Turbopack or Webpack (on Windows), NestJS development server (`nest start --watch`), and local `.env` files. 
 - **Production Architecture**:
   - **API**: A standalone Node.js process (built via Docker or standard `npm run build -w apps/api`) running on port `3001` (or dynamic `PORT`).
-  - **Web Frontend**: A Next.js production server running on port `3000`.
-  - **Admin Frontend**: A Next.js production server running on port `3002`.
+  - **Web Frontend**: A Next.js production server (running on port `3000`) housing both the storefront (`/`) and admin/seller dashboards (`/admin`, `/seller`).
 
 ## 2. Deployment Sequence
 
@@ -17,7 +16,7 @@ To avoid race conditions and ensure zero downtime:
 1. **Infrastructure**: Provision Database, Redis, and Meilisearch.
 2. **Migrations**: Run `npx prisma migrate deploy` on the database.
 3. **Backend API**: Deploy the API service and wait for its health check (`/api/v1/health`) to pass.
-4. **Frontends**: Deploy the Web and Admin applications, configured with the live API URL.
+4. **Frontend**: Deploy the Web application, configured with the live API URL.
 
 ## 3. Environment Variables
 

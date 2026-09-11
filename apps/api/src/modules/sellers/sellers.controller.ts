@@ -54,14 +54,30 @@ export class SellersController {
 
   @Get('products')
   @Roles(Role.SELLER, Role.ADMIN)
-  getSellerProducts(@CurrentUser() user: { userId: string }) {
-    return this.sellersService.getSellerProducts(user.userId);
+  getSellerProducts(
+    @CurrentUser() user: { userId: string },
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+  ) {
+    return this.sellersService.getSellerProducts(
+      user.userId,
+      skip ? parseInt(skip, 10) : 0,
+      take ? parseInt(take, 10) : 50,
+    );
   }
 
   @Get('orders')
   @Roles(Role.SELLER, Role.ADMIN)
-  getSellerOrders(@CurrentUser() user: { userId: string }) {
-    return this.sellersService.getSellerOrders(user.userId);
+  getSellerOrders(
+    @CurrentUser() user: { userId: string },
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+  ) {
+    return this.sellersService.getSellerOrders(
+      user.userId,
+      skip ? parseInt(skip, 10) : 0,
+      take ? parseInt(take, 10) : 50,
+    );
   }
 
   @Put('orders/:orderId/status')

@@ -121,22 +121,57 @@ export class SellersService {
       }),
     ]);
 
-    // Inventory Units & Low Stock Count
-    const inventoryItems = await this.prisma.inventory.findMany({
-      where: { variant: { product: { sellerId: seller.id } } },
-      select: { quantity: true, reserved: true },
+    // Inventory Units & Low Stock Count (DB aggregation, bounded memory)
+    const [inventoryUnitsAgg, lowStockCount] = await Promise.all([
+      this.prisma.inventory.aggregate({
+        where: { variant: { product: { sellerId: seller.id } } },
+        _sum: { quantity: true },
+      }),
+      this.prisma.inventory.count({
+        where: {
+          variant: { product: { sellerId: seller.id } },
+          quantity: { lte: 10 },
+        },
+      }),
+    ]);
+    const inventoryUnits = inventoryUnitsAgg._sum.quantity || 0;
+
+    // Order Items Revenue & Sales (selective projection)
+    const orderItemsPrices = await this.prisma.orderItem.findMany({
+      where: { sellerId: seller.id },
+      select: { price: true, quantity: true },
     });
-    const inventoryUnits = inventoryItems.reduce(
+
+    const revenue = orderItemsPrices.reduce(
+      (acc, item) => acc + Number(item.price) * item.quantity,
+      0,
+    );
+    const totalSalesItems = orderItemsPrices.reduce(
       (acc, item) => acc + item.quantity,
       0,
     );
-    const lowStockCount = inventoryItems.filter(
-      (item) => item.quantity - item.reserved <= 10,
-    ).length;
 
-    // Order Items & Revenue
-    const orderItems = await this.prisma.orderItem.findMany({
+    // Total Orders & Pending Orders
+    const [totalOrdersGroup, pendingOrdersCount] = await Promise.all([
+      this.prisma.orderItem.groupBy({
+        by: ['orderId'],
+        where: { sellerId: seller.id },
+      }),
+      this.prisma.order.count({
+        where: {
+          items: { some: { sellerId: seller.id } },
+          status: { in: [OrderStatus.PENDING, OrderStatus.PROCESSING] },
+        },
+      }),
+    ]);
+
+    const totalOrders = totalOrdersGroup.length;
+    const pendingOrders = pendingOrdersCount;
+
+    // Recent orders (bounded take: 5)
+    const recentOrders = await this.prisma.orderItem.findMany({
       where: { sellerId: seller.id },
+      take: 5,
       include: {
         order: {
           select: {
@@ -151,36 +186,6 @@ export class SellersService {
       },
       orderBy: { order: { createdAt: 'desc' } },
     });
-
-    const revenue = orderItems.reduce(
-      (acc, item) => acc + Number(item.price) * item.quantity,
-      0,
-    );
-
-    // Distinct Order IDs & Pending Orders
-    const orderMap = new Map<string, { status: string; createdAt: Date }>();
-    orderItems.forEach((item) => {
-      if (item.order) {
-        orderMap.set(item.order.id, {
-          status: item.order.status,
-          createdAt: item.order.createdAt,
-        });
-      }
-    });
-
-    const totalOrders = orderMap.size;
-    let pendingOrders = 0;
-    orderMap.forEach((order) => {
-      if (
-        order.status === OrderStatus.PENDING ||
-        order.status === OrderStatus.PROCESSING
-      ) {
-        pendingOrders++;
-      }
-    });
-
-    // Recent orders (last 5)
-    const recentOrders = orderItems.slice(0, 5);
 
     // Recent products (last 5)
     const recentProducts = await this.prisma.product.findMany({
@@ -240,10 +245,10 @@ export class SellersService {
         pendingOrders,
         lowStockCount,
         revenue,
-        sales: orderItems.length,
+        sales: totalSalesItems,
       },
       revenue,
-      sales: orderItems.length,
+      sales: totalSalesItems,
       recentOrders,
       recentProducts,
       inventoryAlerts,
@@ -269,13 +274,21 @@ export class SellersService {
     return this.prisma.seller.update({ where: { userId }, data: updateData });
   }
 
-  async getSellerProducts(userId: string) {
+  async getSellerProducts(
+    userId: string,
+    skip: number = 0,
+    take: number = 50,
+  ) {
     const seller = await this.prisma.seller.findUnique({ where: { userId } });
     if (!seller) throw new NotFoundException('Seller profile not found');
     this.assertSellerActive(seller);
 
+    const boundedTake = Math.min(Math.max(take, 1), 100);
+
     return this.prisma.product.findMany({
       where: { sellerId: seller.id },
+      skip,
+      take: boundedTake,
       include: {
         category: { select: { id: true, name: true } },
         images: true,
@@ -285,13 +298,21 @@ export class SellersService {
     });
   }
 
-  async getSellerOrders(userId: string) {
+  async getSellerOrders(
+    userId: string,
+    skip: number = 0,
+    take: number = 50,
+  ) {
     const seller = await this.prisma.seller.findUnique({ where: { userId } });
     if (!seller) throw new NotFoundException('Seller profile not found');
     this.assertSellerActive(seller);
 
+    const boundedTake = Math.min(Math.max(take, 1), 100);
+
     return this.prisma.orderItem.findMany({
       where: { sellerId: seller.id },
+      skip,
+      take: boundedTake,
       include: {
         order: {
           select: {
