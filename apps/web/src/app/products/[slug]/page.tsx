@@ -56,7 +56,7 @@ export default async function ProductDetailPage({
   const hasDiscount = product.salePrice && product.salePrice < product.basePrice;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-[1400px]">
+    <div className="container mx-auto px-4 py-8 max-w-[1600px]">
       <div className="mb-6">
         <Link href="/products" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="mr-1 h-4 w-4" />

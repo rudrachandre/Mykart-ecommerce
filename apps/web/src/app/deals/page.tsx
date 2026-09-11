@@ -61,7 +61,7 @@ export default async function DealsPage({
     <div className="min-h-screen bg-background">
       {/* Deals Header Banner */}
       <div className="bg-gradient-to-r from-primary/10 via-background to-primary/5 border-b py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-[1280px]">
+        <div className="mx-auto max-w-[1600px]">
           <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider mb-2">
             <Sparkles className="h-4 w-4" />
             <span>Exclusive Promotions</span>
@@ -75,7 +75,7 @@ export default async function DealsPage({
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Desktop Filter Sidebar */}
           <aside className="hidden lg:block w-64 shrink-0">
