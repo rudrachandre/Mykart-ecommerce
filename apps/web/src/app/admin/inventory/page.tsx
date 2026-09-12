@@ -115,7 +115,7 @@ export default function AdminInventoryPage() {
           <p className="text-lg text-muted-foreground">No low-stock items found.</p>
         </div>
       ) : (
-        <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
+        <div className="bg-card border rounded-lg overflow-x-auto shadow-sm">
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 font-medium text-muted-foreground border-b">
               <tr>

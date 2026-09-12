@@ -291,7 +291,7 @@ export default function SellerCouponsPage() {
           <p className="text-lg text-muted-foreground">No coupons have been created yet.</p>
         </div>
       ) : (
-        <div className="border rounded-lg bg-card overflow-hidden">
+        <div className="border rounded-lg bg-card overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>

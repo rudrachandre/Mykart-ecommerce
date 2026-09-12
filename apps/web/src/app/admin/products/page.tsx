@@ -103,7 +103,7 @@ export default function AdminProductsPage() {
         <div className="text-red-500 bg-red-100 p-4 rounded">{error}</div>
       ) : (
         <>
-          <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
+          <div className="bg-card border rounded-lg overflow-x-auto shadow-sm">
             <table className="w-full text-sm text-left">
               <thead className="bg-muted/50 font-medium text-muted-foreground border-b">
                 <tr>

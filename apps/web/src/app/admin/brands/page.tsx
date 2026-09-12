@@ -154,7 +154,7 @@ export default function AdminBrandsPage() {
           <p className="text-lg text-muted-foreground">No brands defined yet.</p>
         </div>
       ) : (
-        <div className="border rounded-lg bg-card overflow-hidden">
+        <div className="border rounded-lg bg-card overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 text-muted-foreground border-b text-xs uppercase tracking-wider font-semibold">
               <tr>

@@ -74,7 +74,7 @@ export default function AdminAuditLogsPage() {
         </div>
       </div>
 
-      <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
+      <div className="bg-card border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted/50 font-medium text-muted-foreground border-b text-xs uppercase tracking-wider">
             <tr>

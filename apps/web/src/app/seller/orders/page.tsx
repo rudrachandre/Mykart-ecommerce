@@ -39,7 +39,7 @@ export default async function SellerOrdersPage() {
           <p className="text-lg text-muted-foreground">You have no orders yet.</p>
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="border rounded-lg overflow-x-auto bg-card">
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>

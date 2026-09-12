@@ -155,19 +155,21 @@ export function OrderActionsClient({
                 </div>
               </div>
 
-              <table>
-                <thead>
-                  <tr>
-                    <th>Item Description</th>
-                    <th style="text-align: center;">Qty</th>
-                    <th style="text-align: right;">Unit Price</th>
-                    <th style="text-align: right;">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${itemsHtml}
-                </tbody>
-              </table>
+              <div class="overflow-x-auto">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item Description</th>
+                      <th style="text-align: center;">Qty</th>
+                      <th style="text-align: right;">Unit Price</th>
+                      <th style="text-align: right;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${itemsHtml}
+                  </tbody>
+                </table>
+              </div>
 
               <div class="totals">
                 <div class="totals-row"><span>Subtotal:</span><span>₹${parseFloat(invoiceData.subtotal).toFixed(2)}</span></div>
