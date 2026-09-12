@@ -50,8 +50,44 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const relatedData = await getProducts({ categorySlug: product.category?.slug, limit: 5 }).catch(() => ({ items: [] }));
-  const relatedProducts = relatedData.items?.filter((p: any) => p.id !== product.id).slice(0, 4) || [];
+  // Fetch related products (Category -> Brand -> Site-wide Fallback up to 4 items)
+  const relatedList: any[] = [];
+  const seenIds = new Set<string>([product.id]);
+
+  if (product.category?.slug) {
+    const catData = await getProducts({ categorySlug: product.category.slug, limit: 6 }).catch(() => ({ items: [] }));
+    for (const item of (catData.items || [])) {
+      if (!seenIds.has(item.id)) {
+        seenIds.add(item.id);
+        relatedList.push(item);
+        if (relatedList.length >= 4) break;
+      }
+    }
+  }
+
+  if (relatedList.length < 4 && product.brand?.slug) {
+    const brandData = await getProducts({ brandSlug: product.brand.slug, limit: 6 }).catch(() => ({ items: [] }));
+    for (const item of (brandData.items || [])) {
+      if (!seenIds.has(item.id)) {
+        seenIds.add(item.id);
+        relatedList.push(item);
+        if (relatedList.length >= 4) break;
+      }
+    }
+  }
+
+  if (relatedList.length < 4) {
+    const fallbackData = await getProducts({ limit: 10 }).catch(() => ({ items: [] }));
+    for (const item of (fallbackData.items || [])) {
+      if (!seenIds.has(item.id)) {
+        seenIds.add(item.id);
+        relatedList.push(item);
+        if (relatedList.length >= 4) break;
+      }
+    }
+  }
+
+  const relatedProducts = relatedList.slice(0, 4);
 
   const hasDiscount = product.salePrice && product.salePrice < product.basePrice;
 

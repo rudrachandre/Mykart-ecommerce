@@ -36,7 +36,15 @@ export function ProductGrid({ products, meta, searchParams = {} }: ProductGridPr
 
   return (
     <div className="flex flex-col gap-12">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+      <div className={`grid gap-4 sm:gap-6 lg:gap-8 ${
+        products.length === 1 
+          ? 'grid-cols-1 max-w-sm' 
+          : products.length === 2 
+          ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl' 
+          : products.length === 3 
+          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl' 
+          : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+      }`}>
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

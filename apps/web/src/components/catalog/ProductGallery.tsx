@@ -18,12 +18,12 @@ export function ProductGallery({
   const mainImage = images?.[selectedIndex]?.url || '/placeholder.png';
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-4 w-full items-center">
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative w-full aspect-square max-h-[340px] sm:max-h-[400px] lg:max-h-[420px] overflow-hidden bg-secondary/50 rounded-xl border border-border/50 flex items-center justify-center p-4"
+        className="relative w-full aspect-square max-w-[340px] sm:max-w-[400px] lg:max-w-[420px] max-h-[340px] sm:max-h-[400px] lg:max-h-[420px] mx-auto overflow-hidden bg-secondary/50 rounded-xl border border-border/50 flex items-center justify-center p-4"
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -40,7 +40,7 @@ export function ProductGallery({
               fill
               className="object-contain cursor-zoom-in p-2 transition-transform duration-300 hover:scale-105"
               priority
-              sizes="(min-width: 1024px) 45vw, 100vw"
+              sizes="(min-width: 1024px) 420px, 100vw"
             />
           </motion.div>
         </AnimatePresence>
@@ -53,7 +53,7 @@ export function ProductGallery({
       </motion.div>
 
       {images?.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto py-1 hide-scrollbar">
+        <div className="flex gap-3 overflow-x-auto py-1 hide-scrollbar w-full max-w-[340px] sm:max-w-[400px] lg:max-w-[420px] mx-auto justify-center">
           {images.map((img: any, i: number) => (
             <button
               key={i}
